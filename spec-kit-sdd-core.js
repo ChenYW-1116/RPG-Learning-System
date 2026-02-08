@@ -2719,7 +2719,16 @@ async function runConstitutionCommand(args) {
     logTerminal('PS > ./generate-constitution.ps1 -Markdown', 'cmd');
 
     const prompt = SDD_COMMANDS.constitution.prompt.replace('{PROJECT_NAME}', state.toolName || 'MyProject');
-    const result = await callKimi(prompt, "你是專案經理，請直接輸出 Markdown 格式的專案憲章。");
+
+    // 🔵 規劃階段 (Phase 1)：強制使用 Kimi
+    const aiConfig = resolveAIConfig('kimi', 'phase1');
+    const result = await callKimi(
+        prompt,
+        "你是專案經理，請直接輸出 Markdown 格式的專案憲章。",
+        aiConfig.model,
+        aiConfig.key,
+        aiConfig.url
+    );
 
     removeTypingIndicator();
 
