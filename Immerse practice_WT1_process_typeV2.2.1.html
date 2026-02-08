@@ -749,11 +749,18 @@
 
             const t = i18n[lang];
 
-            // Sync GeminiKeyManager language
+            // Track if first mount
+            const isFirstRender = useRef(true);
+
+            // Sync GeminiKeyManager language (only re-render on lang change)
             useEffect(() => {
                 if (typeof GeminiKeyManager !== 'undefined') {
                     GeminiKeyManager.setLang(lang);
-                    GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+                    // Only re-render on language change, not initial mount
+                    if (!isFirstRender.current) {
+                        GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+                    }
+                    isFirstRender.current = false;
                 }
             }, [lang]);
 
@@ -777,14 +784,7 @@
                     <PlayerStatusCard lang={lang} t={t} />
 
                     {/* API Key Status Display (Replaces Input) */}
-                    <div className="flex justify-center mb-8">
-                        <div className="glass-panel px-6 py-3 flex items-center gap-4 rounded-full border border-indigo-500/30 shadow-lg bg-slate-900/80">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-indigo-400 tracking-wider">GEMINI AI</span>
-                                <span id="gemini-key-status-container" className="text-sm">⏳</span>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Gemini status is rendered in the fixed header - no duplicate needed here */}
 
                     {/* Tabs */}
                     <div className="flex flex-wrap justify-center gap-2 mb-8">

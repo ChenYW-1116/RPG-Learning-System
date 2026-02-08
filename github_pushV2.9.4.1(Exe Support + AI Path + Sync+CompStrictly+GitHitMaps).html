@@ -1285,11 +1285,7 @@
             setupRealtimeSync('token', 'saveToken', ConfigDB.KEYS.GITHUB_TOKEN);
             setupRealtimeSync('branch', 'saveToken', ConfigDB.KEYS.BRANCH);
 
-            // Initialize Gemini Status Check
-            if (typeof GeminiKeyManager !== 'undefined') {
-                GeminiKeyManager.setLang(i18n.currentLang);
-                GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
-            }
+            // Note: Gemini status is initialized in the DOMContentLoaded handler at bottom of file
 
             // 監聽 Token 變更以自動讀取 Repo
             document.getElementById('token').addEventListener('change', function () {

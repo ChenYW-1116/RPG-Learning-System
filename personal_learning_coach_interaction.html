@@ -164,7 +164,6 @@
 
 <body>
   <!-- Gemini API Key Status Container -->
-  <!-- Gemini API Key Status Container -->
   <div class="fixed top-4 right-4 z-50">
     <div class="glass-card flex items-center gap-4 p-4 text-left shadow-2xl border-indigo-500/20">
       <div class="flex-1 flex items-center gap-3">
@@ -181,13 +180,12 @@
   <!-- Gemini Key Manager -->
   <script src="modules/gemini-key-manager.js"></script>
   <script>
+    // Initial status render - React useEffect will handle subsequent updates
     document.addEventListener('DOMContentLoaded', async () => {
-      const updateKeyStatus = async () => {
-        // Default to 'zh' if not set
+      if (typeof GeminiKeyManager !== 'undefined') {
         GeminiKeyManager.setLang('zh');
         await GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
-      };
-      setTimeout(updateKeyStatus, 500);
+      }
     });
   </script>
 
@@ -435,11 +433,19 @@
       const [lang, setLang] = useState('zh');
       const t = i18n[lang];
 
-      // Sync GeminiKeyManager language
+
+      // Track if first mount
+      const isFirstRender = useRef(true);
+
+      // Sync GeminiKeyManager language (only re-render when lang CHANGES, not initial)
       useEffect(() => {
         if (typeof GeminiKeyManager !== 'undefined') {
           GeminiKeyManager.setLang(lang);
-          GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+          // Only re-render on language change, not initial mount (DOM already handles that)
+          if (!isFirstRender.current) {
+            GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+          }
+          isFirstRender.current = false;
         }
       }, [lang]);
 
