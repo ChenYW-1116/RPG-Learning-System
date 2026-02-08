@@ -1086,6 +1086,29 @@ function saveConfig() {
 // 🤖 AI API FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * 🔓 Release the Gemini request queue lock and process the next waiting request
+ * This ensures that after a Gemini API call completes (success or error),
+ * the next queued request is allowed to proceed.
+ */
+function releaseGeminiQueueLock() {
+    if (!window._geminiRequestQueue) return;
+
+    const queueState = window._geminiRequestQueue;
+
+    // Release the lock
+    queueState.isProcessing = false;
+
+    // If there are waiting requests, resolve the first one (FIFO)
+    if (queueState.queue.length > 0) {
+        const nextResolver = queueState.queue.shift();
+        if (nextResolver) {
+            console.log('[RateLimit] Gemini queue: releasing next request...');
+            nextResolver(); // This will unblock the waiting Promise
+        }
+    }
+}
+
 async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工程師，擅長遵循 Spec-Driven Development 流程生成規格與代碼。", modelOverride = null, apiKeyOverride = null, urlOverride = null, phase = null) {
     let attempt = 0;
     const maxAttempts = 5;
@@ -1120,19 +1143,50 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
             provider = 'gemini';
         }
 
-        // 🚦 GEMINI-SPECIFIC RATE LIMITER
-        // Kimi has higher limits/is paid, so we only govern Gemini Free Tier
+        // 🚦 GEMINI REQUEST QUEUE (MUTEX) - Critical for preventing 429
+        // The previous simple rate limiter failed because concurrent calls
+        // all checked _geminiLastCallTime at the same time BEFORE any of them updated it.
+        // This mutex ensures requests are queued and processed one at a time.
         if (provider === 'gemini') {
-            if (!window._geminiLastCallTime) window._geminiLastCallTime = 0;
-            const GEMINI_MIN_INTERVAL = 2000; // 2s minimum gap for Gemini
+            // Initialize the global queue if it doesn't exist
+            if (!window._geminiRequestQueue) {
+                window._geminiRequestQueue = {
+                    isProcessing: false,
+                    queue: [],
+                    lastCallTime: 0,
+                    minInterval: 3000 // 3 seconds between Gemini requests (Free Tier safe)
+                };
+            }
 
-            const timeSinceLast = Date.now() - window._geminiLastCallTime;
-            if (timeSinceLast < GEMINI_MIN_INTERVAL) {
-                const wait = GEMINI_MIN_INTERVAL - timeSinceLast + (Math.random() * 500);
-                console.log(`[RateLimit] Gemini too fast, slowing down by ${wait.toFixed(0)}ms...`);
+            const queueState = window._geminiRequestQueue;
+
+            // If another request is currently processing, wait in line
+            if (queueState.isProcessing) {
+                console.log('[RateLimit] Gemini queue: waiting for previous request to complete...');
+                addLog('🚦 API 請求排隊中，等待前一個請求完成...', 'info', 'SYSTEM');
+
+                await new Promise(resolve => {
+                    queueState.queue.push(resolve);
+                });
+            }
+
+            // Mark as processing (we have the lock now)
+            queueState.isProcessing = true;
+
+            // Enforce minimum interval since last call
+            const timeSinceLast = Date.now() - queueState.lastCallTime;
+            if (queueState.lastCallTime > 0 && timeSinceLast < queueState.minInterval) {
+                const wait = queueState.minInterval - timeSinceLast + (Math.random() * 1000);
+                console.log(`[RateLimit] Gemini throttle: waiting ${wait.toFixed(0)}ms before request...`);
+                addLog(`🚦 限流保護: 等待 ${(wait / 1000).toFixed(1)} 秒...`, 'info', 'SYSTEM');
                 await new Promise(r => setTimeout(r, wait));
             }
-            window._geminiLastCallTime = Date.now();
+
+            // Update last call time BEFORE making the request
+            queueState.lastCallTime = Date.now();
+
+            // Release the lock after this request completes (in finally block later)
+            // We'll add a helper to release the lock
         }
 
         // 🔍 LLM DEBUG: 詳細請求參數
@@ -1148,6 +1202,10 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
             addLog(msg, 'error', 'SYSTEM');
             alert(msg);
             openConfig();
+
+            // 🔓 Release Gemini queue lock on early exit
+            releaseGeminiQueueLock();
+
             return null;
         }
 
@@ -1368,6 +1426,10 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
                 console.log('%c═══════════════════════════════════════════════════════════\n', 'color: #10b981');
 
                 addLog(`API 請求成功 (${responseFormat} Format)`, 'success', 'SYSTEM');
+
+                // 🔓 Release Gemini queue lock on success
+                releaseGeminiQueueLock();
+
                 return responseContent;
             }
 
@@ -1391,6 +1453,10 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
             }
 
             addChatMessage(`❌ API 呼叫失敗：${errorMessage}`, false);
+
+            // 🔓 Release Gemini queue lock on error
+            releaseGeminiQueueLock();
+
             return null;
         }
     }
