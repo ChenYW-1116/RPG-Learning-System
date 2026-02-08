@@ -192,17 +192,29 @@
 
 <body>
     <!-- Gemini API Key Status Container -->
-    <div id="gemini-status-container" class="fixed top-4 right-4 z-50"></div>
+    <div class="fixed top-4 right-4 z-50">
+        <div class="glass-card flex items-center gap-4 p-4 text-left shadow-2xl border-emerald-500/20">
+            <div class="flex-1 flex items-center gap-3">
+                <label class="block text-xs font-bold text-emerald-400 tracking-wider">GEMINI AI</label>
+                <span id="gemini-key-status-container" class="text-sm">⏳</span>
+            </div>
+            <div class="text-xs text-gray-400 hidden md:block border-l border-emerald-500/20 pl-3">
+                <i class="fas fa-shield-alt text-emerald-400"></i> Local Key Only
+            </div>
+        </div>
+    </div>
     <div id="root"></div>
 
     <!-- Gemini Key Manager -->
     <script src="modules/gemini-key-manager.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            setTimeout(async () => {
+            const updateKeyStatus = async () => {
+                // Default to 'zh' if not set
                 GeminiKeyManager.setLang('zh');
-                await GeminiKeyManager.renderStatusUI('#gemini-status-container');
-            }, 500);
+                await GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+            };
+            setTimeout(updateKeyStatus, 500);
         });
     </script>
 
@@ -355,8 +367,53 @@
             reader.onerror = reject;
         });
 
-        const fetchGenContent = async (apiKey, payload) => {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${apiKey}`, {
+        const fetchGenContent = async (payload) => {
+            if (typeof GeminiKeyManager !== 'undefined') {
+                await GeminiKeyManager.checkQuotaAndAlert();
+            }
+            const apiKey = GeminiKeyManager.getActiveKey();
+            if (!apiKey || apiKey === '__USE_ADMIN_KEY__') {
+                // Determine if we need to alert. Since this is client-side implementation mostly,
+                // we assume user must provide key unless there is a backend proxy.
+                // But GeminiKeyManager.getActiveKey() returns '__USE_ADMIN_KEY__' if local storage is empty
+                // AND we want to support fallback.
+                // However, the original code used a passed-in apiKey.
+                // Let's stick to using the key if available.
+                const validKey = await GeminiKeyManager.validateKey(apiKey === '__USE_ADMIN_KEY__' ? null : apiKey);
+                if (!validKey.valid && validKey.error === 'no_key') {
+                    throw new Error(i18n[window.currentLang || 'zh'].toastNoKey || "Please set Gemini API Key in Hub.");
+                }
+            }
+
+            // For now, assume key is directly usable or handled by backend if 'USE_ADMIN'.
+            // But this specific file accesses generativelanguage.googleapis.com directly.
+            // So it MUST have a real key.
+            // If getActiveKey returns '__USE_ADMIN_KEY__', it means no local key.
+            // Since we don't have a backend proxy for this file explicitly shown to handle '__USE_ADMIN_KEY__' -> google calls,
+            // we might need to rely on the user having set the key in the Hub.
+
+            let keyToUse = apiKey;
+            if (keyToUse === '__USE_ADMIN_KEY__') {
+                // Try to see if we can get a key, or fail.
+                // In the previous version, we just failed if no key.
+                // Let's check if there is a way to get one. 
+                // Actually, if it's '__USE_ADMIN_KEY__', it means the user hasn't set one locally.
+                // We should probably check if it's valid via validateKey (which might use a backend).
+                // But for direct fetch to googleapis, we need the actual string.
+                // If the logic relies on a proxy, the URL would be different.
+                // The original code was: fetch(`https://generativelanguage.googleapis.com/v1beta/models/...
+                // So it requires a client-side key.
+
+                // If the user hasn't set a key, getActiveKey returns '__USE_ADMIN_KEY__' (as default in the manager if none found? NO, wait).
+                // let's check GeminiKeyManager.getActiveKey source.
+                // It returns localStorage key OR '__USE_ADMIN_KEY__'.
+
+                const userKey = localStorage.getItem('gemini_api_key');
+                if (!userKey) throw new Error("Please set your Gemini API Key in the Quest Empire Hub.");
+                keyToUse = userKey;
+            }
+
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${keyToUse}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -447,18 +504,17 @@
         // 4. Content Sections
 
         // --- Natural Cycles ---
-        const NaturalCyclesSection = ({ t, apiKey, setLoading }) => {
+        const NaturalCyclesSection = ({ t, setLoading }) => {
             const [promptResult, setPromptResult] = useState("");
             const [vocabResult, setVocabResult] = useState("");
             const [analysisResult, setAnalysisResult] = useState("");
             const [imgPreview, setImgPreview] = useState(null);
 
             const handleGenPrompt = async () => {
-                if (!apiKey) return alert(t.apiKeyPlaceholder);
                 setLoading(true);
                 try {
                     const q = `Generate a new IELTS Writing Task 1 process diagram prompt about a "Natural Cycle" (e.g. water cycle, life cycle of a frog). Output in English. Pure text.`;
-                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    const res = await fetchGenContent({ contents: [{ parts: [{ text: q }] }] });
                     setPromptResult(res.candidates[0].content.parts[0].text);
                     if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
                 } catch (e) { alert(e.message); }
@@ -466,18 +522,16 @@
             };
 
             const handleGenVocab = async () => {
-                if (!apiKey) return alert(t.apiKeyPlaceholder);
                 setLoading(true);
                 try {
                     const q = `Provide advanced vocabulary and transition words for describing the process of "Drip Coffee Preparation" as an analogy to a natural water cycle. Output in Markdown list.`;
-                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    const res = await fetchGenContent({ contents: [{ parts: [{ text: q }] }] });
                     setVocabResult(res.candidates[0].content.parts[0].text);
                 } catch (e) { alert(e.message); }
                 setLoading(false);
             };
 
             const handleAnalyzeImg = async (e) => {
-                if (!apiKey) return alert(t.apiKeyPlaceholder);
                 const file = e.target.files[0];
                 if (!file) return;
 
@@ -495,7 +549,7 @@
                             ]
                         }]
                     };
-                    const res = await fetchGenContent(apiKey, payload);
+                    const res = await fetchGenContent(payload);
                     setAnalysisResult(res.candidates[0].content.parts[0].text);
                     if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
                 } catch (e) { alert(e.message); }
@@ -540,18 +594,17 @@
         };
 
         // --- Manufacturing & Systems (Simplified structure for brevity, logic same as Natural) ---
-        const GenericSection = ({ t, apiKey, setLoading, type, title, tip, analogyTitle, analogyDesc, analogyProcess }) => {
+        const GenericSection = ({ t, setLoading, type, title, tip, analogyTitle, analogyDesc, analogyProcess }) => {
             const [promptRes, setPromptRes] = useState("");
             const [vocabRes, setVocabRes] = useState("");
             const [analysisRes, setAnalysisRes] = useState("");
             const [img, setImg] = useState(null);
 
             const genPrompt = async () => {
-                if (!apiKey) return alert(t.apiKeyPlaceholder);
                 setLoading(true);
                 try {
                     const q = `Generate a new IELTS Writing Task 1 process diagram prompt about "${type}". Output in English.`;
-                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    const res = await fetchGenContent({ contents: [{ parts: [{ text: q }] }] });
                     setPromptRes(res.candidates[0].content.parts[0].text);
                     if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
                 } catch (e) { alert(e.message); }
@@ -559,18 +612,16 @@
             };
 
             const genVocab = async () => {
-                if (!apiKey) return alert(t.apiKeyPlaceholder);
                 setLoading(true);
                 try {
                     const q = `Provide advanced vocabulary for "${analogyProcess}". Output in Markdown.`;
-                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    const res = await fetchGenContent({ contents: [{ parts: [{ text: q }] }] });
                     setVocabRes(res.candidates[0].content.parts[0].text);
                 } catch (e) { alert(e.message); }
                 setLoading(false);
             };
 
             const analyze = async (e) => {
-                if (!apiKey) return alert(t.apiKeyPlaceholder);
                 const f = e.target.files[0];
                 if (!f) return;
                 setLoading(true);
@@ -578,7 +629,7 @@
                     const b64 = await toBase64(f);
                     setImg(`data:${f.type};base64,${b64}`);
                     const q = `Analyze this image as a "${type}" process for IELTS Task 1. Output in Traditional Chinese.`;
-                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }, { inlineData: { mimeType: f.type, data: b64 } }] }] });
+                    const res = await fetchGenContent({ contents: [{ parts: [{ text: q }, { inlineData: { mimeType: f.type, data: b64 } }] }] });
                     setAnalysisRes(res.candidates[0].content.parts[0].text);
                     if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
                 } catch (e) { alert(e.message); }
@@ -694,15 +745,17 @@
         const App = () => {
             const [lang, setLang] = useState('zh');
             const [activeTab, setActiveTab] = useState('overview');
-            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
             const [isLoading, setIsLoading] = useState(false);
 
             const t = i18n[lang];
 
-            const saveKey = () => {
-                localStorage.setItem('gemini_api_key', apiKey);
-                alert('Saved!');
-            };
+            // Sync GeminiKeyManager language
+            useEffect(() => {
+                if (typeof GeminiKeyManager !== 'undefined') {
+                    GeminiKeyManager.setLang(lang);
+                    GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+                }
+            }, [lang]);
 
             return (
                 <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -723,17 +776,13 @@
                     {/* Status Card */}
                     <PlayerStatusCard lang={lang} t={t} />
 
-                    {/* API Key Input */}
+                    {/* API Key Status Display (Replaces Input) */}
                     <div className="flex justify-center mb-8">
-                        <div className="flex gap-2 w-full max-w-md bg-slate-900/50 p-1.5 rounded-lg border border-white/10">
-                            <input
-                                type="password"
-                                value={apiKey}
-                                onChange={e => setApiKey(e.target.value)}
-                                placeholder={t.apiKeyPlaceholder}
-                                className="bg-transparent border-none text-xs text-white px-3 w-full focus:outline-none placeholder-gray-600"
-                            />
-                            <button onClick={saveKey} className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded transition whitespace-nowrap">{t.saveKey}</button>
+                        <div className="glass-panel px-6 py-3 flex items-center gap-4 rounded-full border border-indigo-500/30 shadow-lg bg-slate-900/80">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-indigo-400 tracking-wider">GEMINI AI</span>
+                                <span id="gemini-key-status-container" className="text-sm">⏳</span>
+                            </div>
                         </div>
                     </div>
 
@@ -768,10 +817,10 @@
                             </div>
                         )}
 
-                        {activeTab === 'natural' && <NaturalCyclesSection t={t} apiKey={apiKey} setLoading={setIsLoading} />}
+                        {activeTab === 'natural' && <NaturalCyclesSection t={t} setLoading={setIsLoading} />}
 
                         {activeTab === 'manufacturing' && <GenericSection
-                            t={t} apiKey={apiKey} setLoading={setIsLoading} type="Manufacturing Process" title={t.tabManufacturing} tip={t.tipManuf}
+                            t={t} setLoading={setIsLoading} type="Manufacturing Process" title={t.tabManufacturing} tip={t.tipManuf}
                             analogyTitle={t.analogyCake} analogyDesc="Baking ≈ Raw Mat. to Product" analogyProcess="Baking a Cake"
                         />}
 

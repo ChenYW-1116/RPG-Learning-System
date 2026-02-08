@@ -12,6 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Base Style */
         body {
@@ -61,6 +62,16 @@ Ensure highlighted part does not wrap */
             border-radius: 9999px;
             font-size: 0.8rem;
         }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
     </style>
     <!-- Dev-Scribe RPG Engine -->
     <script src="DevScribeRPG.js"></script>
@@ -99,7 +110,16 @@ Ensure highlighted part does not wrap */
             <!-- RPG Status Card -->
             <div id="rpg-status-card" class="mt-4 max-w-md mx-auto"></div>
             <!-- Gemini Status -->
-            <div id="gemini-status-container" class="mt-4 max-w-md mx-auto flex justify-center"></div>
+            <!-- API Key Status (Synced Style) -->
+            <div class="glass-card flex items-center gap-4 max-w-lg mx-auto mt-4 px-6 py-4 text-left">
+                <div class="flex-1 flex items-center gap-3">
+                    <label class="block text-xs font-bold text-indigo-400 tracking-wider">GEMINI AI</label>
+                    <span id="gemini-key-status-container" class="text-sm">⏳</span>
+                </div>
+                <div class="text-xs text-gray-500 hidden md:block">
+                    <i class="fas fa-shield-alt text-green-400"></i> <span data-i18n="keySafe">Key 僅保存在本地</span>
+                </div>
+            </div>
         </header>
 
         <!-- API Key Input -->
@@ -3459,22 +3479,22 @@ Return ONLY a valid JSON object matching the requested schema.
     <!-- Gemini Key Manager -->
     <script src="modules/gemini-key-manager.js"></script>
     <script>
-        // Initialize GeminiKeyManager for status display
         document.addEventListener('DOMContentLoaded', async () => {
-            setTimeout(async () => {
+            const updateKeyStatus = async () => {
                 const currentLang = window.i18n?.currentLang === 'zh' ? 'zh' : 'en';
                 GeminiKeyManager.setLang(currentLang);
-                await GeminiKeyManager.renderStatusUI('#gemini-status-container');
-            }, 500);
+                await GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+            };
 
-            // Hook into existing toggleLanguage if accessible
+            // Initial load with slight delay
+            setTimeout(updateKeyStatus, 500);
+
+            // Hook into existing toggleLanguage
             const originalToggleLanguage = window.toggleLanguage;
             if (typeof originalToggleLanguage === 'function') {
                 window.toggleLanguage = function () {
                     originalToggleLanguage();
-                    const newLang = window.i18n?.currentLang === 'zh' ? 'zh' : 'en';
-                    GeminiKeyManager.setLang(newLang);
-                    GeminiKeyManager.renderStatusUI('#gemini-status-container');
+                    setTimeout(updateKeyStatus, 100);
                 };
             }
         });

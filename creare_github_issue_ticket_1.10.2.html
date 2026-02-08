@@ -36,6 +36,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', 'sans-serif';
@@ -78,6 +79,16 @@
             -moz-appearance: textfield;
             /* Firefox 兼容 */
         }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
     </style>
     <!-- Dev-Scribe RPG Engine -->
     <script src="DevScribeRPG.js"></script>
@@ -117,6 +128,17 @@
 
         <!-- RPG Status Card -->
         <div id="rpg-status-card" class="mb-6 text-left"></div>
+
+        <!-- API Key Status (Synced Style) -->
+        <div class="glass-card flex items-center gap-4 max-w-4xl w-full mx-auto text-left relative z-10">
+            <div class="flex-1 flex items-center gap-3">
+                <label class="block text-xs font-bold text-indigo-400 tracking-wider">GEMINI AI</label>
+                <span id="gemini-key-status-container" class="text-sm">⏳</span>
+            </div>
+            <div class="text-xs text-gray-500 hidden md:block">
+                <i class="fas fa-shield-alt text-green-400"></i> <span data-i18n="keySafe">Key 僅保存在本地</span>
+            </div>
+        </div>
 
         <p class="text-lg text-gray-300" data-i18n="pageSubtitle">Quest Board — 建立 GitHub Issue，記錄練習成果與反思</p>
         <p class="text-sm text-gray-500 mt-2" data-i18n="analysisDesc">IELTS Task 1 AI vs 自我評估比較分析</p>
@@ -2318,22 +2340,22 @@ ${additionalNotesFormatted}
     <!-- Gemini Key Manager -->
     <script src="modules/gemini-key-manager.js"></script>
     <script>
-        // Initialize GeminiKeyManager for status display
         document.addEventListener('DOMContentLoaded', async () => {
-            // Set language based on current page state if possible, otherwise default
-            const currentLang = document.documentElement.lang === 'zh-Hant' ? 'zh' : 'en';
-            GeminiKeyManager.setLang(currentLang);
-            await GeminiKeyManager.renderStatusUI('#gemini-status-container');
+            if (typeof GeminiKeyManager !== 'undefined') {
+                const lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : 'zh';
+                GeminiKeyManager.setLang(lang);
+                await GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
 
-            // Hook into language toggle if it exists
-            const originalToggleLanguage = window.toggleLanguage;
-            if (typeof originalToggleLanguage === 'function') {
-                window.toggleLanguage = function () {
-                    originalToggleLanguage();
-                    const newLang = document.documentElement.lang === 'zh-Hant' ? 'zh' : 'en';
-                    GeminiKeyManager.setLang(newLang);
-                    GeminiKeyManager.renderStatusUI('#gemini-status-container');
-                };
+                // Hook into language toggle if available
+                const originalToggle = window.toggleLanguage;
+                if (typeof originalToggle === 'function') {
+                    window.toggleLanguage = function () {
+                        originalToggle();
+                        const newLang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : 'zh';
+                        GeminiKeyManager.setLang(newLang);
+                        GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+                    };
+                }
             }
         });
     </script>

@@ -303,6 +303,9 @@ class GeminiAPIWrapper {
      * @returns {Promise<{success: boolean, data?: any, error?: string}>}
      */
     async call(prompt, systemPrompt, useJson = true, genConfig = {}) {
+        if (typeof GeminiKeyManager !== 'undefined') {
+            await GeminiKeyManager.checkQuotaAndAlert();
+        }
         CodeGenLogger.debug('API', `🔌 GeminiAPIWrapper.call() 開始`, {
             model: this.model,
             useJson,

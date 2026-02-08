@@ -47,6 +47,15 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 16px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
         .btn-gradient {
             background: linear-gradient(135deg, #3B82F6, #8B5CF6);
             transition: all 0.3s ease;
@@ -320,7 +329,17 @@
 
 <body class="p-4 md:p-8">
     <!-- Gemini API Key Status Container -->
-    <div id="gemini-status-container" class="fixed top-4 right-4 z-50"></div>
+    <div class="fixed top-4 right-4 z-50">
+        <div class="glass-card flex items-center gap-4 text-left shadow-2xl">
+            <div class="flex-1 flex items-center gap-3">
+                <label class="block text-xs font-bold text-indigo-400 tracking-wider">GEMINI AI</label>
+                <span id="gemini-key-status-container" class="text-sm">⏳</span>
+            </div>
+            <div class="text-xs text-gray-500 hidden md:block border-l border-gray-700 pl-3">
+                <i class="fas fa-shield-alt text-green-400"></i> <span data-i18n="keySafe">Key 僅保存在本地</span>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -368,34 +387,11 @@
                         </div>
                     </div>
 
-                    <!-- Gemini API Key -->
+                    <!-- Gemini API Key (Managed Globally) -->
                     <div class="border-t border-slate-700 pt-4">
-                        <div class="flex justify-between items-end">
-                            <label
-                                class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center">
-                                <i class="fa-solid fa-robot mr-1"></i> <span data-i18n="geminiApiKey">Gemini API Key
-                                    (選填)</span>
-                            </label>
-                            <span id="geminiStatus" class="text-[10px] text-green-400 opacity-0 transition-opacity"><i
-                                    class="fa-solid fa-check"></i> <span data-i18n="tokenSaved">已紀錄</span></span>
-                        </div>
-                        <div class="relative">
-                            <input type="password" id="geminiApiKey" placeholder="AIzaSy..."
-                                class="input-field w-full p-2.5 rounded-lg text-sm mt-1 pr-10">
-                            <button onclick="toggleTokenVisibility('geminiApiKey', 'aiEyeIcon')"
-                                class="absolute right-3 top-3.5 text-gray-500 hover:text-white">
-                                <i class="fa-regular fa-eye" id="aiEyeIcon"></i>
-                            </button>
-                        </div>
-
-                        <div class="flex items-center mt-2 group cursor-pointer">
-                            <input type="checkbox" id="saveGeminiKey"
-                                class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 cursor-pointer w-4 h-4">
-                            <label for="saveGeminiKey"
-                                class="ml-2 text-xs text-gray-400 group-hover:text-blue-300 transition-colors cursor-pointer select-none">
-                                <i class="fa-solid fa-database mr-1"></i> <span data-i18n="autoSaveApiKey">自動儲存 API Key
-                                    (下次啟動自動帶入)</span>
-                            </label>
+                        <div class="flex justify-between items-center text-xs text-gray-500">
+                            <span><i class="fa-solid fa-robot mr-1"></i> Gemini API</span>
+                            <span class="text-indigo-400">Managed via Hub</span>
                         </div>
                     </div>
 
@@ -1228,9 +1224,17 @@
                             fetchRepositories(config.github_token, config.repo);
                         }
                         if (config.gemini_key) {
-                            document.getElementById('geminiApiKey').value = config.gemini_key;
-                            document.getElementById('saveGeminiKey').checked = true;
+                            // Check if element exists before setting value (it might be removed)
+                            const keyEl = document.getElementById('geminiApiKey');
+                            if (keyEl) {
+                                keyEl.value = config.gemini_key;
+                                document.getElementById('saveGeminiKey').checked = true;
+                            }
                             ConfigDB.save(ConfigDB.KEYS.GEMINI_KEY, config.gemini_key);
+                            // Also update status UI if manager exists
+                            if (typeof GeminiKeyManager !== 'undefined') {
+                                GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+                            }
                         }
                         // 如果有 Branch 設定，先存入 LocalStorage，讓稍後的 fetchBranches 能抓到
                         if (config.branch) {
@@ -1277,18 +1281,15 @@
                 fetchRepositories(tokenToUse);
             }
 
-            const savedGeminiKey = ConfigDB.get(ConfigDB.KEYS.GEMINI_KEY);
-            if (savedGeminiKey) {
-                document.getElementById('geminiApiKey').value = savedGeminiKey;
-                document.getElementById('saveGeminiKey').checked = true;
-                ConfigDB.showSaveIndicator(ConfigDB.KEYS.GEMINI_KEY);
-            }
-
             document.getElementById('commitMessage').value = DEFAULT_UPLOAD_MESSAGE;
-
             setupRealtimeSync('token', 'saveToken', ConfigDB.KEYS.GITHUB_TOKEN);
-            setupRealtimeSync('geminiApiKey', 'saveGeminiKey', ConfigDB.KEYS.GEMINI_KEY);
             setupRealtimeSync('branch', 'saveToken', ConfigDB.KEYS.BRANCH);
+
+            // Initialize Gemini Status Check
+            if (typeof GeminiKeyManager !== 'undefined') {
+                GeminiKeyManager.setLang(i18n.currentLang);
+                GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+            }
 
             // 監聽 Token 變更以自動讀取 Repo
             document.getElementById('token').addEventListener('change', function () {
@@ -1915,7 +1916,12 @@
         // --- 5. Gemini 深度整合功能 ---
 
         function enableGemini(enabled) {
-            const hasKey = !!document.getElementById('geminiApiKey').value.trim();
+            let hasKey = false;
+            if (typeof GeminiKeyManager !== 'undefined') {
+                const key = GeminiKeyManager.getActiveKey();
+                hasKey = !!(key && key !== '__USE_ADMIN_KEY__');
+            }
+
             const finalState = enabled && hasKey;
 
             document.getElementById('btnSummary').disabled = !finalState;
@@ -1926,14 +1932,20 @@
 
         async function suggestPathWithAI() {
             const inputs = getInputs(false);
-            const apiKey = document.getElementById('geminiApiKey').value.trim();
+
+            let apiKey = null;
+            if (typeof GeminiKeyManager !== 'undefined') {
+                await GeminiKeyManager.checkQuotaAndAlert();
+                const key = GeminiKeyManager.getActiveKey();
+                if (key && key !== '__USE_ADMIN_KEY__') apiKey = key;
+            }
 
             if (!selectedFile) {
                 showStatus('warning', i18n.t('selectFileFirst'));
                 return;
             }
             if (!apiKey) {
-                showStatus('error', i18n.t('setGeminiKey'));
+                showStatus('error', i18n.t('setGeminiKey') + ' (in Hub)');
                 return;
             }
             if (!inputs.token || !inputs.repo) {
@@ -1992,8 +2004,19 @@
 
         async function runGeminiTask(task) {
             const file = selectedFile;
-            const apiKey = document.getElementById('geminiApiKey').value.trim();
-            if (!file || !apiKey) return;
+
+            let apiKey = null;
+            if (typeof GeminiKeyManager !== 'undefined') {
+                await GeminiKeyManager.checkQuotaAndAlert();
+                const key = GeminiKeyManager.getActiveKey();
+                if (key && key !== '__USE_ADMIN_KEY__') apiKey = key;
+            }
+
+            if (!file) return;
+            if (!apiKey) {
+                showStatus('error', i18n.t('setGeminiKey') + ' (in Hub)');
+                return;
+            }
 
             const outputContainer = document.getElementById('geminiOutputContainer');
             const outputDiv = document.getElementById('geminiOutput');
@@ -2146,6 +2169,14 @@ Code to review:`;
         }
 
         async function callGeminiApi(systemPrompt, userQuery, contextText = "", apiKey) {
+            if (typeof GeminiKeyManager !== 'undefined') {
+                await GeminiKeyManager.checkQuotaAndAlert();
+                if (!apiKey) {
+                    const key = GeminiKeyManager.getActiveKey();
+                    // If user key exists and is not the proxy signal (since this fetch is client-side)
+                    if (key && key !== '__USE_ADMIN_KEY__') apiKey = key;
+                }
+            }
             if (!apiKey) {
                 throw new Error("Gemini API Key is missing.");
             }
@@ -2395,7 +2426,14 @@ Code to review:`;
 
         function getInputs(validateAll = true) {
             const token = document.getElementById('token').value.trim();
-            const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
+
+            let geminiApiKey = '';
+            // Use Manager if available
+            if (typeof GeminiKeyManager !== 'undefined') {
+                const key = GeminiKeyManager.getActiveKey();
+                if (key && key !== '__USE_ADMIN_KEY__') geminiApiKey = key;
+            }
+
             const repo = document.getElementById('repo').value.trim();
             const branch = document.getElementById('branch').value.trim();
             const path = document.getElementById('targetPath').value.trim();
@@ -2467,11 +2505,22 @@ Code to review:`;
     <script src="modules/gemini-key-manager.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            setTimeout(async () => {
+            const updateKeyStatus = async () => {
                 const currentLang = (typeof i18n !== 'undefined' && i18n.currentLang === 'en') ? 'en' : 'zh';
                 GeminiKeyManager.setLang(currentLang);
-                await GeminiKeyManager.renderStatusUI('#gemini-status-container');
-            }, 500);
+                await GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
+            };
+
+            setTimeout(updateKeyStatus, 500);
+
+            // Hook into toggleLanguage if it exists in this scope
+            const originalToggleLanguage = window.toggleLanguage;
+            if (typeof originalToggleLanguage === 'function') {
+                window.toggleLanguage = function () {
+                    originalToggleLanguage();
+                    setTimeout(updateKeyStatus, 100);
+                };
+            }
         });
     </script>
 </body>
