@@ -1594,6 +1594,11 @@ Stack: ${reGetError.message}`);
          * @param {boolean} preferTable - 是否傾向於轉換為 Key:Value 表格
          */
         async function formatTextWithGemini(text, context, preferTable = true) {
+            // Check Quota Before Starting
+            if (typeof GeminiKeyManager !== 'undefined' && !GeminiKeyManager.checkQuotaAndAlert()) {
+                throw new Error("Quota Exhausted");
+            }
+
             const trimmedText = text.trim();
             if (!trimmedText) {
                 return '無';
@@ -2310,6 +2315,28 @@ ${additionalNotesFormatted}
         }
     </script>
 
+    <!-- Gemini Key Manager -->
+    <script src="modules/gemini-key-manager.js"></script>
+    <script>
+        // Initialize GeminiKeyManager for status display
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Set language based on current page state if possible, otherwise default
+            const currentLang = document.documentElement.lang === 'zh-Hant' ? 'zh' : 'en';
+            GeminiKeyManager.setLang(currentLang);
+            await GeminiKeyManager.renderStatusUI('#gemini-status-container');
+
+            // Hook into language toggle if it exists
+            const originalToggleLanguage = window.toggleLanguage;
+            if (typeof originalToggleLanguage === 'function') {
+                window.toggleLanguage = function () {
+                    originalToggleLanguage();
+                    const newLang = document.documentElement.lang === 'zh-Hant' ? 'zh' : 'en';
+                    GeminiKeyManager.setLang(newLang);
+                    GeminiKeyManager.renderStatusUI('#gemini-status-container');
+                };
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -319,6 +319,8 @@
 </head>
 
 <body class="p-4 md:p-8">
+    <!-- Gemini API Key Status Container -->
+    <div id="gemini-status-container" class="fixed top-4 right-4 z-50"></div>
 
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -2459,6 +2461,18 @@ Code to review:`;
             btn.textContent = 'OK!';
             setTimeout(() => btn.textContent = originalText, 1500);
         }
+    </script>
+
+    <!-- Gemini Key Manager -->
+    <script src="modules/gemini-key-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(async () => {
+                const currentLang = (typeof i18n !== 'undefined' && i18n.currentLang === 'en') ? 'en' : 'zh';
+                GeminiKeyManager.setLang(currentLang);
+                await GeminiKeyManager.renderStatusUI('#gemini-status-container');
+            }, 500);
+        });
     </script>
 </body>
 

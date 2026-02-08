@@ -163,7 +163,20 @@
 </head>
 
 <body>
+  <!-- Gemini API Key Status Container -->
+  <div id="gemini-status-container" class="fixed top-4 right-4 z-50"></div>
   <div id="root"></div>
+
+  <!-- Gemini Key Manager -->
+  <script src="modules/gemini-key-manager.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      setTimeout(async () => {
+        GeminiKeyManager.setLang('zh');
+        await GeminiKeyManager.renderStatusUI('#gemini-status-container');
+      }, 500);
+    });
+  </script>
 
   <script type="text/babel">
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';

@@ -200,6 +200,8 @@
 </head>
 
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-10">
+    <!-- Gemini API Key Status Container -->
+    <div id="gemini-status-container" class="fixed top-4 right-4 z-50"></div>
 
     <!-- Language Toggle -->
     <div class="fixed bottom-6 right-6 z-50">
@@ -1274,6 +1276,29 @@
             if (typeof DevScribeRPG !== 'undefined') {
                 document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
                 window.i18n.applyTranslations(); // Apply translation to the newly generated card
+            }
+        });
+    </script>
+
+    <!-- Gemini Key Manager -->
+    <script src="modules/gemini-key-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(async () => {
+                const currentLang = window.i18n?.currentLang === 'en' ? 'en' : 'zh';
+                GeminiKeyManager.setLang(currentLang);
+                await GeminiKeyManager.renderStatusUI('#gemini-status-container');
+            }, 500);
+
+            // Hook into existing toggleLanguage
+            const originalToggleLang = window.toggleLanguage;
+            if (typeof originalToggleLang === 'function') {
+                window.toggleLanguage = function () {
+                    originalToggleLang();
+                    const newLang = window.i18n?.currentLang === 'en' ? 'en' : 'zh';
+                    GeminiKeyManager.setLang(newLang);
+                    GeminiKeyManager.renderStatusUI('#gemini-status-container');
+                };
             }
         });
     </script>

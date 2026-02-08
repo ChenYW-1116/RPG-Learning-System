@@ -98,6 +98,8 @@ Ensure highlighted part does not wrap */
             </p>
             <!-- RPG Status Card -->
             <div id="rpg-status-card" class="mt-4 max-w-md mx-auto"></div>
+            <!-- Gemini Status -->
+            <div id="gemini-status-container" class="mt-4 max-w-md mx-auto flex justify-center"></div>
         </header>
 
         <!-- API Key Input -->
@@ -3452,6 +3454,30 @@ Return ONLY a valid JSON object matching the requested schema.
         // v2.9.3: Version note
         console.log("IELTS Writing Assistant v2.9.3_en (UI Optimized v3.1) loaded.");
 
+    </script>
+
+    <!-- Gemini Key Manager -->
+    <script src="modules/gemini-key-manager.js"></script>
+    <script>
+        // Initialize GeminiKeyManager for status display
+        document.addEventListener('DOMContentLoaded', async () => {
+            setTimeout(async () => {
+                const currentLang = window.i18n?.currentLang === 'zh' ? 'zh' : 'en';
+                GeminiKeyManager.setLang(currentLang);
+                await GeminiKeyManager.renderStatusUI('#gemini-status-container');
+            }, 500);
+
+            // Hook into existing toggleLanguage if accessible
+            const originalToggleLanguage = window.toggleLanguage;
+            if (typeof originalToggleLanguage === 'function') {
+                window.toggleLanguage = function () {
+                    originalToggleLanguage();
+                    const newLang = window.i18n?.currentLang === 'zh' ? 'zh' : 'en';
+                    GeminiKeyManager.setLang(newLang);
+                    GeminiKeyManager.renderStatusUI('#gemini-status-container');
+                };
+            }
+        });
     </script>
 </body>
 
