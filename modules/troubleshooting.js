@@ -74,7 +74,8 @@ async function establishIntentBaselines(specContent, codeContent) {
     logTerminal('🔍 TROUBLESHOOTING Stage 1: 意圖基準建立', 'cmd');
     logTerminal('═══════════════════════════════════════════════════════════', 'cmd');
 
-    const aiConfig = resolveAIConfig();
+    // 🔵 分析階段：強制使用 Kimi
+    const aiConfig = resolveAIConfig('kimi', 'phase1');
 
     // 1.1 規格轉意圖 (Spec to Intent)
     logTerminal('PS > 執行規格轉意圖分析 (Spec to Intent)...', 'cmd');
@@ -159,7 +160,8 @@ async function executeGapAnalysis(specIntent, codeIntent) {
     logTerminal('🔍 TROUBLESHOOTING Stage 2: 意圖差異分析 (Gap Analysis)', 'cmd');
     logTerminal('═══════════════════════════════════════════════════════════', 'cmd');
 
-    const aiConfig = resolveAIConfig();
+    // 🔵 分析階段：強制使用 Kimi
+    const aiConfig = resolveAIConfig('kimi', 'phase1');
 
     const gapAnalysisPrompt = `你是資深 QA 專家。請比對以下兩份意圖文檔，找出差異並生成意圖對比表格。
 
@@ -209,7 +211,8 @@ async function generateDebugPrompt(gapAnalysis, codeContent) {
     logTerminal('🔍 TROUBLESHOOTING Stage 3: 生成除錯提示詞 (debug.md)', 'cmd');
     logTerminal('═══════════════════════════════════════════════════════════', 'cmd');
 
-    const aiConfig = resolveAIConfig();
+    // 🔵 分析階段：強制使用 Kimi
+    const aiConfig = resolveAIConfig('kimi', 'phase1');
 
     const debugPromptGeneratorPrompt = `你是提示詞工程師。請根據以下意圖對比表格，撰寫一份給「資深除錯專家」的精確提示詞。
 
