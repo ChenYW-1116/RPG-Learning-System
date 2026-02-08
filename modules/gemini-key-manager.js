@@ -24,29 +24,32 @@ const GeminiKeyManager = {
             apiKeyPlaceholder: '輸入您的 Key...',
             apiKeySaveBtn: '保存',
             apiKeyShowHide: '顯示/隱藏',
-            keyStatusChecking: '⏳ 驗證中...',
-            keyStatusValid: '✅ AI 服務可用',
-            keyStatusInvalid: '❌ Key 無效',
-            keyStatusNone: '⚠️ 未設定 Key',
+            keyStatusChecking: '驗證中...',
+            keyStatusValid: 'AI 服務可用',
+            keyStatusInvalid: 'Key 無效',
+            keyStatusNone: '未設定 Key',
+            keyStatusGoToHub: '請到 Hub 設定',
             usingUserKey: '使用您的 Key',
-            requestsMin: 'req/min',
-            quotaExhausted: '⛔ API 額度已用盡！請稍後再試 (約 1 分鐘)。'
+            usingAdminKey: '使用 Admin Key',
+            quotaLabel: '剩餘',
+            requestsMin: '次/分',
+            quotaExhausted: 'API 額度已用盡！請稍後再試 (約 1 分鐘)。'
         },
         en: {
             apiKeyLabel: 'Gemini API Key',
             apiKeyPlaceholder: 'Enter your key...',
             apiKeySaveBtn: 'Save',
             apiKeyShowHide: 'Show/Hide',
-            keyStatusChecking: '⏳ Validating...',
-            keyStatusValid: '✅ AI Available',
-            keyStatusInvalid: '❌ Invalid Key',
-            keyStatusNone: '⚠️ No Key Set',
+            keyStatusChecking: 'Validating...',
+            keyStatusValid: 'AI Available',
+            keyStatusInvalid: 'Invalid Key',
+            keyStatusNone: 'No Key Set',
             usingUserKey: 'Using Your Key',
             usingAdminKey: 'Using Admin Key',
             keyStatusGoToHub: 'Set key in Hub',
             quotaLabel: 'Remaining',
             requestsMin: 'req/min',
-            quotaExhausted: '⛔ API Quota Exhausted! Please wait ~1 min.'
+            quotaExhausted: 'API Quota Exhausted! Please wait ~1 min.'
         }
     },
 
