@@ -1739,7 +1739,7 @@ async function sendMessage(text = null) {
     hideShortcuts();
 
     // Check for SDD commands
-    const cmdMatch = message.match(/^\/(specify|clarify|plan|tasks|checklist|analyze|implement|constitution)/i);
+    const cmdMatch = message.match(/^\/(specify|clarify|plan|tasks|checklist|analyze|implement|constitution|auto)/i);
     if (cmdMatch) {
         const cmdName = cmdMatch[1].toLowerCase();
         const args = message.replace(cmdMatch[0], '').trim();
@@ -2145,13 +2145,13 @@ async function runSpecifyCommand(requirement) {
             { label: '🗺️ /plan', value: '/plan' }
         ]);
 
-        // 自動模式觸發下一步
-        // MODIFICATION: 預設自動繼續，跳過手動確認
-        // 無需等待用戶點擊按鈕，直接進入 Auto Mode
-        setTimeout(() => {
-            addChatMessage('<p class="text-indigo-400">⚡ 自駕模式：規格已生成，3秒後自動開始全流程...</p>');
-            startAutoFromPlan();
-        }, 3000);
+        // 自動模式觸發下一步 (僅在開啟自動模式時)
+        if (state.autoMode) {
+            setTimeout(() => {
+                addChatMessage('<p class="text-indigo-400">⚡ 自駕模式：規格已生成，3秒後自動開始全流程...</p>');
+                startAutoFromPlan();
+            }, 3000);
+        }
 
     } catch (e) {
         addChatMessage(`❌ 規格處理失敗：${e.message}`);
@@ -5504,4 +5504,128 @@ window.updateTypingStatus = updateTypingStatus;
 window.removeTypingIndicator = removeTypingIndicator;
 window.findRelevantSkills = findRelevantSkills;
 window.loadSkillContent = loadSkillContent;
+window.updateCodeSection = updateCodeSection;
+window.sendMessage = sendMessage;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔗 CROSS-PAGE INTEGRATION (postMessage API)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * 用於支持其他頁面通過 iframe + postMessage 調用 Spec Kit 功能
+ * 通訊協議：
+ * - 接收: { source: 'spec-kit-integration', type: 'start-generation', requirement: '...' }
+ * - 發送: { source: 'spec-kit-agent', type: 'progress|code-generated|error', ... }
+ */
+(function initCrossPageIntegration() {
+    let _externalMode = false;
+    let _parentOrigin = null;
+
+    /**
+     * 發送消息到父頁面
+     */
+    function postToParent(type, data = {}) {
+        if (!_externalMode || !window.parent || window.parent === window) return;
+
+        try {
+            window.parent.postMessage({
+                source: 'spec-kit-agent',
+                type: type,
+                ...data
+            }, _parentOrigin || '*');
+        } catch (e) {
+            console.warn('[CrossPage] Failed to send message to parent:', e);
+        }
+    }
+
+    /**
+     * 覆寫 logTerminal 來攔截進度更新
+     */
+    const originalLogTerminal = window.logTerminal;
+    window.logTerminal = function (content, type = 'info') {
+        // 調用原始函數
+        if (originalLogTerminal) originalLogTerminal(content, type);
+
+        // 如果在外部模式，發送進度到父頁面
+        if (_externalMode) {
+            // 解析步驟
+            let step = 'unknown';
+            if (content.includes('spec.md') || content.includes('SPEC')) step = 'specify';
+            else if (content.includes('plan.md') || content.includes('PLAN')) step = 'plan';
+            else if (content.includes('tasks.md') || content.includes('TASKS')) step = 'tasks';
+            else if (content.includes('checklist') || content.includes('CHECKLIST')) step = 'checklist';
+            else if (content.includes('analyze') || content.includes('ANALYZE')) step = 'analyze';
+            else if (content.includes('constitution') || content.includes('CONSTITUTION')) step = 'constitution';
+            else if (content.includes('implement') || content.includes('IMPLEMENT') || content.includes('代碼生成')) step = 'implement';
+
+            postToParent('progress', { step, message: content });
+        }
+    };
+
+    /**
+     * 覆寫代碼完成邏輯
+     */
+    const originalUpdateCodeSection = window.updateCodeSection || function () { };
+    window.updateCodeSection = function (code) {
+        // 調用原始函數
+        if (typeof originalUpdateCodeSection === 'function') {
+            originalUpdateCodeSection(code);
+        }
+
+        // 如果在外部模式，發送代碼到父頁面
+        if (_externalMode && code) {
+            postToParent('code-generated', {
+                code: code,
+                toolName: state.toolName || 'generated_app'
+            });
+        }
+    };
+
+    /**
+     * 監聽來自外部的消息
+     */
+    window.addEventListener('message', async (event) => {
+        const data = event.data;
+        if (!data || !data.source || data.source !== 'spec-kit-integration') return;
+
+        console.log('[CrossPage] Received message:', data.type);
+        _parentOrigin = event.origin;
+
+        switch (data.type) {
+            case 'start-generation':
+                if (!data.requirement) {
+                    postToParent('error', { message: 'Missing requirement' });
+                    return;
+                }
+
+                _externalMode = true;
+                console.log('[CrossPage] Starting external generation:', data.requirement.substring(0, 100) + '...');
+
+                // 通知父頁面已準備好
+                postToParent('progress', { step: 'init', message: 'Spec Kit Agent ready' });
+
+                try {
+                    // 直接調用 sendMessage 開始生成流程
+                    await sendMessage(data.requirement);
+                } catch (e) {
+                    console.error('[CrossPage] Generation error:', e);
+                    postToParent('error', { message: e.message });
+                }
+                break;
+
+            case 'ping':
+                postToParent('ready', {});
+                break;
+        }
+    });
+
+    // 通知父頁面 Spec Kit 已準備好
+    if (window.parent && window.parent !== window) {
+        setTimeout(() => {
+            postToParent('ready', {});
+        }, 1000);
+    }
+
+    console.log('🔗 Cross-page integration initialized');
+})();
 

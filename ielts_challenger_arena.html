@@ -594,6 +594,87 @@
                     <div id="recommendations-content"
                         class="bg-slate-800/30 rounded-xl p-6 border border-slate-700 prose prose-invert max-w-none text-sm leading-relaxed">
                     </div>
+                    <!-- Spec Kit Launch Button -->
+                    <div id="spec-kit-launch-container" class="mt-4 hidden">
+                        <button id="spec-kit-launch-btn" onclick="launchSpecKitGeneration()"
+                            class="w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl font-bold text-white text-lg transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-3 border border-indigo-400/30">
+                            <span class="text-2xl">🚀</span>
+                            <span data-i18n="specKitLaunchBtn">自動生成練習應用！</span>
+                        </button>
+                        <p class="text-xs text-gray-500 text-center mt-2" data-i18n="specKitLaunchHint">
+                            AI 將根據學習建議自動開發一個互動練習工具
+                        </p>
+                    </div>
+                </section>
+
+                <!-- Spec Kit Development Progress Panel -->
+                <section id="spec-kit-progress-section" class="hidden">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <span>🤖 AI 應用開發進度</span>
+                    </h2>
+                    <div
+                        class="bg-gradient-to-br from-indigo-900/40 to-purple-900/30 rounded-xl p-6 border border-indigo-500/30">
+                        <!-- Progress Bar -->
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span id="spec-kit-step-label" class="text-sm text-indigo-300">初始化中...</span>
+                                <span id="spec-kit-progress-percent" class="text-sm text-gray-400">0%</span>
+                            </div>
+                            <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="spec-kit-progress-bar"
+                                    class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 rounded-full"
+                                    style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Steps List -->
+                        <div id="spec-kit-steps-list" class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2 text-gray-500">
+                                <span
+                                    class="w-6 h-6 rounded-full border border-gray-600 flex items-center justify-center text-xs">1</span>
+                                <span>📝 分析需求 (Specify)</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-500">
+                                <span
+                                    class="w-6 h-6 rounded-full border border-gray-600 flex items-center justify-center text-xs">2</span>
+                                <span>🗺️ 技術規劃 (Plan)</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-500">
+                                <span
+                                    class="w-6 h-6 rounded-full border border-gray-600 flex items-center justify-center text-xs">3</span>
+                                <span>📋 任務分解 (Tasks)</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-500">
+                                <span
+                                    class="w-6 h-6 rounded-full border border-gray-600 flex items-center justify-center text-xs">4</span>
+                                <span>✅ 品質檢查 (Checklist)</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-gray-500">
+                                <span
+                                    class="w-6 h-6 rounded-full border border-gray-600 flex items-center justify-center text-xs">5</span>
+                                <span>🚀 生成代碼 (Implement)</span>
+                            </div>
+                        </div>
+
+                        <!-- Current Log -->
+                        <div id="spec-kit-current-log"
+                            class="mt-4 p-3 bg-black/30 rounded-lg text-xs text-gray-400 font-mono max-h-24 overflow-y-auto hidden">
+                            等待開始...
+                        </div>
+
+                        <!-- Completion Actions -->
+                        <div id="spec-kit-complete-actions" class="mt-4 hidden">
+                            <div class="flex items-center gap-2 text-green-400 mb-3">
+                                <span class="text-2xl">✨</span>
+                                <span class="font-bold" data-i18n="specKitCompleteMsg">練習應用開發完成！</span>
+                            </div>
+                            <button id="spec-kit-download-btn" onclick="downloadSpecKitCode()"
+                                class="w-full py-3 px-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-lg font-bold text-white transition-all shadow-lg flex items-center justify-center gap-2">
+                                <span>📥</span>
+                                <span data-i18n="specKitDownloadBtn">下載練習應用</span>
+                            </button>
+                        </div>
+                    </div>
                 </section>
             </div>
         </div>
@@ -758,6 +839,19 @@
                     rpgGainXP: "獲得經驗值",
                     rpgContrib: "公會貢獻：推送檔案",
                     rpgArenaWin: "競技場勝利",
+
+                    // Spec Kit Integration
+                    specKitLaunchBtn: "🚀 自動生成練習應用！",
+                    specKitLaunchHint: "AI 將根據學習建議自動開發一個互動練習工具",
+                    specKitCompleteMsg: "練習應用開發完成！",
+                    specKitDownloadBtn: "下載練習應用",
+                    specKitProgressTitle: "🤖 AI 應用開發進度",
+                    specKitInitializing: "初始化中...",
+                    specKitGenerating: "正在生成...",
+                    specKitNoRec: "找不到 AI 建議內容，請先完成挑戰分析",
+                    specKitNoAction: "無法提取行動建議，請確保分析已完成",
+                    specKitNoCode: "沒有可下載的代碼",
+                    specKitComplete: "🎉 生成完成！",
                 },
                 en: {
                     pageTitle: "⚔️ IELTS Challenger Arena",
@@ -914,6 +1008,19 @@
                     rpgGainXP: "Gained Experience",
                     rpgContrib: "Guild Contribution: Push Files",
                     rpgArenaWin: "Arena Victory",
+
+                    // Spec Kit Integration
+                    specKitLaunchBtn: "🚀 Auto-Generate Practice App!",
+                    specKitLaunchHint: "AI will build an interactive practice tool based on learning recommendations",
+                    specKitCompleteMsg: "Practice app development complete!",
+                    specKitDownloadBtn: "Download Practice App",
+                    specKitProgressTitle: "🤖 AI App Development Progress",
+                    specKitInitializing: "Initializing...",
+                    specKitGenerating: "Generating...",
+                    specKitNoRec: "No AI recommendations found. Please complete an analysis first.",
+                    specKitNoAction: "Unable to extract action suggestions. Please ensure analysis is complete.",
+                    specKitNoCode: "No code available for download",
+                    specKitComplete: "🎉 Generation Complete!",
                 }
             },
 
@@ -1817,6 +1924,12 @@ Do NOT use markdown code blocks.`;
 
                 recContent.innerHTML = displayHtml.replace(/\n/g, '<br>');
                 recSection.classList.remove('hidden');
+
+                // 3. Show Spec Kit launch button for practice app generation
+                const specKitLaunchContainer = document.getElementById('spec-kit-launch-container');
+                if (specKitLaunchContainer) {
+                    specKitLaunchContainer.classList.remove('hidden');
+                }
             }
         }
 
@@ -2080,7 +2193,329 @@ Do NOT use markdown code blocks.`;
                 });
             }
         });
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 🚀 SPEC KIT INTEGRATION
+        // 與 spec-kit-agent.html 整合，實現自動生成練習應用
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        // 儲存生成的代碼
+        let specKitGeneratedCode = null;
+        let specKitToolName = 'practice_app';
+        let specKitIframeReady = false;
+
+        /**
+         * 從 AI 建議中提取 Action 內容
+         * 支援中文「【下一步行動計劃】」和英文 "[Next Steps]" 格式
+         */
+        function extractActionContent(recommendations) {
+            if (!recommendations) return null;
+
+            // 嘗試提取中文區塊
+            const zhPattern = /【下一步行動計劃】([\s\S]*?)(?=【|===ENGLISH|$)/i;
+            const zhMatch = recommendations.match(zhPattern);
+
+            // 嘗試提取英文區塊
+            const enPattern = /\[Next Steps\]([\s\S]*?)(?=\[|$)/i;
+            const enMatch = recommendations.match(enPattern);
+
+            // 優先使用英文 (更適合作為 Spec Kit 的輸入)
+            let actionContent = enMatch ? enMatch[1].trim() : (zhMatch ? zhMatch[1].trim() : null);
+
+            // 如果找不到特定區塊，使用完整建議內容
+            if (!actionContent && recommendations.length > 100) {
+                // 精簡化：提取建議精華
+                const lines = recommendations.split('\n').filter(l => l.trim().startsWith('-') || l.trim().startsWith('*'));
+                if (lines.length > 0) {
+                    actionContent = lines.slice(0, 10).join('\n');
+                } else {
+                    actionContent = recommendations.substring(0, 1000);
+                }
+            }
+
+            return actionContent;
+        }
+
+        /**
+         * 啟動 Spec Kit 生成練習應用
+         */
+        function launchSpecKitGeneration() {
+            console.log('🚀 [Spec Kit] 啟動自動生成流程...');
+
+            // 1. 獲取 AI 建議內容
+            const recommendationsContent = document.getElementById('recommendations-content')?.innerHTML;
+            if (!recommendationsContent) {
+                alert(i18n.t('specKitNoRec') || '找不到 AI 建議內容');
+                return;
+            }
+
+            // 2. 轉換 HTML 為純文字
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = recommendationsContent;
+            const plainTextRec = tempDiv.textContent || tempDiv.innerText;
+
+            // 3. 提取 Action 內容
+            const actionContent = extractActionContent(plainTextRec);
+            if (!actionContent) {
+                alert(i18n.t('specKitNoAction') || '無法提取行動建議');
+                return;
+            }
+
+            console.log('[Spec Kit] Extracted Action:', actionContent.substring(0, 200) + '...');
+
+            // 4. 格式化需求
+            const formattedRequirement = `/auto Generate an application that fulfills the following **user requirements**:
+
+Based on IELTS Writing Analysis recommendations, create an interactive practice tool:
+
+${actionContent}
+
+The app should:
+- Be a single-page HTML application with embedded CSS and JavaScript
+- Include interactive exercises based on the weak areas identified
+- Provide immediate feedback on user attempts
+- Support both English and Traditional Chinese (i18n)
+- Use a modern, engaging UI design with animations
+- Save progress to localStorage`;
+
+            console.log('[Spec Kit] Formatted Requirement:', formattedRequirement.substring(0, 300) + '...');
+
+            // 5. 顯示進度面板
+            showSpecKitProgressPanel();
+
+            // 6. 發送到 Spec Kit iframe
+            sendToSpecKitAgent(formattedRequirement);
+        }
+
+        /**
+         * 顯示 Spec Kit 進度面板
+         */
+        function showSpecKitProgressPanel() {
+            // 隱藏啟動按鈕
+            const launchContainer = document.getElementById('spec-kit-launch-container');
+            if (launchContainer) launchContainer.classList.add('hidden');
+
+            // 顯示進度面板
+            const progressSection = document.getElementById('spec-kit-progress-section');
+            if (progressSection) progressSection.classList.remove('hidden');
+
+            // 重置進度
+            updateSpecKitProgress('init', 0, i18n.t('specKitInitializing') || '正在初始化...');
+
+            // 顯示日誌區域
+            const logArea = document.getElementById('spec-kit-current-log');
+            if (logArea) {
+                logArea.classList.remove('hidden');
+                logArea.textContent = '等待 Spec Kit Agent 回應...';
+            }
+        }
+
+        /**
+         * 發送需求到 Spec Kit Agent
+         */
+        function sendToSpecKitAgent(requirement) {
+            const iframe = document.getElementById('spec-kit-iframe');
+            if (!iframe || !iframe.contentWindow) {
+                console.error('[Spec Kit] iframe 尚未載入');
+                updateSpecKitLog('❌ iframe 尚未載入，請稍後再試');
+                return;
+            }
+
+            // 發送開始生成消息
+            console.log('[Spec Kit] 發送 postMessage 到 iframe...');
+            iframe.contentWindow.postMessage({
+                source: 'spec-kit-integration',
+                type: 'start-generation',
+                requirement: requirement
+            }, '*');
+
+            updateSpecKitLog('📤 已發送需求到 Spec Kit Agent...');
+        }
+
+        /**
+         * 更新進度 UI
+         */
+        function updateSpecKitProgress(step, percent, message) {
+            // 更新進度條
+            const progressBar = document.getElementById('spec-kit-progress-bar');
+            const progressPercent = document.getElementById('spec-kit-progress-percent');
+            const stepLabel = document.getElementById('spec-kit-step-label');
+
+            if (progressBar) progressBar.style.width = `${percent}%`;
+            if (progressPercent) progressPercent.textContent = `${percent}%`;
+            if (stepLabel) stepLabel.textContent = message;
+
+            // 更新步驟列表高亮
+            const stepMap = {
+                'init': 0,
+                'specify': 1,
+                'plan': 2,
+                'tasks': 3,
+                'checklist': 4,
+                'analyze': 4,
+                'constitution': 4,
+                'implement': 5
+            };
+
+            const stepIndex = stepMap[step] || 0;
+            const stepsList = document.getElementById('spec-kit-steps-list');
+            if (stepsList) {
+                const steps = stepsList.querySelectorAll('div');
+                steps.forEach((stepEl, idx) => {
+                    if (idx < stepIndex) {
+                        // 已完成
+                        stepEl.className = 'flex items-center gap-2 text-green-400';
+                        const circle = stepEl.querySelector('span:first-child');
+                        if (circle) circle.innerHTML = '✓';
+                    } else if (idx === stepIndex - 1) {
+                        // 當前進行中
+                        stepEl.className = 'flex items-center gap-2 text-indigo-300 font-semibold animate-pulse';
+                    } else {
+                        // 未開始
+                        stepEl.className = 'flex items-center gap-2 text-gray-500';
+                    }
+                });
+            }
+        }
+
+        /**
+         * 更新當前日誌
+         */
+        function updateSpecKitLog(message) {
+            const logArea = document.getElementById('spec-kit-current-log');
+            if (logArea) {
+                const timestamp = new Date().toLocaleTimeString();
+                logArea.textContent = `[${timestamp}] ${message}`;
+            }
+        }
+
+        /**
+         * 處理代碼生成完成
+         */
+        function handleSpecKitCodeGenerated(code, toolName) {
+            console.log('[Spec Kit] 代碼生成完成！', { codeLength: code.length, toolName });
+
+            specKitGeneratedCode = code;
+            specKitToolName = toolName || 'ielts_practice_app';
+
+            // 更新進度 100%
+            updateSpecKitProgress('complete', 100, i18n.t('specKitComplete') || '🎉 生成完成！');
+            updateSpecKitLog('✅ 練習應用已成功生成！');
+
+            // 顯示完成操作區
+            const completeActions = document.getElementById('spec-kit-complete-actions');
+            if (completeActions) completeActions.classList.remove('hidden');
+
+            // 自動觸發下載
+            setTimeout(() => {
+                downloadSpecKitCode();
+            }, 1500);
+        }
+
+        /**
+         * 下載生成的代碼
+         */
+        function downloadSpecKitCode() {
+            if (!specKitGeneratedCode) {
+                alert(i18n.t('specKitNoCode') || '沒有可下載的代碼');
+                return;
+            }
+
+            const filename = `${specKitToolName}_${Date.now()}.html`;
+            const blob = new Blob([specKitGeneratedCode], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log('[Spec Kit] 代碼已下載:', filename);
+            updateSpecKitLog(`📥 已下載: ${filename}`);
+
+            // 同時嘗試上傳到工具庫 (如果後端可用)
+            uploadToToolStore(specKitGeneratedCode, filename);
+        }
+
+        /**
+         * 上傳到工具庫 (可選)
+         */
+        async function uploadToToolStore(code, filename) {
+            try {
+                const formData = new FormData();
+                const blob = new Blob([code], { type: 'text/html' });
+                formData.append('file', blob, filename);
+
+                const response = await fetch('/api/upload-tool', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    console.log('[Spec Kit] 工具已上傳到工具庫');
+                    updateSpecKitLog(`☁️ 已同步到工具庫: ${filename}`);
+                }
+            } catch (e) {
+                // 工具庫上傳失敗是可選的，不影響主流程
+                console.log('[Spec Kit] 工具庫上傳略過 (後端可能未運行)');
+            }
+        }
+
+        /**
+         * 監聽來自 Spec Kit Agent 的 postMessage
+         */
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (!data || data.source !== 'spec-kit-agent') return;
+
+            console.log('[Spec Kit] 收到消息:', data.type, data);
+
+            switch (data.type) {
+                case 'ready':
+                    specKitIframeReady = true;
+                    console.log('[Spec Kit] iframe 已準備就緒');
+                    break;
+
+                case 'progress':
+                    // 計算進度百分比
+                    const stepPercents = {
+                        'init': 5,
+                        'specify': 20,
+                        'plan': 40,
+                        'tasks': 55,
+                        'checklist': 70,
+                        'analyze': 75,
+                        'constitution': 80,
+                        'implement': 90
+                    };
+                    const percent = stepPercents[data.step] || 50;
+                    updateSpecKitProgress(data.step, percent, data.message || `進行中: ${data.step}`);
+                    updateSpecKitLog(data.message || `步驟: ${data.step}`);
+                    break;
+
+                case 'code-generated':
+                    handleSpecKitCodeGenerated(data.code, data.toolName);
+                    break;
+
+                case 'error':
+                    console.error('[Spec Kit] 生成錯誤:', data.message);
+                    updateSpecKitLog(`❌ 錯誤: ${data.message}`);
+                    updateSpecKitProgress('error', 0, '生成失敗');
+                    break;
+            }
+        });
+
+        // 將函數暴露到全局
+        window.launchSpecKitGeneration = launchSpecKitGeneration;
+        window.downloadSpecKitCode = downloadSpecKitCode;
     </script>
+
+    <!-- Hidden iframe for Spec Kit Agent integration -->
+    <iframe id="spec-kit-iframe" src="spec-kit-agent.html"
+        style="display: none; width: 0; height: 0; border: none;"></iframe>
 
     <!-- Gemini Key Manager -->
     <script src="modules/gemini-key-manager.js"></script>
