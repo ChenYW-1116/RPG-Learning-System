@@ -3124,6 +3124,11 @@ function closeTemplateModal() {
 }
 
 async function runAutoCommand(requirement) {
+    // FIX: Define activeUrl and activeKey locally strictly for this check
+    const currentProvider = state.config?.provider || 'gemini';
+    const activeUrl = currentProvider === 'kimi' ? (state.config?.kimi?.url || '') : '';
+    const activeKey = currentProvider === 'kimi' ? (state.config?.kimi?.key || '') : (state.config?.gemini?.key || '');
+
     // 智能檢查: Kimi Key 格式提示 (僅針對官方 Moonshot API)
     // 排除 GitCode 代理的 Key 格式檢查
     if (activeUrl.includes("moonshot.cn") && !activeUrl.includes("gitcode.com") && !activeKey.startsWith("sk-")) {
