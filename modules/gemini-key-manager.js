@@ -30,7 +30,9 @@ const GeminiKeyManager = {
             keyStatusNone: '⚠️ 未設定 Key',
             usingUserKey: '使用您的 Key',
             usingAdminKey: '使用系統預設 Key',
-            keyStatusGoToHub: '請至主畫面設定'
+            keyStatusGoToHub: '請至主畫面設定',
+            quotaLabel: '剩餘',
+            requestsMin: '次/分鐘'
         },
         en: {
             apiKeyLabel: 'Gemini API Key',
@@ -43,7 +45,9 @@ const GeminiKeyManager = {
             keyStatusNone: '⚠️ No Key Set',
             usingUserKey: 'Using Your Key',
             usingAdminKey: 'Using Admin Key',
-            keyStatusGoToHub: 'Set key in Hub'
+            keyStatusGoToHub: 'Set key in Hub',
+            quotaLabel: 'Remaining',
+            requestsMin: 'req/min'
         }
     },
 
@@ -210,7 +214,14 @@ const GeminiKeyManager = {
 
         if (result.valid) {
             iconEl.textContent = '✅';
-            textEl.textContent = this.t('keyStatusValid');
+
+            // Format status text with quota if available
+            let statusText = this.t('keyStatusValid');
+            if (result.quota && result.quota.remaining !== null) {
+                statusText += ` (${result.quota.remaining}/${result.quota.limit || '?'} ${this.t('requestsMin')})`;
+            }
+            textEl.textContent = statusText;
+
             container.querySelector('.gemini-status-badge').classList.add('border-green-500/50');
         } else if (result.error === 'no_key') {
             iconEl.textContent = '⚠️';
@@ -229,7 +240,12 @@ const GeminiKeyManager = {
     _updateStatusElement(el, result) {
         if (result.valid) {
             const sourceText = result.source === 'user' ? this.t('usingUserKey') : this.t('usingAdminKey');
-            el.innerHTML = `<span class="text-green-400">${this.t('keyStatusValid')}</span> <span class="text-gray-500">(${sourceText})</span>`;
+            let quotaText = '';
+            if (result.quota && result.quota.remaining !== null) {
+                quotaText = ` • <span class="text-indigo-300 font-mono">${this.t('quotaLabel')}: ${result.quota.remaining}/${result.quota.limit || '?'} ${this.t('requestsMin')}</span>`;
+            }
+
+            el.innerHTML = `<span class="text-green-400">${this.t('keyStatusValid')}</span> <span class="text-gray-500">(${sourceText})</span>${quotaText}`;
         } else if (result.error === 'no_key') {
             el.innerHTML = `<span class="text-yellow-400">${this.t('keyStatusNone')}</span>`;
         } else {

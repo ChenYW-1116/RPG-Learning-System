@@ -106,11 +106,18 @@ app.post('/api/gemini/validate', async (req, res) => {
         });
 
         if (response.ok) {
+            const remaining = response.headers.get('x-ratelimit-remaining-requests');
+            const limit = response.headers.get('x-ratelimit-limit-requests');
+
             res.json({
                 valid: true,
                 maskedKey,
                 source: userKey ? 'user' : 'admin',
-                message: 'API key is valid'
+                message: 'API key is valid',
+                quota: {
+                    remaining: remaining ? parseInt(remaining) : null,
+                    limit: limit ? parseInt(limit) : null
+                }
             });
         } else {
             const errorData = await response.json().catch(() => ({}));
