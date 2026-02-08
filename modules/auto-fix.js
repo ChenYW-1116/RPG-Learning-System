@@ -328,7 +328,7 @@ async function verifyCodeWithBridge() {
 
         // 呼叫本地 Bridge
         // 嘗試連結本地服務器
-        const response = await fetch('http://localhost:3333/verify', {
+        const response = await fetch('/api/bridge/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -338,7 +338,7 @@ async function verifyCodeWithBridge() {
                 model: config.model
             })
         }).catch(err => {
-            throw new Error(`無法連接到 Bridge Server (localhost:3333)。請確認您已執行 "node spec-kit-bridge.js"`);
+            throw new Error(`無法連接到 Bridge Server。請確認後端服務已啟動。`);
         });
 
         if (!response.ok) {

@@ -1699,7 +1699,7 @@ function logTerminal(content, type = 'info') {
     contentArea.scrollTop = contentArea.scrollHeight;
 
     // 同步到 Bridge (OS Terminal)
-    fetch('http://localhost:3333/fs/log', {
+    fetch('/api/bridge/fs/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, type })
@@ -1812,7 +1812,7 @@ function updateCmdBar(activeCmd) {
 
 async function listSkills() {
     try {
-        const bridgeUrl = 'http://localhost:3333/fs/list-skills';
+        const bridgeUrl = '/api/bridge/fs/list-skills';
         const response = await fetch(bridgeUrl, { method: 'POST' });
         if (!response.ok) return [];
         const data = await response.json();
@@ -1825,7 +1825,7 @@ async function listSkills() {
 
 async function loadSkillContent(path) {
     try {
-        const bridgeUrl = 'http://localhost:3333/fs/read-file';
+        const bridgeUrl = '/api/bridge/fs/read-file';
         const response = await fetch(bridgeUrl, {
             method: 'POST',
             body: JSON.stringify({ path }),
@@ -5278,7 +5278,7 @@ async function verifyCodeWithBridge() {
 
         // 呼叫本地 Bridge
         // 嘗試連結本地服務器
-        const response = await fetch('http://localhost:3333/verify', {
+        const response = await fetch('/api/bridge/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
