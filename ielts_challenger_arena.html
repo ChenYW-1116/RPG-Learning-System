@@ -1315,8 +1315,12 @@ Do NOT use markdown code blocks.`;
             renderBattleLog();
 
             // RPG Status
-            if (typeof DevScribeRPG !== 'undefined') {
-                document.getElementById('rpg-status').innerHTML = DevScribeRPG.generateStatusCardHTML();
+            if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status')) {
+                const updateRPG = () => {
+                    document.getElementById('rpg-status').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                };
+                updateRPG();
+                window.addEventListener('questempire:action', updateRPG);
             }
         }
 

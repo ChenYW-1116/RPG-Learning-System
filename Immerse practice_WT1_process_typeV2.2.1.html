@@ -752,17 +752,24 @@
             // Track if first mount
             const isFirstRender = useRef(true);
 
-            // Sync GeminiKeyManager language (only re-render on lang change)
+            // Sync GeminiKeyManager language
             useEffect(() => {
                 if (typeof GeminiKeyManager !== 'undefined') {
                     GeminiKeyManager.setLang(lang);
-                    // Only re-render on language change, not initial mount
                     if (!isFirstRender.current) {
                         GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
                     }
                     isFirstRender.current = false;
                 }
             }, [lang]);
+
+            // RPG Sync
+            const [rpgSync, setRpgSync] = useState(0);
+            useEffect(() => {
+                const h = () => setRpgSync(c => c + 1);
+                window.addEventListener('questempire:action', h);
+                return () => window.removeEventListener('questempire:action', h);
+            }, []);
 
             return (
                 <div className="container mx-auto px-4 py-8 max-w-5xl">

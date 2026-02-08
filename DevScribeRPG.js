@@ -291,7 +291,7 @@ const DevScribeRPG = (function () {
             category: 'utility',
             tokenCost: 120,
             tier: 'gold',
-            fileName: 'zhihu_poster_tool.html',
+            fileName: 'zhihu_publisher.html',
             usages: 10,
             rating: 4.8,
             developerId: 'system',
@@ -414,6 +414,17 @@ const DevScribeRPG = (function () {
 
     // 單例狀態
     let _state = loadState();
+
+    // 監聽來自其他分頁的狀態變更以保持同步
+    if (typeof window !== 'undefined') {
+        window.addEventListener('storage', (e) => {
+            if (e.key === STORAGE_KEY) {
+                console.log('[QuestEmpire] State synced from other tab');
+                _state = loadState();
+                dispatchEvent('action', { type: 'sync' });
+            }
+        });
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // 🎮 CORE GAME MECHANICS

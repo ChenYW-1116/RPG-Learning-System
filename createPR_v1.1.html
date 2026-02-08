@@ -1391,9 +1391,12 @@
             addFileBlock();
 
             // 🎮 RPG: Initialize UI
-            if (typeof DevScribeRPG !== 'undefined') {
-                // Show status card
-                document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+            if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
+                const updateRPG = () => {
+                    document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                };
+                updateRPG();
+                window.addEventListener('questempire:action', updateRPG);
 
                 // Check ritual gate
                 const warning = document.getElementById('ritual-gate-warning');

@@ -581,6 +581,64 @@
             updateTexts();
         }
 
+        function syncRPGStatus() {
+            if (typeof DevScribeRPG === 'undefined') return;
+            const state = DevScribeRPG.getState();
+            const rank = DevScribeRPG.calculateLevel(state.totalXP);
+            const progress = DevScribeRPG.getProgressToNextLevel(state.totalXP);
+
+            // Try to get arena data for victories/defeats
+            let victories = 0;
+            let defeats = 0;
+            try {
+                const arenaData = JSON.parse(localStorage.getItem('ielts_challenger_data') || '{}');
+                victories = arenaData.victories || 0;
+                defeats = arenaData.defeats || 0;
+            } catch (e) { }
+
+            // Update UI elements
+            const rankIconEl = document.getElementById('rank-icon');
+            const rankTitleEl = document.getElementById('rank-title');
+            const playerLevelEl = document.getElementById('player-level');
+            const totalXpEl = document.getElementById('total-xp');
+            const totalTokensEl = document.getElementById('total-tokens');
+            const xpBarEl = document.getElementById('xp-bar');
+            const xpCurrentEl = document.getElementById('xp-current');
+            const xpTotalEl = document.getElementById('xp-total');
+            const xpNeededContainer = document.getElementById('xp-needed-container');
+            const statVictoriesEl = document.getElementById('stat-victories');
+            const statDefeatsEl = document.getElementById('stat-defeats');
+            const pluginsCountEl = document.getElementById('plugins-count');
+            const streakDaysEl = document.getElementById('streak-days');
+
+            if (rankIconEl) rankIconEl.textContent = rank.icon;
+            if (rankTitleEl) {
+                rankTitleEl.textContent = translations[currentLang]['rpgRank' + rank.level];
+                rankTitleEl.style.color = rank.color;
+            }
+            if (playerLevelEl) playerLevelEl.textContent = rank.level;
+            if (totalXpEl) totalXpEl.textContent = state.totalXP.toLocaleString();
+            if (totalTokensEl) totalTokensEl.textContent = state.tokens.toLocaleString();
+            if (xpBarEl) xpBarEl.style.width = progress.progress + '%';
+
+            if (xpCurrentEl) xpCurrentEl.textContent = progress.currentInLevel.toLocaleString();
+            if (xpTotalEl) xpTotalEl.textContent = progress.totalInLevel.toLocaleString();
+
+            if (xpNeededContainer) {
+                const xpVal = `<span class="text-indigo-400">${progress.xpNeeded.toLocaleString()}</span>`;
+                xpNeededContainer.innerHTML = (translations[currentLang].xpNeeded || '').replace('{xp}', xpVal);
+            }
+
+            if (statVictoriesEl) statVictoriesEl.textContent = victories;
+            if (statDefeatsEl) statDefeatsEl.textContent = defeats;
+
+            const ownedTools = (state.unlockedTools || []).length;
+            const ownedPlugins = (state.unlockedPlugins || []).length;
+            if (pluginsCountEl) pluginsCountEl.textContent = ownedTools + ownedPlugins;
+            if (streakDaysEl) streakDaysEl.textContent = state.currentStreak || 0;
+        }
+
+
         function updateTexts() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
@@ -588,6 +646,9 @@
                     el.textContent = translations[currentLang][key];
                 }
             });
+
+            syncRPGStatus();
+
             // Update Inputs
             if (currentLang === 'en') {
                 document.getElementById('articleTitle').placeholder = "Article Title...";
@@ -794,9 +855,24 @@
             }
         }
 
-        // Initial language update
+        // Initial registration
         document.addEventListener('DOMContentLoaded', () => {
             updateTexts();
+
+            // Listen for storage changes (from other tabs)
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'quest_empire_state' || e.key === 'ielts_challenger_data') {
+                    syncRPGStatus();
+                }
+            });
+
+            // Listen for internal RPG events
+            if (typeof DevScribeRPG !== 'undefined') {
+                DevScribeRPG.addEventListener('action', syncRPGStatus);
+                DevScribeRPG.addEventListener('levelUp', syncRPGStatus);
+                DevScribeRPG.addEventListener('toolUnlocked', syncRPGStatus);
+                DevScribeRPG.addEventListener('reset', syncRPGStatus);
+            }
         });
     </script>
 

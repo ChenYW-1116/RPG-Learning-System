@@ -499,6 +499,9 @@
 
             // Sync Player Status
             updatePlayerStatus();
+            if (typeof DevScribeRPG !== 'undefined') {
+                window.addEventListener('questempire:action', updatePlayerStatus);
+            }
 
             // Set Initial Lang
             updateLanguage();

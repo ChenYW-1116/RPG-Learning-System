@@ -1295,9 +1295,15 @@
             resetRitual();
 
             // 🎮 RPG: Show status card
-            if (typeof DevScribeRPG !== 'undefined') {
-                document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
-                window.i18n.applyTranslations(); // Apply translation to the newly generated card
+            if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
+                const updateRPG = () => {
+                    document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                    if (window.i18n && typeof window.i18n.applyTranslations === 'function') {
+                        window.i18n.applyTranslations();
+                    }
+                };
+                updateRPG();
+                window.addEventListener('questempire:action', updateRPG);
             }
         });
     </script>

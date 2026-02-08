@@ -2320,7 +2320,11 @@ ${additionalNotesFormatted}
 
             // Initialize RPG card
             if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
-                document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                const updateRPG = () => {
+                    document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                };
+                updateRPG();
+                window.addEventListener('questempire:action', updateRPG);
             }
         });
 

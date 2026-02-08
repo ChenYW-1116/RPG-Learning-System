@@ -751,6 +751,14 @@ Ensure highlighted part does not wrap */
         window.i18n.loadSavedLanguage();
         window.addEventListener('DOMContentLoaded', () => {
             window.i18n.applyTranslations();
+
+            // Sync RPG status
+            if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
+                const updateRPG = () => {
+                    document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                };
+                window.addEventListener('questempire:action', updateRPG);
+            }
         });
 
         // --- [MODIFICATION] Gemini API Key ---

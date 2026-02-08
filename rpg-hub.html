@@ -1782,8 +1782,8 @@
             const result = DevScribeRPG.useTool(toolId);
             if (result.success) {
                 DevScribeRPG.showNotification(t('notifyLaunching'), toolName, 'info', '🚀');
-                // Open the tool in a new window/tab
-                window.open(result.fileName, '_blank');
+                // Open the tool in the same tab
+                window.location.href = result.fileName;
             } else {
                 const errorMsg = result.errorKey ? t(result.errorKey, result.params) : result.error;
                 alert('❌ ' + errorMsg);
