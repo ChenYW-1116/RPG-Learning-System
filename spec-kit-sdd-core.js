@@ -1120,6 +1120,21 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
             provider = 'gemini';
         }
 
+        // 🚦 GEMINI-SPECIFIC RATE LIMITER
+        // Kimi has higher limits/is paid, so we only govern Gemini Free Tier
+        if (provider === 'gemini') {
+            if (!window._geminiLastCallTime) window._geminiLastCallTime = 0;
+            const GEMINI_MIN_INTERVAL = 2000; // 2s minimum gap for Gemini
+
+            const timeSinceLast = Date.now() - window._geminiLastCallTime;
+            if (timeSinceLast < GEMINI_MIN_INTERVAL) {
+                const wait = GEMINI_MIN_INTERVAL - timeSinceLast + (Math.random() * 500);
+                console.log(`[RateLimit] Gemini too fast, slowing down by ${wait.toFixed(0)}ms...`);
+                await new Promise(r => setTimeout(r, wait));
+            }
+            window._geminiLastCallTime = Date.now();
+        }
+
         // 🔍 LLM DEBUG: 詳細請求參數
         if (attempt === 0) {
             console.log(`%c📍 Provider: ${provider}`, 'color: #10b981');
@@ -1234,7 +1249,9 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
                 attempt++;
 
                 if (attempt >= maxAttempts) {
-                    throw new Error(`HTTP Error 429: Rate Limit Exceeded after ${maxAttempts} attempts. ${errorText}`);
+                    const helpMsg = provider === 'gemini' ?
+                        "💡 Google Gemini Free Tier 限制了請求頻率。請等待幾分鐘再試或是切換至 Kimi。" : "";
+                    throw new Error(`HTTP Error 429: Rate Limit Exceeded after ${maxAttempts} attempts. ${helpMsg} ${errorText}`);
                 }
 
                 // 🔄 ROTATION STRATEGY
@@ -1257,7 +1274,12 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
                 // Example: "Please retry in 40.772213184s."
                 const match = errorText.match(/retry in (\d+(?:\.\d+)?)s/i);
                 if (match) {
-                    waitTime = Math.ceil(parseFloat(match[1]) * 1000) + 1500; // Add 1.5s buffer
+                    waitTime = Math.ceil(parseFloat(match[1]) * 1000) + 2000; // Add 2s extra buffer
+                }
+
+                // If Gemini Free Tier, add more noise to prevent thundering herd
+                if (provider === 'gemini') {
+                    waitTime += (Math.random() * 2000);
                 }
 
                 addLog(`⚠️ API 限流 (429). 將在 ${(waitTime / 1000).toFixed(1)} 秒後重試...`, 'warn', 'SYSTEM');
