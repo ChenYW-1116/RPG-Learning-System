@@ -720,7 +720,7 @@
             btn.innerHTML = '<div class="spinner"></div> Processing...';
 
             try {
-                const res = await fetch('http://localhost:5000/polish', {
+                const res = await fetch('/api/zhihu/polish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ apiKey, content })
@@ -762,7 +762,7 @@
             selectedFiles.forEach(file => formData.append('images', file));
 
             try {
-                const res = await fetch('http://localhost:5000/export', { method: 'POST', body: formData });
+                const res = await fetch('/api/zhihu/export', { method: 'POST', body: formData });
                 const data = await res.json();
 
                 console.log("[DEBUG] Server response:", data);

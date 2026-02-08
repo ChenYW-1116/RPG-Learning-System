@@ -429,7 +429,6 @@ if __name__ == '__main__':
     print("⚔️ IELTS Challenger Arena API Server")
     print("=" * 60)
     print(f"Analyzer loaded: {HAS_ANALYZER}")
-    print("Starting server on http://localhost:3000")
-    print("=" * 60)
-    
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    port = int(os.environ.get('PORT', 3000))
+    print(f"Starting server on http://0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=False)

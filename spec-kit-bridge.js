@@ -274,6 +274,7 @@ const server = http.createServer(async (req, res) => {
     res.end("Not Found");
 });
 
-server.listen(3333, () => {
-    console.log("Bridge listening on http://localhost:3333");
+const port = process.env.PORT || 3333;
+server.listen(port, '0.0.0.0', () => {
+    console.log(`Bridge listening on http://0.0.0.0:${port}`);
 });
