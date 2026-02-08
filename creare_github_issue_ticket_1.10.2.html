@@ -2255,16 +2255,59 @@ ${additionalNotesFormatted}
             }
         });
 
+        async function fetchTokenFromServer() {
+            try {
+                const response = await fetch('/api/config/github-token');
+                const data = await response.json();
+                if (data.token) {
+                    document.getElementById('github_token').value = data.token;
+                    console.log('GitHub Token loaded from Render environment.');
+                }
+            } catch (err) {
+                console.warn('Could not fetch token from server, falling back to local storage.');
+            }
+        }
+
         // 頁面載入時初始化 i18n
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             i18n.loadSavedLanguage();
             i18n.applyTranslations();
+
+            // Load saved settings
+            const savedToken = localStorage.getItem('github_pat_token');
+            const savedUser = localStorage.getItem('github_user');
+            const savedRepo = localStorage.getItem('github_repo');
+            if (savedToken) document.getElementById('github_token').value = savedToken;
+            if (savedUser) document.getElementById('github_user').value = savedUser;
+            if (savedRepo) {
+                const repoSelect = document.getElementById('github_repo');
+                const opt = document.createElement('option');
+                opt.value = savedRepo;
+                opt.textContent = `${savedRepo} (Saved)`;
+                opt.selected = true;
+                repoSelect.appendChild(opt);
+            }
+
+            // Try to fetch from Render (overwrites localStorage if found)
+            await fetchTokenFromServer();
 
             // Initialize RPG card
             if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
                 document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
             }
         });
+
+        function toggleTokenVisibility(id) {
+            const input = document.getElementById(id);
+            const icon = document.getElementById('eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
     </script>
 
 </body>

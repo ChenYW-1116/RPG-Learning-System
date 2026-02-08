@@ -1324,11 +1324,33 @@
             }
         }
 
+        async function fetchTokenFromServer() {
+            try {
+                const response = await fetch('/api/config/github-token');
+                const data = await response.json();
+                if (data.token) {
+                    document.getElementById('token').value = data.token;
+                    console.log('GitHub Token loaded from Render environment.');
+                }
+            } catch (err) {
+                console.warn('Could not fetch token from server, falling back to local storage.');
+            }
+        }
+
         // 載入時自動新增一個檔案區塊
-        window.onload = function () {
+        window.onload = async function () {
             // Initialize i18n
             i18n.loadSavedLanguage();
             i18n.applyTranslations();
+
+            // Load saved settings
+            const savedToken = localStorage.getItem('github_pat_token');
+            const savedRepo = localStorage.getItem('github_repo_full_name');
+            if (savedToken) document.getElementById('token').value = savedToken;
+            if (savedRepo) document.getElementById('repoFullName').value = savedRepo;
+
+            // Try to fetch from Render (overwrites localStorage if found)
+            await fetchTokenFromServer();
 
             addFileBlock();
 

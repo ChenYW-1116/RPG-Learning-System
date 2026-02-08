@@ -1246,18 +1246,33 @@
             }
         };
 
-        window.onload = function () {
+        window.onload = async function () {
             // Initialize i18n system
             i18n.loadSavedLanguage();
             i18n.applyTranslations();
 
-            const savedToken = ConfigDB.get(ConfigDB.KEYS.GITHUB_TOKEN);
-            if (savedToken) {
-                document.getElementById('token').value = savedToken;
-                document.getElementById('saveToken').checked = true;
+            let tokenToUse = ConfigDB.get(ConfigDB.KEYS.GITHUB_TOKEN);
+
+            // Try to fetch from Render Environment
+            try {
+                const response = await fetch('/api/config/github-token');
+                const data = await response.json();
+                if (data.token) {
+                    tokenToUse = data.token;
+                    console.log('GitHub Token loaded from Render environment.');
+                }
+            } catch (err) {
+                console.warn('Could not fetch token from server, using local storage.');
+            }
+
+            if (tokenToUse) {
+                document.getElementById('token').value = tokenToUse;
+                if (tokenToUse === ConfigDB.get(ConfigDB.KEYS.GITHUB_TOKEN)) {
+                    document.getElementById('saveToken').checked = true;
+                }
                 ConfigDB.showSaveIndicator(ConfigDB.KEYS.GITHUB_TOKEN);
                 // 自動讀取 Repo
-                fetchRepositories(savedToken);
+                fetchRepositories(tokenToUse);
             }
 
             const savedGeminiKey = ConfigDB.get(ConfigDB.KEYS.GEMINI_KEY);

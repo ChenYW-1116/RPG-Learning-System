@@ -59,6 +59,13 @@ app.use('/api/bridge', createProxyMiddleware({
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════
+// NEW: Config Endpoint for GitHub Token (from Render Environment Variables)
+// ═══════════════════════════════════════════════════════════════════════════
+app.get('/api/config/github-token', (req, res) => {
+    res.json({ token: process.env.GITHUB_TOKEN || '' });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 3. Static File Hosting
 // ═══════════════════════════════════════════════════════════════════════════
 
