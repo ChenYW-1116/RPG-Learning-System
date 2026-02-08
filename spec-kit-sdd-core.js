@@ -829,6 +829,14 @@ function resolveAIConfig(preferredProvider = null, phase = null) {
 
         // Update state if DOM has values
         if (state.config && state.config.gemini) {
+
+            // 🕵️‍♂️ CONFIG DIAGNOSTIC: Check for phantom keys in localStorage
+            const storageKey = localStorage.getItem('gemini_api_key');
+            if (domGeminiKeyRaw && storageKey && !domGeminiKeyRaw.startsWith(storageKey.substring(0, 10))) {
+                console.warn(`⚠️ [CONFIG MISMATCH] UI Key (${domGeminiKeyRaw.substring(0, 8)}...) != Storage Key (${storageKey.substring(0, 8)}...)`);
+                console.warn(`👉 System will use UI Key. You can clear storage by running: localStorage.removeItem('gemini_api_key')`);
+            }
+
             if (domProviderEl) state.config.provider = domProviderEl.value;
 
             // 🧠 Fix: Parse multi-line keys from DOM, don't just assign raw string
