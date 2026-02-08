@@ -713,6 +713,11 @@
             const apiKey = getApiKey();
             const btn = document.getElementById('aiBtn');
 
+            // Check Quota First
+            if (typeof GeminiKeyManager !== 'undefined' && !GeminiKeyManager.checkQuotaAndAlert()) {
+                return;
+            }
+
             if (!apiKey) return showToast('error', translations[currentLang].toastNoKey);
             if (!content) return showToast('error', translations[currentLang].toastNoContent);
 

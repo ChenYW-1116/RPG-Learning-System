@@ -29,10 +29,8 @@ const GeminiKeyManager = {
             keyStatusInvalid: '❌ Key 無效',
             keyStatusNone: '⚠️ 未設定 Key',
             usingUserKey: '使用您的 Key',
-            usingAdminKey: '使用系統預設 Key',
-            keyStatusGoToHub: '請至主畫面設定',
-            quotaLabel: '剩餘',
-            requestsMin: '次/分鐘'
+            requestsMin: 'req/min',
+            quotaExhausted: '⛔ API 額度已用盡！請稍後再試 (約 1 分鐘)。'
         },
         en: {
             apiKeyLabel: 'Gemini API Key',
@@ -47,12 +45,16 @@ const GeminiKeyManager = {
             usingAdminKey: 'Using Admin Key',
             keyStatusGoToHub: 'Set key in Hub',
             quotaLabel: 'Remaining',
-            requestsMin: 'req/min'
+            requestsMin: 'req/min',
+            quotaExhausted: '⛔ API Quota Exhausted! Please wait ~1 min.'
         }
     },
 
     // Current language (synced with page)
     currentLang: 'zh',
+
+    // Cache for quota info
+    lastQuota: null,
 
     // ═══════════════════════════════════════════════════════════════════════
     // Core Methods
@@ -107,10 +109,29 @@ const GeminiKeyManager = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key: key === '__USE_ADMIN_KEY__' ? null : key })
             });
-            return await response.json();
+            const data = await response.json();
+
+            // Update cached quota if valid
+            if (data.valid && data.quota) {
+                this.lastQuota = data.quota;
+            }
+
+            return data;
         } catch (err) {
             return { valid: false, error: 'network_error', message: err.message };
         }
+    },
+
+    /**
+     * Check if quota is available and alert if not
+     * @returns {boolean} - true if safe to proceed, false if blocked
+     */
+    checkQuotaAndAlert() {
+        if (this.lastQuota && this.lastQuota.remaining !== null && this.lastQuota.remaining <= 0) {
+            alert(this.t('quotaExhausted'));
+            return false;
+        }
+        return true;
     },
 
     /**

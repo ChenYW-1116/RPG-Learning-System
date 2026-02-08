@@ -1857,6 +1857,11 @@ Do NOT use markdown code blocks.`;
                 return;
             }
 
+            // Check Quota Before Starting
+            if (typeof GeminiKeyManager !== 'undefined' && !GeminiKeyManager.checkQuotaAndAlert()) {
+                return;
+            }
+
             showLoading(true);
 
             try {
