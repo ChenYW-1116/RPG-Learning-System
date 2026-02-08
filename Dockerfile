@@ -1,7 +1,7 @@
-# Use Python as base (heavier dependencies like pandas/sklearn/matplotlib)
+# Use Python as base
 FROM python:3.12-slim
 
-# Install Node.js
+# Install basic system tools and Node.js in one layer to save space and avoid update issues
 RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
@@ -9,38 +9,21 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OS dependencies for Playwright and Matplotlib
-RUN apt-get update && apt-get install -y \
-    libnss3 \
-    libnspr4 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    librandr2 \
-    libgbm1 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libasound2 \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
-# Copy and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy dependency files first for better caching
+COPY requirements.txt package.json package-lock.json* ./
 
-# Copy and install Node dependencies
-COPY package.json package-lock.json* ./
-RUN npm install --production
+# Install Python & Node dependencies
+RUN pip install --no-cache-dir -r requirements.txt \
+    && npm install --production
 
-# Install Playwright browsers (chromium only to save space)
-RUN npx playwright install chromium --with-deps
+# IMPORTANT: Install Playwright and let IT handle all OS dependencies automatically
+RUN npx playwright install chromium \
+    && npx playwright install-deps chromium
+
+# Copy the rest of the application
+COPY . .
 
 # Copy the rest of the application
 COPY . .
