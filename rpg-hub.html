@@ -1938,21 +1938,37 @@
     <!-- Gemini Key Manager -->
     <script src="modules/gemini-key-manager.js"></script>
     <script>
-        // Initialize GeminiKeyManager after page load
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Sync language with page
-            GeminiKeyManager.setLang(currentLang);
-            // Render input UI in the designated container
-            await GeminiKeyManager.renderInputUI('#gemini-key-container');
-        });
+        // Initialize GeminiKeyManager
+        (async function initGeminiStatus() {
+            try {
+                if (typeof GeminiKeyManager !== 'undefined') {
+                    // Try to get language from window.i18n
+                    const lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : 'zh';
+                    GeminiKeyManager.setLang(lang);
 
-        // Update GeminiKeyManager language when page language changes
-        const originalToggleLanguage = toggleLanguage;
-        toggleLanguage = function () {
-            originalToggleLanguage();
-            GeminiKeyManager.setLang(currentLang);
-            GeminiKeyManager.renderInputUI('#gemini-key-container');
-        };
+                    // Render UI (Input mode for Hub)
+                    const container = document.getElementById('gemini-key-container');
+                    if (container) {
+                        await GeminiKeyManager.renderInputUI('#gemini-key-container');
+                    }
+                }
+            } catch (err) {
+                console.error('Gemini init error:', err);
+            }
+        })();
+
+        // Update when language changes
+        const originalToggleLanguage = window.toggleLanguage;
+        if (typeof originalToggleLanguage === 'function') {
+            window.toggleLanguage = function () {
+                originalToggleLanguage();
+                if (typeof GeminiKeyManager !== 'undefined') {
+                    const lang = (window.i18n && window.i18n.currentLang) ? window.i18n.currentLang : 'zh';
+                    GeminiKeyManager.setLang(lang);
+                    GeminiKeyManager.renderInputUI('#gemini-key-container');
+                }
+            };
+        }
     </script>
 </body>
 

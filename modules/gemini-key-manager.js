@@ -216,52 +216,10 @@ const GeminiKeyManager = {
     },
 
     /**
-     * Render status-only UI (for other pages)
-     * @param {string} containerSelector - CSS selector for container
-     */
-    async renderStatusUI(containerSelector) {
-        const container = document.querySelector(containerSelector);
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="gemini-status-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-600 text-sm">
-                <span id="gemini-status-icon">⏳</span>
-                <span id="gemini-status-text">${this.t('keyStatusChecking')}</span>
-            </div>
-        `;
-
-        const iconEl = document.getElementById('gemini-status-icon');
-        const textEl = document.getElementById('gemini-status-text');
-
-        const activeKey = this.getActiveKey();
-        const result = await this.validateKey(activeKey === '__USE_ADMIN_KEY__' ? null : activeKey);
-
-        if (result.valid) {
-            iconEl.textContent = '✅';
-
-            // Format status text with quota if available
-            let statusText = this.t('keyStatusValid');
-            if (result.quota && result.quota.remaining !== null) {
-                statusText += ` (${result.quota.remaining}/${result.quota.limit || '?'} ${this.t('requestsMin')})`;
-            }
-            textEl.textContent = statusText;
-
-            container.querySelector('.gemini-status-badge').classList.add('border-green-500/50');
-        } else if (result.error === 'no_key') {
-            iconEl.textContent = '⚠️';
-            textEl.textContent = `${this.t('keyStatusNone')} - ${this.t('keyStatusGoToHub')}`;
-            container.querySelector('.gemini-status-badge').classList.add('border-yellow-500/50');
-        } else {
-            iconEl.textContent = '❌';
-            textEl.textContent = `${this.t('keyStatusInvalid')} - ${this.t('keyStatusGoToHub')}`;
-            container.querySelector('.gemini-status-badge').classList.add('border-red-500/50');
-        }
-    },
-
-    /**
      * Internal: Update status element based on validation result
      */
     _updateStatusElement(el, result) {
+        if (!el) return;
         if (result.valid) {
             const sourceText = result.source === 'user' ? this.t('usingUserKey') : this.t('usingAdminKey');
             let quotaText = '';
@@ -273,7 +231,56 @@ const GeminiKeyManager = {
         } else if (result.error === 'no_key') {
             el.innerHTML = `<span class="text-yellow-400">${this.t('keyStatusNone')}</span>`;
         } else {
-            el.innerHTML = `<span class="text-red-400">${this.t('keyStatusInvalid')}</span> <span class="text-gray-500">${result.message || ''}</span>`;
+            // Check if it's strictly a key error or just a hub-check
+            const msg = result.error === 'network_error' ? ' (Server Offline)' : (result.message || '');
+            el.innerHTML = `<span class="text-red-400">${this.t('keyStatusInvalid')}</span> <span class="text-gray-500">${msg}</span>`;
+        }
+    },
+
+    /**
+     * Render status-only UI (for other pages)
+     * @param {string} containerSelector - CSS selector for container
+     */
+    async renderStatusUI(containerSelector) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+
+        // Use unique class-based selection within container to avoid ID collisions
+        container.innerHTML = `
+            <div class="gemini-status-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-600 text-sm">
+                <span class="status-icon">⏳</span>
+                <span class="status-text">${this.t('keyStatusChecking')}</span>
+            </div>
+        `;
+
+        const iconEl = container.querySelector('.status-icon');
+        const textEl = container.querySelector('.status-text');
+
+        const activeKey = this.getActiveKey();
+        const result = await this.validateKey(activeKey === '__USE_ADMIN_KEY__' ? null : activeKey);
+
+        if (result.valid) {
+            if (iconEl) iconEl.textContent = '✅';
+            if (textEl) {
+                let statusText = this.t('keyStatusValid');
+                if (result.quota && result.quota.remaining !== null) {
+                    statusText += ` (${result.quota.remaining}/${result.quota.limit || '?'} ${this.t('requestsMin')})`;
+                }
+                textEl.textContent = statusText;
+            }
+            container.querySelector('.gemini-status-badge').classList.add('border-green-500/50');
+        } else if (result.error === 'no_key') {
+            if (iconEl) iconEl.textContent = '⚠️';
+            if (textEl) textEl.textContent = `${this.t('keyStatusNone')} - ${this.t('keyStatusGoToHub')}`;
+            container.querySelector('.gemini-status-badge').classList.add('border-yellow-500/50');
+        } else {
+            // Validation failed
+            if (iconEl) iconEl.textContent = '❌';
+            if (textEl) {
+                const hint = result.error === 'network_error' ? ' (No Server)' : ` - ${this.t('keyStatusGoToHub')}`;
+                textEl.textContent = `${this.t('keyStatusInvalid')}${hint}`;
+            }
+            container.querySelector('.gemini-status-badge').classList.add('border-red-500/50');
         }
     }
 };
