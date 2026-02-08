@@ -310,7 +310,7 @@ class GeminiAPIWrapper {
             hasSystemPrompt: !!systemPrompt
         });
 
-        const url = `${this.baseUrl}/${this.model}:generateContent?key=${this.apiKey.trim()}`;
+        const url = `/api/bridge/gemini`;
 
         const payload = {
             contents: [{ parts: [{ text: prompt }] }],
@@ -331,7 +331,13 @@ class GeminiAPIWrapper {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        model: this.model,
+                        contents: payload.contents,
+                        generationConfig: payload.generationConfig,
+                        system_instruction: payload.system_instruction,
+                        key: this.apiKey.trim()
+                    })
                 });
 
                 if (!response.ok) {
