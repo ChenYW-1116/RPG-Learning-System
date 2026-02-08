@@ -1971,8 +1971,8 @@ async function findRelevantSkills(requirement, maxSkills = 3) {
 
     logTerminal(`🤖 [SKILL-DISCOVERY] AI 正在分析 ${candidatesForLLM.length} 個候選技能的描述...`, 'cmd');
 
-    // Use Kimi/Gemini (configured provider)
-    const aiConfig = resolveAIConfig();
+    // 🔵 分析階段：強制使用 Kimi 進行技能調度
+    const aiConfig = resolveAIConfig('kimi', 'phase1');
 
     try {
         let selection = await callKimi(prompt, "You are a Skill Dispatcher. Reply with Comma-separated Names only.", aiConfig.model, aiConfig.key, aiConfig.url);
@@ -2101,10 +2101,15 @@ function resolveAIConfig(forceProvider = null) {
 
         return { model, key, url, provider };
     } catch (error) {
-        console.warn("Failed to resolve AI config, using defaults", error);
+        console.warn("Failed to resolve AI config, using UI defaults", error);
+
+        // 🛡️ Fallback: Try to read directly from DOM one last time
+        const uiKey = document.getElementById('config-gemini-key')?.value?.trim();
+        const uiModel = document.getElementById('config-gemini-model')?.value?.trim();
+
         return {
-            model: "gemini-2.5-flash-preview-09-2025",
-            key: localStorage.getItem('gemini_api_key'),
+            model: uiModel || "gemini-2.5-flash-preview-09-2025",
+            key: uiKey || localStorage.getItem('gemini_api_key'), // UI > Storage
             url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             provider: "gemini"
         };
