@@ -464,6 +464,8 @@
             <span class="text-gray-600">|</span>
             <span id="backend-status" class="text-xs text-gray-500 transition-colors duration-300"
                 data-i18n="backendStatus">正在偵測後端狀態...</span>
+            <span class="text-gray-600">|</span>
+            <span id="gemini-key-status-container" class="text-xs">⏳</span>
         </section>
 
         <!-- Main Grid -->
@@ -2068,6 +2070,16 @@ Do NOT use markdown code blocks.`;
                     updateUI();
                 });
             }
+        });
+    </script>
+
+    <!-- Gemini Key Manager -->
+    <script src="modules/gemini-key-manager.js"></script>
+    <script>
+        // Initialize GeminiKeyManager for status display
+        document.addEventListener('DOMContentLoaded', async () => {
+            GeminiKeyManager.setLang(window.i18n?.currentLang || 'zh');
+            await GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
         });
     </script>
 </body>

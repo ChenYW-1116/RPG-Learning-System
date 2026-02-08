@@ -440,6 +440,13 @@
             </div>
         </section>
 
+        <!-- API Key Settings -->
+        <section class="glass-card p-4 mb-6">
+            <div id="gemini-key-container">
+                <!-- Will be populated by GeminiKeyManager.renderInputUI() -->
+            </div>
+        </section>
+
         <!-- Main Arena Entry -->
         <section class="arena-card mb-8" onclick="window.location.href='ielts_challenger_arena.html'">
             <div class="relative z-10 flex flex-col md:flex-row items-center gap-6">
@@ -1926,6 +1933,26 @@
         });
 
         document.addEventListener('DOMContentLoaded', updateUI);
+    </script>
+
+    <!-- Gemini Key Manager -->
+    <script src="modules/gemini-key-manager.js"></script>
+    <script>
+        // Initialize GeminiKeyManager after page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Sync language with page
+            GeminiKeyManager.setLang(currentLang);
+            // Render input UI in the designated container
+            await GeminiKeyManager.renderInputUI('#gemini-key-container');
+        });
+
+        // Update GeminiKeyManager language when page language changes
+        const originalToggleLanguage = toggleLanguage;
+        toggleLanguage = function () {
+            originalToggleLanguage();
+            GeminiKeyManager.setLang(currentLang);
+            GeminiKeyManager.renderInputUI('#gemini-key-container');
+        };
     </script>
 </body>
 

@@ -66,6 +66,71 @@ app.get('/api/config/github-token', (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Gemini API Key Management Endpoints
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Enable JSON body parsing
+app.use(express.json());
+
+// Get Gemini key status (without revealing the key)
+app.get('/api/config/gemini-status', (req, res) => {
+    const adminKey = process.env.GEMINI_API_KEY;
+    res.json({
+        hasAdminKey: !!adminKey,
+        maskedKey: adminKey ? `${adminKey.slice(0, 8)}...${adminKey.slice(-4)}` : null
+    });
+});
+
+// Validate Gemini API key
+app.post('/api/gemini/validate', async (req, res) => {
+    const userKey = req.body.key;
+    const adminKey = process.env.GEMINI_API_KEY;
+    const keyToValidate = userKey || adminKey;
+
+    if (!keyToValidate) {
+        return res.json({ valid: false, error: 'no_key', message: 'No API key provided' });
+    }
+
+    const maskedKey = `${keyToValidate.slice(0, 8)}...${keyToValidate.slice(-4)}`;
+    const model = 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyToValidate}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: 'Reply OK' }] }],
+                generationConfig: { maxOutputTokens: 5 }
+            })
+        });
+
+        if (response.ok) {
+            res.json({
+                valid: true,
+                maskedKey,
+                source: userKey ? 'user' : 'admin',
+                message: 'API key is valid'
+            });
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            res.json({
+                valid: false,
+                maskedKey,
+                error: 'invalid_key',
+                message: errorData?.error?.message || `HTTP ${response.status}`
+            });
+        }
+    } catch (err) {
+        res.json({
+            valid: false,
+            error: 'network_error',
+            message: err.message
+        });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // 3. Static File Hosting
 // ═══════════════════════════════════════════════════════════════════════════
 

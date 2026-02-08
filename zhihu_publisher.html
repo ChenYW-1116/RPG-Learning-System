@@ -338,12 +338,11 @@
             </section>
         </div>
 
-        <!-- API Key -->
+        <!-- API Key Status (Input moved to rpg-hub.html) -->
         <div class="glass-card flex items-center gap-4">
-            <div class="flex-1">
-                <label class="block text-xs font-bold text-indigo-400 mb-2 tracking-wider">GEMINI PRO API KEY</label>
-                <input type="password" id="apiKey" class="input-field font-mono" placeholder="請輸入 API Key 以啟用 AI 功能..."
-                    style="height: 42px;">
+            <div class="flex-1 flex items-center gap-3">
+                <label class="block text-xs font-bold text-indigo-400 tracking-wider">GEMINI AI</label>
+                <span id="gemini-key-status-container" class="text-sm">⏳</span>
             </div>
             <div class="text-xs text-gray-500 hidden md:block">
                 <i class="fas fa-shield-alt text-green-400"></i> <span data-i18n="keySafe">Key 僅保存在本地</span>
@@ -651,10 +650,11 @@
             maxHeight: "500px"
         });
 
-        // App Logic
-        const apiKeyInput = document.getElementById('apiKey');
-        apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
-        apiKeyInput.addEventListener('input', (e) => localStorage.setItem('gemini_api_key', e.target.value));
+        // API Key is now managed by GeminiKeyManager (centralized in rpg-hub.html)
+        function getApiKey() {
+            const userKey = localStorage.getItem('gemini_api_key');
+            return userKey && userKey.trim() ? userKey.trim() : null;
+        }
 
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
@@ -710,7 +710,7 @@
 
         async function polishArticle() {
             const content = easyMDE.value();
-            const apiKey = apiKeyInput.value.trim();
+            const apiKey = getApiKey();
             const btn = document.getElementById('aiBtn');
 
             if (!apiKey) return showToast('error', translations[currentLang].toastNoKey);
@@ -745,7 +745,7 @@
             const title = document.getElementById('articleTitle').value.trim();
             const content = easyMDE.value();
             const btn = document.getElementById('exportBtn');
-            const apiKey = apiKeyInput.value.trim();
+            const apiKey = getApiKey();
 
             console.log("[DEBUG] Exporting article:", title);
 
@@ -792,6 +792,15 @@
         // Initial language update
         document.addEventListener('DOMContentLoaded', () => {
             updateTexts();
+        });
+    </script>
+
+    <!-- Gemini Key Manager -->
+    <script src="modules/gemini-key-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            GeminiKeyManager.setLang(currentLang);
+            await GeminiKeyManager.renderStatusUI('#gemini-key-status-container');
         });
     </script>
 </body>
