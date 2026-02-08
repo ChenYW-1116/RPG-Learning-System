@@ -657,12 +657,18 @@ const state = {
     toolName: '',
     toolDescription: '',
     config: (() => {
+        // 🧹 Auto-Cleanup: Remove potentially leaked raw key from localStorage
+        if (localStorage.getItem('gemini_api_key')) {
+            console.log('🧹 Auto-Cleaning legacy gemini_api_key from localStorage to enforce UI-only source.');
+            localStorage.removeItem('gemini_api_key');
+        }
+
         const stored = JSON.parse(localStorage.getItem('speckit_config')) || {};
         // Ensure default structure exists
         return {
             provider: stored.provider || 'gemini',
             gemini: {
-                key: stored.gemini?.key || stored.apiKey || localStorage.getItem('gemini_api_key') || '', // Fallback to global key
+                key: stored.gemini?.key || stored.apiKey || '', // Strict: No localStorage fallback for raw key
                 model: stored.gemini?.model || 'gemini-2.5-flash',
                 // 🔄 KEY ROTATION: Support multiple API keys
                 keys: stored.gemini?.keys || [], // Array of additional backup keys
@@ -2103,7 +2109,7 @@ function resolveAIConfig(forceProvider = null) {
             const domKey = document.getElementById('config-gemini-key')?.value?.trim();
 
             model = domModel || state.config.gemini.model || "gemini-2.5-flash-preview-09-2025";
-            key = domKey || state.config.gemini.key || localStorage.getItem('gemini_api_key');
+            key = domKey || state.config.gemini.key || ''; // Strict: UI Only
             url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
         }
 
@@ -2117,7 +2123,7 @@ function resolveAIConfig(forceProvider = null) {
 
         return {
             model: uiModel || "gemini-2.5-flash-preview-09-2025",
-            key: uiKey || localStorage.getItem('gemini_api_key'), // UI > Storage
+            key: uiKey || '', // Strict: UI Only
             url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             provider: "gemini"
         };
