@@ -1,0 +1,311 @@
+You are an Elite Full-Stack Engineer specializing in Single-File Executables.
+            
+            Your goal is to implement the SPECIFICATION below into a **SINGLE, SELF-CONTAINED HTML FILE**.
+            
+            --- 🏗️ STRICT FILE STRUCTURE (MANDATORY) ---
+            You MUST follow this exact structure. DO NOT create separate files.
+            
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <!-- Tailwind CDN -->
+                <script src="https://cdn.tailwindcss.com"></script>
+                <!-- Fonts -->
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                <style>
+                    body { font-family: 'Inter', sans-serif; }
+                    /* PUT ALL YOUR CUSTOM CSS HERE */
+                </style>
+            </head>
+            <body class="bg-gray-50 text-gray-800">
+                <!-- PUT YOUR HTML UI COMPONENTS HERE -->
+            
+                <script>
+                    // PUT ALL YOUR JAVASCRIPT LOGIC HERE
+                    // DATA, STATE, FUNCTIONS, EVENTS - EVERYTHING
+                </script>
+            </body>
+            </html>
+            
+            --- 🎨 VISUAL VISUAL REFERENCE (MIMIC THIS EXACTLY) ---
+            1. **Colors**: Primary 'bg-indigo-600', Background 'bg-gray-50'.
+            2. **Cards**: class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6"
+            3. **Buttons**: class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95"
+            4. **Charts**: Use raw <svg> logic inside the script. NO PLACEHOLDERS.
+            
+            --- FUNCTIONAL REQUIREMENTS ---
+            1. **No External Requests**: Except for Tailwind/Fonts CDN.
+            2. **Full Logic**: Implement the complete chart rendering and state management in the <script> block.
+            
+            --- SPECIFICATION ---
+            IELTS 寫作與翻譯衝刺訓練程式功能描述
+
+程式需求描述
+
+這是一個專業級的網頁應用程式，旨在幫助用戶準備雅思寫作與翻譯。程式採用響應式設計，支援深色模式和多語言（繁體中文/英文），並提供動態任務管理、模擬API整合（Grammarly、Gemini）以及本地儲存功能，以提供個人化的學習體驗。
+
+🎯 核心功能需求
+
+📝 設定與任務管理功能
+
+*   **語言切換：** 提供繁體中文 (zh-TW) 和英文 (en-US) 兩種語言選項，即時更新介面文字。
+*   **深色模式切換：** 一鍵切換應用程式的深色/淺色主題，並保存用戶偏好。
+*   **設定管理：**
+    *   模態視窗提供 Grammarly API Key (模擬) 和 Gemini API Key (模擬) 輸入。
+    *   API Key 自動保存至本地儲存。
+*   **任務卡片列表：**
+    *   動態顯示 8 個任務卡片，包含「動詞衝刺 (5天)」、「盲譯回寫」和「瓶頸指數報告」任務。
+    *   每個卡片顯示任務編號、任務提示、當前狀態（未開始、進行中、已完成）。
+    *   根據任務狀態調整卡片邊框顏色和按鈕可用性。
+    *   「開始任務」或「繼續任務」按鈕，點擊後導航至相應功能區並初始化任務狀態。
+*   **本地儲存：** 自動保存應用程式的整體狀態，包括設定、用戶進度、已使用動詞、編輯器內容、翻譯文本和雅思分數等，確保資料持久化。
+*   **每日任務提醒 (H1 Fix)：** 每天上午 8 點後，若當前任務未完成，會觸發一次性的 Toast 通知提醒用戶。
+*   **Toast 通知系統：**
+    *   在螢幕右下角顯示成功、錯誤、資訊、警告等類型的通知訊息。
+    *   訊息自動在 3 秒後淡出消失。
+    *   在非同步操作期間顯示「處理中...」訊息，提供即時用戶回饋。
+
+🎮 動詞衝刺 (5-Day Verb Sprint) 系統
+
+*   **任務流程圖：** 顯示與當前衝刺任務相關的流程圖圖片（使用佔位圖）。
+*   **15 分鐘倒數計時器：**
+    *   顯示剩餘時間 (MM:SS)。
+    *   「開始計時」按鈕啟動計時器，並在計時期間禁用自身，顯示「重設計時」按鈕。
+    *   「重設計時」按鈕可將計時器重置為 15 分鐘。
+    *   當剩餘時間少於 5 分鐘時，計時器文字會變為紅色並伴隨脈衝動畫警示。
+    *   計時結束時，自動鎖定寫作區編輯器。
+*   **寫作區編輯器：**
+    *   多行文本輸入框，用於撰寫文章。
+    *   支援垂直調整大小和內容滾動。
+    *   計時器結束時，編輯器會被鎖定，並顯示半透明覆蓋層及「時間到！編輯器已鎖定。」訊息。
+    *   實時保存用戶輸入內容至本地儲存。
+*   **Grammarly 狀態顯示：**
+    *   顯示 Grammarly API 的啟用狀態（「啟用中」、「未啟用」）。
+    *   若 API 配額超限或未提供 Key，則顯示「配額超限，使用本地被動語態檢查 (精度較低)」的備用狀態。
+*   **要使用的動詞列表：**
+    *   從預定義的學術動詞庫中，選取 6 個在過去 90 天內未使用的動詞。若不足，則重用最舊的動詞。
+    *   實時檢查寫作區內容，並在列表中標示動詞是否已被使用 (✅ / ❌)。
+*   **被動語態比例徽章：**
+    *   實時計算寫作區內容的被動語態比例，並以百分比顯示。
+    *   若比例達到或超過 30%，徽章文字顏色會變為紅色以示警示。
+    *   被動語態檢查使用本地正則表達式作為備用方案。
+*   **提交任務按鈕：**
+    *   將當前衝刺任務標記為「已完成」。
+    *   記錄寫作區中已使用的動詞及其時間戳，更新用戶的「已使用動詞」歷史記錄。
+    *   停止計時器並導航回任務列表。
+
+🎪 盲譯回寫 (Blind Translate) 機制
+
+*   **階段 1: 原始文本：**
+    *   提供文本輸入框，供用戶貼上原始文本。
+    *   「開始盲譯」按鈕，將原始文本保存並進入下一階段。
+*   **階段 2: 說出你的翻譯 (遮罩 + 錄音機)：**
+    *   全螢幕半透明遮罩覆蓋，防止用戶看到原始文本。
+    *   「開始錄音」和「停止錄音」按鈕（模擬錄音功能）。
+    *   錄音進度條，顯示模擬錄音的進度（最長 10 分鐘）。
+    *   錄音狀態顯示（閒置、錄音中、暫停、已停止）。
+    *   **H2 Fix：** 若模擬錄音在 30 秒內未偵測到聲音，錄音會自動暫停，並彈出警告訊息，提示用戶可「強制停止並繼續」。
+    *   「強制停止並繼續」按鈕，可提前結束錄音並進入下一階段。
+*   **階段 3: 輸入你的翻譯並審查：**
+    *   提供文本輸入框，供用戶輸入其翻譯文本（預設填充模擬錄音文本）。
+    *   「計算省略率」按鈕。
+    *   **省略率報告：**
+        *   顯示計算出的省略率百分比。
+        *   根據省略率是否低於 3% (SC002)，顯示「恭喜！省略率低於 3%。」或「省略率高於 3%。請仔細檢查差異。」的狀態訊息。
+        *   差異顯示區：簡化顯示原始文本、翻譯文本和 Levenshtein 距離。
+
+🎉 瓶頸指數報告 (Bottleneck Index Report) 功能
+
+*   **雅思成績單上傳：**
+    *   提供檔案上傳輸入框，接受 PDF 格式的雅思成績單（模擬 PDF 文本提取功能）。
+    *   模擬提取後，自動填充雅思分數至手動輸入框。
+*   **雅思分數手動輸入：**
+    *   文本輸入框，供用戶手動輸入雅思寫作分數 (TA, CC, LR, GRA)，例如：7.0, 6.5, 8.0, 7.5。
+*   **計算瓶頸指數按鈕：**
+    *   根據輸入的雅思分數和用戶歷史弱點 (A1 Fix)，計算瓶頸指數。
+    *   **A1 Fix：** 瓶頸指數計算會考慮用戶在 TA, CC, LR, GRA 各維度的歷史弱點，並動態調整目標分數。計算完成後，會更新用戶的歷史弱點數據。
+*   **瓶頸結果顯示：**
+    *   顯示計算出的瓶頸指數（例如：0.00）。
+    *   根據瓶頸指數是否低於 0.02 (SC003)，顯示「恭喜！瓶頸指數低於 0.02。」或「瓶頸指數高於 0.02。請參考改善方案。」的狀態訊息。
+*   **AI 生成改善方案：**
+    *   顯示由 AI (模擬 Gemini API) 根據瓶頸指數和弱點類別生成的個性化改善計畫。
+*   **重新計算瓶頸指數按鈕：** 允許用戶在修改分數後重新計算。
+
+🎨 視覺設計規格
+
+🌈 色彩方案
+
+*   **背景色：**
+    *   淺色模式：`#f3f4f6` (bg-gray-100)
+    *   深色模式：`#111827` (bg-gray-900)
+*   **文字顏色：**
+    *   淺色模式：`#374151` (text-gray-800)
+    *   深色模式：`#f9fafb` (text-gray-100)
+*   **主色調 (Indigo)：**
+    *   標題/強調：`#4f46e5` (text-indigo-600), `#818cf8` (dark:text-indigo-400)
+    *   按鈕/互動：`#4f46e5` (bg-indigo-600), `#4338ca` (hover:bg-indigo-700)
+    *   資訊面板背景：`#eef2ff` (bg-indigo-50), `#1e293b` (dark:bg-indigo-900)
+*   **中性色 (Gray)：**
+    *   次要背景：`#f9fafb` (bg-gray-50), `#374151` (dark:bg-gray-700)
+    *   邊框：`#d1d5db` (border-gray-300), `#4b5563` (dark:border-gray-600)
+    *   次要按鈕/文字：`#6b7280` (text-gray-700), `#9ca3af` (dark:text-gray-300)
+*   **成功色 (Green)：**
+    *   按鈕：`#22c55e` (bg-green-600)
+    *   Toast：`#22c55e` (bg-green-500)
+    *   任務狀態/省略率通過：`#16a34a` (text-green-600), `#4ade80` (dark:text-green-400)
+*   **錯誤/警告色 (Red)：**
+    *   按鈕：`#ef4444` (bg-red-600)
+    *   Toast：`#ef4444` (bg-red-500)
+    *   計時器警告/省略率失敗：`#ef4444` (text-red-600)
+    *   錄音進度條：`#ef4444` (bg-red-500)
+*   **資訊色 (Blue)：**
+    *   Toast：`#3b82f6` (bg-blue-500)
+    *   面板背景：`#eff6ff` (bg-blue-50), `#1e3a8a` (dark:bg-blue-900)
+*   **強調色 (Yellow)：**
+    *   按鈕：`#eab308` (bg-yellow-500)
+    *   Toast：`#eab308` (bg-yellow-500)
+    *   動詞高亮 (淺色)：`yellow`
+    *   動詞高亮 (深色)：`#6d4d00`
+
+🎭 背景設計
+
+*   **整體背景：** `min-h-screen` 確保最小高度，`flex flex-col` 佈局。
+*   **Header 背景：** `bg-white` (淺色), `dark:bg-gray-800` (深色), `shadow-md`。
+*   **主內容區背景：** `bg-white` (淺色), `dark:bg-gray-800` (深色), `p-6`, `rounded-lg`, `shadow-lg`。
+*   **模態視窗遮罩：** `fixed inset-0 bg-gray-900 bg-opacity-75 dark:bg-opacity-85`。
+
+📦 容器規格
+
+主容器 (`main#app-view`)
+
+*   最大寬度：`container mx-auto` (Tailwind 預設響應式最大寬度)
+*   邊距：`p-6` (上下左右 24px)
+*   定位：居中對齊
+
+標題區域 (`header`)
+
+*   背景：`bg-white` (淺色), `dark:bg-gray-800` (深色)
+*   陰影：`shadow-md`
+*   內距：`p-4` (16px)
+*   佈局：`flex justify-between items-center`
+
+控制面板 (例如：計時器、被動語態比例面板)
+
+*   背景：`bg-indigo-50` (淺色), `dark:bg-indigo-900` (深色) 或 `bg-blue-50` (淺色), `dark:bg-blue-900` (深色)
+*   圓角：`rounded-md`
+*   內距：`p-4` (16px)
+*   陰影：`shadow-sm`
+
+抽獎區域 (例如：盲譯階段 2 遮罩)
+
+*   背景：`bg-gray-800 bg-opacity-95` (深色半透明)
+*   圓角：`rounded-md`
+*   文字：`text-white text-3xl font-bold`
+
+🔘 按鈕設計
+
+主要按鈕 (例如：開始計時、提交任務、開始盲譯)
+
+*   內距：`px-6 py-2` 或 `px-8 py-3`
+*   背景：`bg-indigo-600` (主色), `bg-green-600` (提交), `bg-red-600` (錄音)
+*   文字：`text-white`
+*   圓角：`rounded-md`
+*   懸停效果：`hover:bg-indigo-700`, `hover:bg-green-700`, `hover:bg-red-700` (顏色變深)
+*   過渡：`transition-colors`
+*   禁用狀態：`opacity-50 cursor-not-allowed`
+
+次要按鈕 (例如：重設計時、停止錄音、關閉設定)
+
+*   背景：`bg-gray-400` (淺色), `bg-gray-600` (深色)
+*   文字：`text-white` (淺色), `text-gray-800` (深色)
+*   **其他規格同主要按鈕**
+
+危險按鈕 (例如：強制停止錄音)
+
+*   背景：`bg-yellow-500`
+*   文字：`text-white`
+*   內距：`px-4 py-2` (較小)
+
+🎯 網格格子規格 (例如：任務卡片)
+
+*   佈局：`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`
+*   背景：`bg-gray-50` (淺色), `dark:bg-gray-700` (深色)
+*   邊框：`border`，顏色根據任務狀態變化 (`border-green-400`, `border-blue-400`, `border-gray-300`)
+*   圓角：`rounded-lg`
+*   內距：`p-4`
+*   陰影：`shadow-md`
+*   字體：`text-xl font-semibold` (標題), `text-gray-700` (內容)
+*   狀態標籤：`px-3 py-1 text-sm rounded-full`，背景和文字顏色根據狀態變化。
+
+📝 輸入框設計
+
+*   內距：`p-4` (textarea), `p-3` (input)
+*   邊框：`border border-gray-300` (淺色), `dark:border-gray-600` (深色)
+*   圓角：`rounded-md`
+*   背景：`bg-white` (淺色), `dark:bg-gray-700` (深色)
+*   文字：`dark:text-gray-100`
+*   佔位符：`placeholder-gray-500` (淺色), `dark:placeholder-gray-400` (深色)
+*   焦點效果：`focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400` (環形陰影和邊框變色)
+
+🎪 彈窗規格 (設定模態視窗)
+
+*   背景遮罩：`fixed inset-0 bg-gray-900 bg-opacity-75 dark:bg-opacity-85`
+*   內容區域：`bg-white` (淺色), `dark:bg-gray-800` (深色), `p-8`, `rounded-lg`, `shadow-xl`, `w-full max-w-md`
+*   標題：`text-2xl font-bold mb-6 text-indigo-700 dark:text-indigo-300`
+*   輸入框：參照「輸入框設計」
+
+📱 響應式設計
+
+*   **整體佈局：** `container mx-auto` 確保內容在不同螢幕尺寸下居中並有適當寬度。
+*   **任務卡片：**
+    *   手機版 (`col-span-1`)：單欄垂直排列。
+    *   平板版 (`md:col-span-2`)：兩欄佈局。
+    *   桌面版 (`lg:col-span-3`)：三欄佈局。
+*   **寫作區與動詞列表：**
+    *   手機版 (`col-span-1`)：單欄垂直排列。
+    *   桌面版 (`lg:col-span-2` for editor, `lg:col-span-1` for verb list)：兩欄佈局，編輯器佔 2/3 寬度。
+*   **字體大小：** 透過 TailwindCSS 預設的響應式字體大小調整。
+*   **間距：** 透過 TailwindCSS 預設的響應式間距調整。
+
+🔧 技術特色
+
+動畫系統
+
+*   **CSS 過渡：** 廣泛使用 `transition-colors` 和 `transition-all` 實現平滑的 UI 變化，例如深色模式切換、按鈕懸停效果。
+*   **CSS 關鍵幀動畫：** `pulse-red` 動畫用於計時器警告狀態，提供視覺警示。
+*   **JavaScript 動畫：** Toast 通知系統使用 `requestAnimationFrame` 進行淡入淡出和位移動畫。錄音進度條使用 `transition-width` 實現平滑填充。
+
+效能優化
+
+*   **本地儲存：** 使用 `localStorage` 進行應用程式狀態的持久化，減少伺服器請求。
+*   **狀態合併：** 從 `localStorage` 加載狀態時，會與預設狀態進行合併，確保新屬性能被正確初始化，提高應用程式的健壯性。
+*   **UIHandler.performAction：** 實作「Loading-Lock」模式，在非同步操作期間禁用按鈕並顯示加載狀態，防止重複提交和改善用戶體驗。
+*   **事件監聽：** 集中在 `App.init()` 中初始化所有事件監聽器。
+*   **i18n 字典：** 翻譯文本預載入為 JavaScript 物件，實現快速語言切換而無需額外請求。
+
+用戶體驗
+
+*   **即時反饋：** 所有用戶操作（如點擊按鈕、輸入文本）都有視覺或文字上的即時反饋（Toast 通知、按鈕狀態、計時器更新）。
+*   **錯誤處理：** 通過 Toast 通知系統提供友善的錯誤提示訊息，例如「請先輸入原始文本」。
+*   **無障礙設計：** 支援深色模式，提供足夠的對比度。
+*   **直覺操作：** 導航清晰，功能分區明確，符合常見的網頁應用程式交互模式。
+*   **持久化狀態：** 用戶的設定和任務進度會自動保存，重新載入頁面後能恢復到上次離開時的狀態。
+            
+            --- 🚫 ANTI-HALLUCINATION & INTEGRITY PROTOCOLS ---
+            1. **NO Phantom Classes**: Do NOT instantiate classes that are not defined in the script (e.g., usually 'new Application()' or 'new TestRunner()' are hallucinations).
+            2. **Clean End-of-File**: The script MUST end strictly with the application initialization (e.g., 'document.addEventListener("DOMContentLoaded", init);'). Do NOT append incomplete or "example" test suites after the main logic.
+            3. **Object Initialization Safety**: When defining the main `app` object, you MUST explicitly initialize all sub-objects (e.g., `router: {}, handlers: {}`) to prevent "Cannot set properties of undefined" errors later.
+            4. **Strict Syntax Compliance**: Do NOT include Markdown tags (like ```javascript) inside the <script> tag. The <script> content must be valid, executable JavaScript only.
+            5. **Standardized Test Hook**: If E2E testing support is required, ONLY add this exact hook at the end:
+               ```javascript
+               window.injectTestRunner = function(runner) {
+                   // Allow external tools to access the app instance
+                   runner.app = app; 
+                   console.log("🧪 Test Runner Hook Injected");
+               };
+               ```
+            6. **Verification**: Before outputting '</html>', verify that the last 20 lines of code do not contain 'new TestRunner(...)' or undefined variable references.
+
+            --- EXECUTION ---
+            GENERATE THE HTML CODE NOW. USE THE STRUCTURE ABOVE.

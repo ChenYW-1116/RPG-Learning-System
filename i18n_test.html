@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語言切換測試</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🧪 Quest Empire 語言切換功能驗證</h1>
+
+        <div class="space-y-4 bg-gray-800 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold text-green-400">✅ 已實現語言切換的頁面：</h2>
+            <ul class="list-disc list-inside space-y-2 ml-4">
+                <li>
+                    <a href="github_pushV2.9.4.1(Exe Support + AI Path + Sync+CompStrictly+GitHitMaps).html"
+                        class="text-blue-400 hover:text-blue-300 underline" target="_blank">
+                        GitHub 檔案管理終端 v2.9.6 (主畫面)
+                    </a>
+                    <span class="text-gray-400 text-sm">- localStorage key: <code>github_manager_lang</code></span>
+                </li>
+                <li>
+                    <a href="createPR_v1.1.html" class="text-blue-400 hover:text-blue-300 underline" target="_blank">
+                        GitHub PR 自動化工具 v1.1
+                    </a>
+                    <span class="text-gray-400 text-sm">- localStorage key: <code>github_manager_lang</code>
+                        (與主畫面同步)</span>
+                </li>
+            </ul>
+
+            <div class="mt-6 p-4 bg-gray-700 rounded">
+                <h3 class="font-semibold text-yellow-400 mb-2">📋 功能特性：</h3>
+                <ul class="list-disc list-inside space-y-1 text-sm text-gray-300 ml-4">
+                    <li>支援中文/英文即時切換</li>
+                    <li>語言偏好存儲於 localStorage</li>
+                    <li>多個頁面共享相同語言設定 (使用統一的 <code>github_manager_lang</code> key)</li>
+                    <li>包含 RPG 等級名稱的多語言支援</li>
+                    <li>UI 元素通過 <code>data-i18n</code> 屬性自動更新</li>
+                </ul>
+            </div>
+
+            <div class="mt-6 p-4 bg-gray-700 rounded">
+                <h3 class="font-semibold text-purple-400 mb-2">🔧 測試步驟：</h3>
+                <ol class="list-decimal list-inside space-y-1 text-sm text-gray-300 ml-4">
+                    <li>點擊上方連結開啟任一頁面</li>
+                    <li>點擊頁面右上角的語言切換按鈕 (顯示 "EN" 或 "中文")</li>
+                    <li>觀察所有文字是否切換到對應語言</li>
+                    <li>開啟另一個頁面，確認語言設定已同步</li>
+                </ol>
+            </div>
+
+            <div class="mt-6 p-4 bg-green-900/30 border border-green-600 rounded">
+                <h3 class="font-semibold text-green-400 mb-2">✨ RPG 等級翻譯 (與主畫面一致的 key 命名)：</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-300">
+                    <div><code>rpgRank1</code> → 新手挑戰者 / Novice Challenger</div>
+                    <div><code>rpgRank2</code> → 見習冒險家 / Apprentice Adventurer</div>
+                    <div><code>rpgRank3</code> → 探索者 / Explorer</div>
+                    <div><code>rpgRank4</code> → 挑戰達人 / Challenge Master</div>
+                    <div><code>rpgRank5</code> → 精英戰士 / Elite Warrior</div>
+                    <div><code>rpgRank6</code> → 專家引導者 / Expert Guide</div>
+                    <div><code>rpgRank7</code> → 大師創造者 / Master Creator</div>
+                    <div><code>rpgRank8</code> → 宗師煉金師 / Grandmaster Alchemist</div>
+                    <div><code>rpgRank9</code> → 傳奇締造者 / Legendary Founder</div>
+                    <div><code>rpgRank10</code> → 帝國領袖 / Empire Leader</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center">
+            <p class="text-gray-400 text-sm">
+                🎮 Quest Empire - Multilingual Universal System
+            </p>
+            <p class="text-gray-500 text-xs mt-2">
+                ✅ 已與主畫面統一：使用 <code>rpgRank1</code>-<code>rpgRank10</code> key 命名
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

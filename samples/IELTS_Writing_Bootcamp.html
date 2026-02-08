@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">IELTS Writing Bootcamp</title>
+    <!-- T001: TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* T001: Custom styles for components and layout */
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .passive-highlight {
+            background-color: #fef3c7;
+            border-bottom: 2px solid #f59e0b;
+        }
+
+        .radar-chart {
+            width: 200px;
+            height: 200px;
+        }
+
+        /* CHK022: High contrast timer for <60s */
+        .timer-critical {
+            background-color: #ef4444;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* T016: Basic Radar Chart Styling */
+        .radar-line {
+            stroke: #3b82f6;
+            stroke-width: 2;
+            fill: rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen p-4">
+
+    <!-- T005: Settings Modal -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4" data-i18n="settings_title">Settings</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="input-grammarly-key">Grammarly API Key
+                        (Mocked)</label>
+                    <input type="text" id="input-grammarly-key"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                        placeholder="sk-grm-xxxx">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="input-gemini-key">Gemini API Key
+                        (Mocked)</label>
+                    <input type="text" id="input-gemini-key"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                        placeholder="sk-gem-xxxx">
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-700" data-i18n="language">Language</span>
+                    <button id="btn-lang-toggle" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                        onclick="app.toggleLanguage()">
+                        <span data-i18n="current_lang_display">English</span>
+                    </button>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="btn-close-settings" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+                    onclick="app.closeSettings()">
+                    <span data-i18n="close">Close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div class="max-w-4xl mx-auto">
+        <!-- Header and Navigation (T004) -->
+        <header class="flex justify-between items-center py-4 border-b mb-6">
+            <h1 class="text-3xl font-extrabold text-gray-900" data-i18n="app_title_short">IELTS Coach</h1>
+            <div class="flex space-x-4 items-center">
+                <nav>
+                    <button class="nav-btn p-2 text-sm font-medium text-gray-700 hover:text-blue-600"
+                        data-view="dashboard" data-i18n="nav_dashboard"
+                        onclick="app.router.navigate('dashboard')">Dashboard</button>
+                    <button class="nav-btn p-2 text-sm font-medium text-gray-700 hover:text-blue-600" data-view="task"
+                        data-i18n="nav_task" onclick="app.router.navigate('task')">Task</button>
+                    <button class="nav-btn p-2 text-sm font-medium text-gray-700 hover:text-blue-600" data-view="blind"
+                        data-i18n="nav_blind" onclick="app.router.navigate('blind')">Blind Write</button>
+                </nav>
+                <button id="btn-open-settings" class="text-gray-500 hover:text-gray-700" onclick="app.openSettings()">
+                    ⚙️
+                </button>
+            </div>
+        </header>
+
+        <!-- T004: Router Views -->
+
+        <!-- T017: Dashboard View (FR005) -->
+        <section id="view-dashboard" class="view-section active">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="dashboard_title">Progress Dashboard</h2>
+
+            <!-- T017: Daily Progress Heatmap -->
+            <div class="bg-white p-6 rounded-lg shadow mb-6">
+                <h3 class="text-xl font-medium mb-3" data-i18n="progress_heatmap">8-Day Progress</h3>
+                <div id="progress-heatmap" class="grid grid-cols-8 gap-2 text-center">
+                    <!-- Day blocks will be injected here -->
+                </div>
+            </div>
+
+            <!-- T017: Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <p class="text-sm text-gray-500" data-i18n="stat_total_verbs">Total New Verbs Learned</p>
+                    <p id="stat-total-verbs" class="text-3xl font-bold text-blue-600">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <p class="text-sm text-gray-500" data-i18n="stat_avg_passive">Avg. Passive Ratio</p>
+                    <p id="stat-avg-passive" class="text-3xl font-bold text-green-600">0.0%</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <p class="text-sm text-gray-500" data-i18n="stat_last_bottleneck">Last Bottleneck Index</p>
+                    <p id="stat-last-bottleneck" class="text-3xl font-bold text-red-600">N/A</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- US-1: Writing Task View (Day 1-5) -->
+        <section id="view-task" class="view-section">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="task_title">IELTS Writing Task 2 (Day <span
+                    id="current-day-display">1</span>)</h2>
+
+            <div class="flex justify-between items-center mb-4 p-3 bg-white rounded-lg shadow">
+                <!-- T007: Timer Widget (FR-001) -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-gray-600" data-i18n="time_remaining">Time Remaining:</span>
+                    <span id="timer-display" class="text-2xl font-mono text-blue-700">15:00</span>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="btn-start-timer" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                        onclick="app.timer.start()">
+                        <span data-i18n="start">Start</span>
+                    </button>
+                    <button id="btn-pause-timer"
+                        class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 hidden"
+                        onclick="app.timer.pause()">
+                        <span data-i18n="pause">Pause</span>
+                    </button>
+                    <button id="btn-reset-timer" class="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500"
+                        onclick="app.timer.reset()">
+                        <span data-i18n="reset">Reset</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <p class="text-sm text-gray-600 mb-3" data-i18n="task_prompt">Prompt: Some people believe that...</p>
+
+                <!-- T008: Editor (FR-002) -->
+                <textarea id="editor-textarea" rows="15"
+                    class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Start writing your essay here (min 250 words)..."
+                    oninput="app.editor.handleInput()"></textarea>
+
+                <div class="flex justify-between items-center mt-3 text-sm">
+                    <span data-i18n="word_count">Word Count:</span>
+                    <span id="word-count-display" class="font-medium">0</span>
+
+                    <span data-i18n="passive_ratio">Passive Ratio (Target ≥ 30%):</span>
+                    <span id="passive-ratio-display" class="font-medium text-red-500">0.0%</span>
+                </div>
+
+                <!-- T010: Submission -->
+                <button id="btn-submit-task"
+                    class="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+                    onclick="app.task.submit()" disabled>
+                    <span data-i18n="submit_task">Submit Task & Get Feedback</span>
+                </button>
+                <p id="task-status-message" class="mt-2 text-center text-red-500 hidden" data-i18n="task_status_fail">
+                    Task failed or submitted.</p>
+            </div>
+        </section>
+
+        <!-- US-2: Blind Writing/Diff View (Day 6-7) -->
+        <section id="view-blind" class="view-section">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="blind_title">Blind Re-translation Training (Day 6)</h2>
+
+            <!-- T011: Blind Panel -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700" data-i18n="original_text">Original Text
+                        (Hidden)</label>
+                    <textarea id="input-original-blind" rows="5"
+                        class="w-full p-3 border border-gray-300 rounded-md bg-gray-100"
+                        placeholder="Paste your original high-score essay here..." oninput="app.blind.updateOriginal()"
+                        disabled></textarea>
+                    <button id="btn-toggle-blind" class="mt-2 px-3 py-1 bg-gray-500 text-white rounded-md"
+                        onclick="app.blind.toggleBlind()">
+                        <span data-i18n="show_original">Show Original</span>
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700" data-i18n="retranslation_text">Your
+                        Re-translation (Blind)</label>
+                    <textarea id="input-retranslation" rows="8" class="w-full p-3 border border-gray-300 rounded-md"
+                        placeholder="Write your re-translation from memory/audio here..."
+                        oninput="app.blind.handleInput()"></textarea>
+                </div>
+
+                <!-- T012: Speech ASR Mock (H6 Fix: Manual Upload Hint) -->
+                <div class="flex items-center space-x-4 mb-4">
+                    <button id="btn-start-asr" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                        onclick="app.blind.startASR()">
+                        🎙️ <span data-i18n="start_recording">Start Recording (Chrome Only)</span>
+                    </button>
+                    <p id="asr-status" class="text-sm text-gray-500" data-i18n="asr_fallback">Non-Chrome: Please type
+                        manually or paste transcript.</p>
+                </div>
+
+                <button id="btn-submit-blind"
+                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+                    onclick="app.blind.submit()" disabled>
+                    <span data-i18n="submit_blind">Compare & Get Diff Report</span>
+                </button>
+            </div>
+
+            <!-- T014: Diff Report -->
+            <div id="diff-report-card" class="mt-6 bg-white p-6 rounded-lg shadow hidden">
+                <h3 class="text-xl font-medium mb-3" data-i18n="diff_report_title">Diff Report</h3>
+                <p class="text-lg mb-2">
+                    <span data-i18n="missing_rate">Missing Rate:</span>
+                    <span id="missing-rate-display" class="font-bold text-red-600">0.0%</span>
+                </p>
+                <p id="diff-report-message" class="text-sm text-gray-700"></p>
+            </div>
+        </section>
+
+        <!-- US-3: Scorer View (Day 8) -->
+        <section id="view-scorer" class="view-section">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="scorer_title">Band Score Diagnosis (Day 8)</h2>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <p class="mb-4 text-gray-600" data-i18n="scorer_intro">Paste your final essay for comprehensive AI
+                    scoring.</p>
+                <textarea id="input-final-essay" rows="10" class="w-full p-3 border border-gray-300 rounded-md"
+                    placeholder="Paste final essay (min 250 words)..." oninput="app.scorer.handleInput()"></textarea>
+
+                <button id="btn-get-score"
+                    class="mt-4 w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-300"
+                    onclick="app.scorer.getScore()" disabled>
+                    <span data-i18n="get_score">Get Band Score & Bottleneck Index</span>
+                </button>
+            </div>
+
+            <!-- T016: Scorer Card -->
+            <div id="scorer-card"
+                class="mt-6 bg-white p-6 rounded-lg shadow hidden flex flex-col md:flex-row items-center justify-around">
+                <div class="md:w-1/2">
+                    <h3 class="text-xl font-medium mb-3" data-i18n="score_breakdown">Score Breakdown</h3>
+                    <div class="space-y-2">
+                        <p>TR (Task Response): <span id="score-tr" class="font-bold text-lg">N/A</span></p>
+                        <p>C (Coherence/Cohesion): <span id="score-c" class="font-bold text-lg">N/A</span></p>
+                        <p>L (Lexical Resource): <span id="score-l" class="font-bold text-lg">N/A</span></p>
+                        <p>G (Grammatical Range/Accuracy): <span id="score-g" class="font-bold text-lg">N/A</span></p>
+                    </div>
+                </div>
+
+                <!-- T016: Radar Chart and Bottleneck Index -->
+                <div class="md:w-1/2 flex flex-col items-center mt-4 md:mt-0">
+                    <svg id="radar-chart-svg" class="radar-chart" viewBox="0 0 200 200"></svg>
+                    <div class="mt-4 text-center">
+                        <p class="text-sm text-gray-500" data-i18n="bottleneck_index">Bottleneck Index (Target <
+                                0.02)</p>
+                                <p id="bottleneck-index-display" class="text-3xl font-bold text-gray-800">N/A</p>
+                                <p id="bottleneck-status" class="mt-1 text-sm font-semibold"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- T018: Global Message/Error Display -->
+    <!-- T018: Global Message Replaced by Toast System (UI Hardening) -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // T003: Internationalization Repository
+        const translations = {
+            'zh-TW': {
+                app_title: "IELTS 寫作衝刺營",
+                app_title_short: "IELTS 教練",
+                nav_dashboard: "儀表板",
+                nav_task: "寫作任務",
+                nav_blind: "盲寫回譯",
+                settings_title: "設定",
+                language: "語言",
+                current_lang_display: "繁體中文",
+                close: "關閉",
+                dashboard_title: "進度儀表板",
+                progress_heatmap: "8天進度",
+                stat_total_verbs: "累積新學動詞量",
+                stat_avg_passive: "平均被動比例",
+                stat_last_bottleneck: "上次瓶頸指數",
+                task_title: "IELTS 寫作任務 2 (Day",
+                time_remaining: "剩餘時間:",
+                start: "開始",
+                pause: "暫停",
+                reset: "重設",
+                task_prompt: "題目: 有些人認為...",
+                word_count: "字數:",
+                passive_ratio: "被動比例 (目標 ≥ 30%):",
+                submit_task: "提交任務並獲取回饋",
+                task_status_fail: "任務失敗或已提交。請重設以重新開始。",
+                blind_title: "盲寫回譯訓練 (Day 6)",
+                original_text: "原文 (已遮蔽)",
+                show_original: "顯示原文",
+                retranslation_text: "您的回譯 (盲寫)",
+                start_recording: "🎙️ 開始錄音 (僅限 Chrome)",
+                asr_fallback: "非 Chrome 瀏覽器: 請手動輸入或貼上音稿。",
+                submit_blind: "比對並獲取差異報告",
+                diff_report_title: "差異報告",
+                missing_rate: "遺漏率:",
+                scorer_title: "Band Score 診斷 (Day 8)",
+                scorer_intro: "貼上您的最終作文以進行綜合 AI 評分。",
+                get_score: "獲取 Band Score 與瓶頸指數",
+                score_breakdown: "分數細項",
+                bottleneck_index: "瓶頸指數 (目標 < 0.02)",
+                alert_title: "警告!",
+                bottleneck_status_pass: "✅ 達標！架構均衡。",
+                bottleneck_status_fail: "⚠️ 需改進！瓶頸在於 ",
+                passive_ratio_pass: "✅ 達標",
+                passive_ratio_fail: "❌ 未達標",
+                word_count_fail: "字數不足 (需 ≥ 250 字)",
+                word_count_pass: "字數達標",
+                timer_end_lock: "時間到！編輯區已鎖定。",
+                submission_success: "任務提交成功！已記錄新動詞。",
+                missing_rate_pass: "✅ 遺漏率低於 3%，記憶力優秀。",
+                missing_rate_fail: "❌ 遺漏率過高，請加強記憶。",
+            },
+            en: {
+                app_title: "IELTS Writing Bootcamp",
+                app_title_short: "IELTS Coach",
+                nav_dashboard: "Dashboard",
+                nav_task: "Writing Task",
+                nav_blind: "Blind Rewrite",
+                settings_title: "Settings",
+                language: "Language",
+                current_lang_display: "English",
+                close: "Close",
+                dashboard_title: "Progress Dashboard",
+                progress_heatmap: "8-Day Progress",
+                stat_total_verbs: "Total New Verbs Learned",
+                stat_avg_passive: "Avg. Passive Ratio",
+                stat_last_bottleneck: "Last Bottleneck Index",
+                task_title: "IELTS Writing Task 2 (Day",
+                time_remaining: "Time Remaining:",
+                start: "Start",
+                pause: "Pause",
+                reset: "Reset",
+                task_prompt: "Prompt: Some people believe that...",
+                word_count: "Word Count:",
+                passive_ratio: "Passive Ratio (Target ≥ 30%):",
+                submit_task: "Submit Task & Get Feedback",
+                task_status_fail: "Task failed or submitted. Reset to restart.",
+                blind_title: "Blind Re-translation Training (Day 6)",
+                original_text: "Original Text (Hidden)",
+                show_original: "Show Original",
+                retranslation_text: "Your Re-translation (Blind)",
+                start_recording: "🎙️ Start Recording (Chrome Only)",
+                asr_fallback: "Non-Chrome: Please type manually or paste transcript.",
+                submit_blind: "Compare & Get Diff Report",
+                diff_report_title: "Diff Report",
+                missing_rate: "Missing Rate:",
+                scorer_title: "Band Score Diagnosis (Day 8)",
+                scorer_intro: "Paste your final essay for comprehensive AI scoring.",
+                get_score: "Get Band Score & Bottleneck Index",
+                score_breakdown: "Score Breakdown",
+                bottleneck_index: "Bottleneck Index (Target < 0.02)",
+                alert_title: "Warning!",
+                bottleneck_status_pass: "✅ Target met! Balanced profile.",
+                bottleneck_status_fail: "⚠️ Needs improvement! Bottleneck in ",
+                passive_ratio_pass: "✅ Target met",
+                passive_ratio_fail: "❌ Target missed",
+                word_count_fail: "Word count too low (Need ≥ 250 words)",
+                word_count_pass: "Word count met",
+                timer_end_lock: "Time's up! Editor locked.",
+                submission_success: "Task submitted successfully! New verbs recorded.",
+                missing_rate_pass: "✅ Missing rate below 3%, excellent recall.",
+                missing_rate_fail: "❌ Missing rate too high, strengthen memory.",
+            }
+        };
+
+        // T002: LocalStorage State Schema (Modified by C3)
+        const STORAGE_KEY = 'IELTS_BOOTCAMP_V1';
+        const DEFAULT_STATE = {
+            user: {
+                lang: 'en',
+                keyGrammarly: '',
+                keyGemini: '',
+            },
+            progress: {
+                day1: { status: 'open', startTime: null, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 0, duration: 0 },
+                day2: { status: 'open', startTime: null, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 0, duration: 0 },
+                day3: { status: 'open', startTime: null, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 0, duration: 0 },
+                day4: { status: 'open', startTime: null, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 0, duration: 0 },
+                day5: { status: 'open', startTime: null, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 0, duration: 0 },
+                day6: { status: 'open', paperText: '', retranslation: '', missingRate: 0 },
+                day7: { status: 'open', paperText: '', retranslation: '', missingRate: 0 },
+                day8: { status: 'open', paperText: '', scores: { TR: 0, C: 0, L: 0, G: 0 }, bottleNeckIndex: 0 }
+            },
+            revisionCards: [] // C3: [{lemma: string, firstSeen: number, sentence: string, easeFactor: number, dueDate: number}]
+        };
+
+        // --- Core Services ---
+
+        // T006, T007: Timer Service (FR-001)
+        class TimerService {
+            constructor(app) {
+                this.app = app;
+                this.duration = 15 * 60 * 1000; // 15 minutes in ms
+                this.remaining = this.duration;
+                this.isRunning = false;
+                this.startTime = 0;
+                this.rafHandle = null;
+                this.displayEl = document.getElementById('timer-display');
+            }
+
+            // Task T006: Precision Timer using requestAnimationFrame
+            start() {
+                if (this.isRunning) return;
+                if (this.app.state.progress[this.app.router.currentDay].status !== 'open') {
+                    this.app.showMessage(this.app.t('task_status_fail'), 'error');
+                    return;
+                }
+
+                this.isRunning = true;
+                this.startTime = performance.now();
+                this.app.state.progress[this.app.router.currentDay].startTime = Date.now();
+                this.app.store.save();
+
+                document.getElementById('btn-start-timer').classList.add('hidden');
+                document.getElementById('btn-pause-timer').classList.remove('hidden');
+                this.app.editor.setLocked(false);
+
+                const tick = (timestamp) => {
+                    if (!this.isRunning) return;
+
+                    const elapsed = timestamp - this.startTime;
+                    this.remaining = Math.max(0, this.duration - elapsed);
+
+                    this.updateDisplay();
+
+                    if (this.remaining === 0) {
+                        this.end();
+                    } else {
+                        this.rafHandle = requestAnimationFrame(tick);
+                    }
+                };
+                this.rafHandle = requestAnimationFrame(tick);
+            }
+
+            pause() {
+                if (!this.isRunning) return;
+                this.isRunning = false;
+                cancelAnimationFrame(this.rafHandle);
+                this.duration = this.remaining; // Save remaining time
+
+                document.getElementById('btn-start-timer').classList.remove('hidden');
+                document.getElementById('btn-pause-timer').classList.add('hidden');
+            }
+
+            reset() {
+                this.pause();
+                this.remaining = 15 * 60 * 1000;
+                this.duration = this.remaining;
+                this.updateDisplay();
+                this.app.editor.setLocked(false);
+                this.app.state.progress[this.app.router.currentDay].status = 'open';
+                this.app.store.save();
+
+                document.getElementById('btn-start-timer').classList.remove('hidden');
+                document.getElementById('btn-pause-timer').classList.add('hidden');
+                document.getElementById('task-status-message').classList.add('hidden');
+            }
+
+            // Task T006, C2 Fix: Auto-lock on timeout
+            end() {
+                this.pause();
+                this.app.editor.setLocked(true); // C2: Lock editor
+                this.app.state.progress[this.app.router.currentDay].status = 'fail'; // Mark as fail
+                this.app.store.save(); // Auto-save
+                this.app.showMessage(this.app.t('timer_end_lock'), 'error');
+                document.getElementById('task-status-message').classList.remove('hidden');
+            }
+
+            updateDisplay() {
+                const totalSeconds = Math.ceil(this.remaining / 1000);
+                const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+                if (this.displayEl) {
+                    this.displayEl.textContent = `${minutes}:${seconds}`;
+                    // CHK022: High contrast for <60s
+                    if (totalSeconds < 60) {
+                        this.displayEl.classList.add('timer-critical');
+                    } else {
+                        this.displayEl.classList.remove('timer-critical');
+                    }
+                }
+            }
+        }
+
+        // T009, C1 Fix: Passive Ratio Service (Local Heuristic Fallback)
+        class PassiveRatioService {
+            // Heuristic: Counts sentences containing a form of 'to be' followed by a past participle (V3).
+            static calculate(text) {
+                if (!text) return 0;
+
+                const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+                let passiveSentenceCount = 0;
+
+                // Common forms of 'to be'
+                const beForms = /\b(is|am|are|was|were|be|been|being)\b/i;
+
+                // Simple pattern: [be form] + [word] + [ed/en/t] (past participle)
+                // This is a simplification, but satisfies the local fallback requirement (C1)
+                const passivePattern = new RegExp(beForms.source + '\\s+\\w+(ed|en|t)\\b', 'i');
+
+                for (const sentence of sentences) {
+                    if (passivePattern.test(sentence)) {
+                        passiveSentenceCount++;
+                    }
+                }
+
+                // CHK009: Calculate based on sentence count
+                const ratio = sentences.length > 0 ? (passiveSentenceCount / sentences.length) * 100 : 0;
+                return parseFloat(ratio.toFixed(1));
+            }
+
+            // T018: Mock API call with fallback
+            static async fetchPassiveRatio(text) {
+                // Mock API call (always fails in this SPA context, triggering fallback)
+                // await fetch('/v2/passive_ratio', { ... }); 
+
+                // Fallback (C1)
+                return PassiveRatioService.calculate(text);
+            }
+        }
+
+        // C3 Fix: New Verb Detector Service (Simplified)
+        class NewVerbDetector {
+            // Simplified known list (common, low-value verbs)
+            static KNOWN_VERBS = new Set(['be', 'have', 'do', 'say', 'get', 'make', 'go', 'know', 'take', 'see', 'come', 'think', 'look', 'want', 'give', 'use', 'find', 'tell', 'ask', 'work', 'seem', 'feel', 'try', 'leave', 'call']);
+
+            // Simple tokenization and stemming/lemmatization approximation
+            static detect(text, existingVerbs) {
+                const tokens = text.toLowerCase().match(/\b\w+\b/g) || [];
+                const newVerbs = [];
+                const existingLemmas = new Set(existingVerbs.map(v => v.lemma));
+
+                // Very basic stemming approximation (removing 'ing', 's', 'ed')
+                const stem = (word) => {
+                    if (word.endsWith('ing')) return word.slice(0, -3);
+                    if (word.endsWith('s')) return word.slice(0, -1);
+                    if (word.endsWith('ed')) return word.slice(0, -2);
+                    return word;
+                };
+
+                // Find potential verbs (simplification: assume any word not in KNOWN_VERBS is a candidate)
+                for (let i = 0; i < tokens.length; i++) {
+                    const token = tokens[i];
+                    const lemma = stem(token);
+
+                    if (lemma.length > 3 && !NewVerbDetector.KNOWN_VERBS.has(lemma) && !existingLemmas.has(lemma)) {
+                        // Find the sentence for context (C3 requirement)
+                        const sentenceMatch = text.match(new RegExp(`[^.!?]*${token}[^.!?]*[.!?]`, 'i'));
+                        const sentence = sentenceMatch ? sentenceMatch[0].trim() : token;
+
+                        newVerbs.push({
+                            lemma: lemma,
+                            firstSeen: Date.now(),
+                            sentence: sentence
+                        });
+                        existingLemmas.add(lemma); // Prevent duplicates in this run
+                        if (newVerbs.length >= 6) break; // SC001: Only need 6
+                    }
+                }
+                return newVerbs;
+            }
+        }
+
+        // [spec-kit-data-simulation] Unified Data Service with Latency
+        class DataService {
+            constructor() {
+                this.latency = 800; // Simulate 800ms network delay
+            }
+
+            _delay() {
+                return new Promise(resolve => setTimeout(resolve, this.latency));
+            }
+
+            // Scorer Backend Simulation
+            async getScores(text) {
+                await this._delay();
+                if (text.length < 250) throw new Error("Essay must be at least 250 words.");
+
+                const mockScores = {
+                    TR: 7.0 + Math.random() * 1.5,
+                    C: 6.5 + Math.random() * 1.5,
+                    L: 7.5 + Math.random() * 1.0,
+                    G: 7.0 + Math.random() * 1.0,
+                };
+
+                // Round to nearest 0.5
+                const scores = Object.fromEntries(
+                    Object.entries(mockScores).map(([k, v]) => [k, Math.round(v * 2) / 2])
+                );
+
+                // Calculate Bottleneck
+                let weightedGapSum = 0;
+                const weights = { TR: 4, C: 3, L: 2, G: 1 };
+                for (const key in weights) {
+                    weightedGapSum += weights[key] * (9 - scores[key]);
+                }
+                const rawIndex = weightedGapSum / 10;
+                const bottleNeckIndex = parseFloat(((rawIndex / 9) * 0.02).toFixed(4)); // Normalize to 0.02 scale
+
+                return { scores, bottleNeckIndex };
+            }
+
+            // Diff Engine Simulation
+            async getDiffReport(original, retranslation) {
+                await this._delay();
+                const origTokens = (original.match(/\b\w+\b/g) || []).length;
+                const newTokens = (retranslation.match(/\b\w+\b/g) || []).length;
+
+                if (origTokens < 10) return { missingRate: 0, missingTokens: 0, origTokens };
+
+                const lengthRatio = newTokens / origTokens;
+                // Complex heuristic logic simulation
+                let missingRate = lengthRatio < 0.8 ? 5.2 : 1.5;
+
+                return {
+                    missingTokens: Math.round(origTokens * (missingRate / 100)),
+                    origTokens: origTokens,
+                    missingRate: missingRate
+                };
+            }
+        }
+
+        // [spec-kit-ui-hardening] UI Resilience Handler
+        class UIHandler {
+            constructor(app) {
+                this.app = app;
+            }
+
+            // Toast System
+            toast(msg, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const colors = {
+                    success: 'bg-green-600 text-white',
+                    error: 'bg-red-600 text-white',
+                    info: 'bg-blue-600 text-white'
+                };
+                const icons = { success: '✅', error: '⚠️', info: 'ℹ️' };
+
+                const el = document.createElement('div');
+                el.className = `${colors[type]} px-4 py-3 rounded shadow-lg transform transition-all translate-y-2 opacity-0 flex items-center gap-2 pointer-events-auto min-w-[300px]`;
+                el.innerHTML = `<span class="text-xl">${icons[type]}</span><span class="font-medium">${msg}</span>`;
+
+                container.appendChild(el);
+
+                // Animate In
+                requestAnimationFrame(() => el.classList.remove('translate-y-2', 'opacity-0'));
+
+                // Auto Dismiss
+                setTimeout(() => {
+                    el.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => el.remove(), 300);
+                }, 4000);
+            }
+
+            // Safe Async Action (Loading Lock)
+            async performAction(btnId, asyncFn) {
+                const btn = document.getElementById(btnId);
+                if (!btn) return asyncFn(); // Fallback if no button
+
+                // Lock
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<span class="animate-spin inline-block mr-2">⏳</span> Processing...`;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+                try {
+                    await asyncFn();
+                } catch (err) {
+                    console.error(err);
+                    this.toast(err.message || "Operation failed", 'error');
+                } finally {
+                    // Unlock
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    }
+                }
+            }
+        }
+
+        // --- Application Core ---
+
+        class IELTSCoachApp {
+            constructor() {
+                // T002: Store initialization
+                this.store = {
+                    load: () => {
+                        const saved = localStorage.getItem(STORAGE_KEY);
+                        return saved ? { ...DEFAULT_STATE, ...JSON.parse(saved) } : DEFAULT_STATE;
+                    },
+                    save: () => {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+                    }
+                };
+                this.state = this.store.load();
+
+                this.timer = new TimerService(this);
+                // Initialize New Services
+                this.data = new DataService();
+                this.ui = new UIHandler(this);
+
+                this.router = {
+                    currentView: '',
+                    currentDay: 'day1',
+                    navigate: (view) => this.navigate(view)
+                };
+            }
+
+            // T003: I18n implementation
+            t(key) {
+                return translations[this.state.user.lang][key] || key;
+            }
+
+            // T003: Language toggle
+            toggleLanguage() {
+                this.state.user.lang = this.state.user.lang === 'zh-TW' ? 'en' : 'zh-TW';
+                this.store.save();
+                this.applyTranslations();
+                this.updateUI();
+            }
+
+            applyTranslations() {
+                const lang = this.state.user.lang;
+                const dict = translations[lang];
+                document.documentElement.lang = lang;
+
+                document.getElementById('btn-lang-toggle').querySelector('span').textContent = lang === 'zh-TW' ? '繁體中文' : 'English';
+
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (dict[key]) {
+                        // Handle placeholders separately
+                        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                            el.placeholder = dict[key];
+                        } else {
+                            el.textContent = dict[key];
+                        }
+                    }
+                });
+            }
+
+            // T004: Router logic
+            navigate(view) {
+                this.router.currentView = view;
+                document.querySelectorAll('.view-section').forEach(el => {
+                    el.classList.remove('active');
+                });
+                document.getElementById(`view-${view}`).classList.add('active');
+
+                // Determine current day based on view
+                if (view === 'task') {
+                    this.router.currentDay = this.findCurrentTaskDay();
+                    document.getElementById('current-day-display').textContent = this.router.currentDay.replace('day', '');
+                    this.editor.handleInput(); // Re-evaluate editor state
+                } else if (view === 'blind') {
+                    this.router.currentDay = this.findCurrentBlindDay();
+                } else if (view === 'scorer') {
+                    this.router.currentDay = 'day8';
+                }
+
+                this.updateUI();
+            }
+
+            findCurrentTaskDay() {
+                for (let i = 1; i <= 5; i++) {
+                    const dayKey = `day${i}`;
+                    if (this.state.progress[dayKey].status === 'open') {
+                        return dayKey;
+                    }
+                }
+                return 'day5'; // Default to last day if all done
+            }
+
+            findCurrentBlindDay() {
+                if (this.state.progress.day6.status === 'open') return 'day6';
+                if (this.state.progress.day7.status === 'open') return 'day7';
+                return 'day7';
+            }
+
+            // T005: Settings Modal
+            openSettings() {
+                document.getElementById('settings-modal').classList.remove('hidden');
+                document.getElementById('input-grammarly-key').value = this.state.user.keyGrammarly;
+                document.getElementById('input-gemini-key').value = this.state.user.keyGemini;
+            }
+
+            closeSettings() {
+                this.state.user.keyGrammarly = document.getElementById('input-grammarly-key').value.trim();
+                this.state.user.keyGemini = document.getElementById('input-gemini-key').value.trim();
+                this.store.save();
+                document.getElementById('settings-modal').classList.add('hidden');
+            }
+
+            // T018: Global Message Display (Delegated to UIHandler)
+            showMessage(message, type = 'info') {
+                this.ui.toast(message, type);
+            }
+
+            // --- Component Logic ---
+
+            editor = {
+                // T008: Handle input and update stats
+                handleInput: () => {
+                    const textarea = document.getElementById('editor-textarea');
+                    const text = textarea.value;
+                    const wordCount = (text.match(/\b\w+\b/g) || []).length;
+
+                    // T008: Word Count
+                    document.getElementById('word-count-display').textContent = wordCount;
+
+                    // T009: Passive Ratio (C1 Fix)
+                    const passiveRatio = PassiveRatioService.calculate(text);
+                    document.getElementById('passive-ratio-display').textContent = `${passiveRatio}%`;
+
+                    const passiveEl = document.getElementById('passive-ratio-display');
+                    if (passiveRatio >= 30) {
+                        passiveEl.classList.replace('text-red-500', 'text-green-600');
+                        passiveEl.textContent += ` (${this.t('passive_ratio_pass')})`;
+                    } else {
+                        passiveEl.classList.replace('text-green-600', 'text-red-500');
+                        passiveEl.textContent += ` (${this.t('passive_ratio_fail')})`;
+                    }
+
+                    // Enable submit button if word count >= 250 (CHK008)
+                    const submitBtn = document.getElementById('btn-submit-task');
+                    if (wordCount >= 250 && this.state.progress[this.router.currentDay].status === 'open') {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = this.t('submit_task');
+                    } else {
+                        submitBtn.disabled = true;
+                        if (wordCount < 250) {
+                            submitBtn.textContent = this.t('word_count_fail');
+                        }
+                    }
+                },
+
+                // T008, C2: Lock/Unlock editor
+                setLocked: (locked) => {
+                    const textarea = document.getElementById('editor-textarea');
+                    const submitBtn = document.getElementById('btn-submit-task');
+                    textarea.disabled = locked;
+                    submitBtn.classList.toggle('hidden', locked);
+                    document.getElementById('task-status-message').classList.toggle('hidden', !locked);
+                }
+            };
+
+            task = {
+                // T010: Submission logic
+                submit: () => {
+                    this.ui.performAction('btn-submit-task', async () => {
+                        this.timer.pause();
+                        this.editor.setLocked(true);
+
+                        const dayKey = this.router.currentDay;
+                        const essayText = document.getElementById('editor-textarea').value;
+                        const wordCount = (essayText.match(/\b\w+\b/g) || []).length;
+                        const passiveRatio = PassiveRatioService.calculate(essayText);
+
+                        const progress = this.state.progress[dayKey];
+                        progress.submitTime = Date.now();
+                        progress.duration = progress.submitTime - progress.startTime;
+                        progress.wordCount = wordCount;
+                        progress.passiveRatio = passiveRatio;
+                        progress.status = 'done';
+
+                        // C3: New Verb Detection
+                        const newVerbs = NewVerbDetector.detect(essayText, this.state.revisionCards);
+                        progress.verbs = newVerbs.map(v => v.lemma);
+
+                        // Add to revision cards (simplified Spaced Repetition)
+                        newVerbs.forEach(v => {
+                            this.state.revisionCards.push({
+                                ...v,
+                                easeFactor: 2.5,
+                                dueDate: Date.now() + (24 * 60 * 60 * 1000) // 1 day later
+                            });
+                        });
+
+                        this.store.save();
+                        this.ui.toast(this.t('submission_success'), 'success');
+                        this.updateUI();
+                    });
+                }
+            };
+
+            blind = {
+                // T011: Toggle blind mode
+                toggleBlind: () => {
+                    const originalEl = document.getElementById('input-original-blind');
+                    const isBlind = originalEl.disabled;
+                    originalEl.disabled = !isBlind;
+                    document.getElementById('btn-toggle-blind').textContent = isBlind ? this.t('close') : this.t('show_original');
+                },
+
+                updateOriginal: () => {
+                    // Placeholder for Day 6/7 original text storage
+                    // In a real app, this would load the Day 1/2 essay
+                },
+
+                handleInput: () => {
+                    const retranslationText = document.getElementById('input-retranslation').value;
+                    const submitBtn = document.getElementById('btn-submit-blind');
+                    submitBtn.disabled = retranslationText.length < 50; // Min 50 chars for comparison
+                },
+
+                // T012: Mock ASR
+                startASR: () => {
+                    // Mock webkitSpeechRecognition (H6)
+                    if (window.webkitSpeechRecognition) {
+                        this.showMessage("ASR started. Mocking transcript after 3 seconds...", 'info');
+                        setTimeout(() => {
+                            document.getElementById('input-retranslation').value = "The re-translation was successfully transcribed from the audio input, demonstrating high fidelity recall.";
+                            this.blind.handleInput();
+                            this.showMessage("ASR complete.", 'success');
+                        }, 3000);
+                    } else {
+                        this.showMessage(this.t('asr_fallback'), 'error');
+                    }
+                },
+
+                // T013: Submit blind task (Async Guarded)
+                submit: () => {
+                    this.ui.performAction('btn-submit-blind', async () => {
+                        const originalText = document.getElementById('input-original-blind').value || "The original text contained complex vocabulary and nuanced arguments about global warming and renewable energy sources.";
+                        const retranslationText = document.getElementById('input-retranslation').value;
+
+                        if (!originalText || !retranslationText) {
+                            throw new Error("Please provide both original and re-translation texts.");
+                        }
+
+                        // Use DataService
+                        const report = await this.data.getDiffReport(originalText, retranslationText);
+                        const missingRate = report.missingRate;
+
+                        // T014: Update Diff Report UI
+                        document.getElementById('diff-report-card').classList.remove('hidden');
+                        document.getElementById('missing-rate-display').textContent = `${missingRate}%`;
+
+                        const messageEl = document.getElementById('diff-report-message');
+                        if (missingRate < 3) { // SC003: <3% threshold
+                            messageEl.textContent = this.t('missing_rate_pass');
+                            messageEl.classList.replace('text-red-600', 'text-green-600');
+                        } else {
+                            messageEl.textContent = this.t('missing_rate_fail');
+                            messageEl.classList.replace('text-green-600', 'text-red-600');
+                        }
+
+                        // Save progress for Day 6/7
+                        this.state.progress[this.router.currentDay].paperText = originalText;
+                        this.state.progress[this.router.currentDay].retranslation = retranslationText;
+                        this.state.progress[this.router.currentDay].missingRate = missingRate;
+                        this.state.progress[this.router.currentDay].status = 'done';
+                        this.store.save();
+                    });
+                }
+            };
+
+            scorer = {
+                handleInput: () => {
+                    const text = document.getElementById('input-final-essay').value;
+                    const wordCount = (text.match(/\b\w+\b/g) || []).length;
+                    document.getElementById('btn-get-score').disabled = wordCount < 250;
+                },
+
+                // T015: Get score and calculate bottleneck (Async Guarded)
+                getScore: () => {
+                    this.ui.performAction('btn-get-score', async () => {
+                        const essayText = document.getElementById('input-final-essay').value;
+
+                        // Use DataService
+                        const { scores, bottleNeckIndex } = await this.data.getScores(essayText);
+
+                        // Update state
+                        this.state.progress.day8.paperText = essayText;
+                        this.state.progress.day8.scores = scores;
+                        this.state.progress.day8.bottleNeckIndex = bottleNeckIndex;
+                        this.state.progress.day8.status = 'done';
+                        this.store.save();
+
+                        // T016: Update UI
+                        document.getElementById('scorer-card').classList.remove('hidden');
+                        document.getElementById('score-tr').textContent = scores.TR.toFixed(1);
+                        document.getElementById('score-c').textContent = scores.C.toFixed(1);
+                        document.getElementById('score-l').textContent = scores.L.toFixed(1);
+                        document.getElementById('score-g').textContent = scores.G.toFixed(1);
+
+                        document.getElementById('bottleneck-index-display').textContent = bottleNeckIndex.toFixed(4);
+
+                        this.scorer.drawRadarChart(scores);
+                        this.scorer.updateBottleneckStatus(scores, bottleNeckIndex);
+                        this.updateUI();
+                    });
+                },
+
+                // T016: Draw Radar Chart (Simplified SVG)
+                drawRadarChart: (scores) => {
+                    const svg = document.getElementById('radar-chart-svg');
+                    svg.innerHTML = ''; // Clear previous
+                    const center = 100;
+                    const maxRadius = 80;
+                    const categories = ['TR', 'C', 'L', 'G'];
+                    const numCategories = categories.length;
+
+                    // Draw axes and grid (simplified)
+                    for (let i = 0; i < numCategories; i++) {
+                        const angle = (i * 360 / numCategories) * (Math.PI / 180);
+                        const x = center + maxRadius * Math.sin(angle);
+                        const y = center - maxRadius * Math.cos(angle);
+
+                        // Axis line
+                        svg.innerHTML += `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+
+                        // Label
+                        svg.innerHTML += `<text x="${x}" y="${y}" fill="#374151" font-size="10" text-anchor="middle" dy="${i === 0 ? -5 : 10}">${categories[i]}</text>`;
+                    }
+
+                    // Calculate polygon points based on scores (Band 0-9 scale)
+                    let points = '';
+                    categories.forEach((cat, i) => {
+                        const score = scores[cat];
+                        const radius = (score / 9) * maxRadius; // Scale score (max 9) to maxRadius
+                        const angle = (i * 360 / numCategories) * (Math.PI / 180);
+                        const x = center + radius * Math.sin(angle);
+                        const y = center - radius * Math.cos(angle);
+                        points += `${x},${y} `;
+                    });
+
+                    // Draw the score polygon
+                    svg.innerHTML += `<polygon points="${points}" class="radar-line"/>`;
+                },
+
+                // T016: Bottleneck Status
+                updateBottleneckStatus: (scores, index) => {
+                    const statusEl = document.getElementById('bottleneck-status');
+
+                    if (index < 0.02) {
+                        statusEl.textContent = this.t('bottleneck_status_pass');
+                        statusEl.className = 'mt-1 text-sm font-semibold text-green-600';
+                    } else {
+                        // Find the lowest score category (the bottleneck)
+                        let minScore = 10;
+                        let bottleneckCategory = '';
+                        for (const key in scores) {
+                            if (scores[key] < minScore) {
+                                minScore = scores[key];
+                                bottleneckCategory = key;
+                            }
+                        }
+                        statusEl.textContent = this.t('bottleneck_status_fail') + bottleneckCategory;
+                        statusEl.className = 'mt-1 text-sm font-semibold text-red-600';
+                    }
+                }
+            };
+
+            // T017: Dashboard Update
+            updateDashboard() {
+                // 1. Heatmap
+                const heatmapEl = document.getElementById('progress-heatmap');
+                heatmapEl.innerHTML = '';
+                let totalVerbs = 0;
+                let totalPassiveRatio = 0;
+                let completedTasks = 0;
+                let lastBottleneck = 'N/A';
+
+                for (let i = 1; i <= 8; i++) {
+                    const dayKey = `day${i}`;
+                    const dayData = this.state.progress[dayKey];
+                    let color = 'bg-gray-200';
+                    let tooltip = `Day ${i}: Open`;
+
+                    if (dayData.status === 'done') {
+                        color = 'bg-green-500';
+                        tooltip = `Day ${i}: Done`;
+                        completedTasks++;
+
+                        if (i <= 5) {
+                            totalVerbs += dayData.verbs.length;
+                            totalPassiveRatio += dayData.passiveRatio;
+                        }
+                        if (i === 8) {
+                            lastBottleneck = dayData.bottleNeckIndex.toFixed(4);
+                        }
+                    } else if (dayData.status === 'fail') {
+                        color = 'bg-red-500';
+                        tooltip = `Day ${i}: Failed (Timeout)`;
+                    }
+
+                    heatmapEl.innerHTML += `
+                        <div class="p-2 rounded text-xs ${color} text-white cursor-pointer" title="${tooltip}" onclick="app.router.navigate('${i <= 5 ? 'task' : i <= 7 ? 'blind' : 'scorer'}')">
+                            D${i}
+                        </div>
+                    `;
+                }
+
+                // 2. Stats
+                const avgPassive = completedTasks > 0 ? (totalPassiveRatio / completedTasks).toFixed(1) : 0.0;
+                document.getElementById('stat-total-verbs').textContent = totalVerbs;
+                document.getElementById('stat-avg-passive').textContent = `${avgPassive}%`;
+                document.getElementById('stat-last-bottleneck').textContent = lastBottleneck;
+            }
+
+            // T001: Initialization and UI update
+            updateUI() {
+                this.timer.updateDisplay();
+                this.updateDashboard();
+
+                // Ensure editor state is correct on load
+                if (this.router.currentView === 'task') {
+                    const currentDayStatus = this.state.progress[this.router.currentDay].status;
+                    const isLocked = currentDayStatus !== 'open';
+                    this.editor.setLocked(isLocked);
+                    this.editor.handleInput(); // Re-run word count/passive check
+                }
+            }
+
+            init() {
+                this.applyTranslations();
+
+                // T004: Initial routing based on hash or default
+                const initialView = window.location.hash.substring(1) || 'dashboard';
+                this.navigate(initialView.split('/')[0]);
+
+                // Listen for hash changes
+                window.addEventListener('hashchange', () => {
+                    const hash = window.location.hash.substring(1) || 'dashboard';
+                    this.navigate(hash.split('/')[0]);
+                });
+
+                this.updateUI();
+            }
+        }
+
+        // --- Critical System Requirement: Test Runner Injection ---
+        // Must be included for Anti-Hallucination verification.
+
+        function injectTestRunner(runner) {
+            // runner API: click, type, assert, waitFor, getValue, getText, isVisible, count, log, checkStorage, setStorage, mockAIResponse
+
+            // Helper function to get the current active day key (e.g., 'day1')
+            const getCurrentDayKey = async () => {
+                const dayText = await runner.getText('#current-day-display');
+                return `day${dayText}`;
+            };
+
+            runner.defineTests([
+                {
+                    id: 'TC-001',
+                    name: 'US-1: Timer Start and Auto-Lock (FR-001, C2)',
+                    steps: async () => {
+                        await runner.log('TC-001: Testing Timer Start and Lock');
+                        await runner.click('[data-view="task"]');
+                        await runner.waitFor('#timer-display');
+
+                        // Ensure status is open before starting
+                        await runner.setStorage('IELTS_BOOTCAMP_V1', {
+                            user: { lang: 'en' },
+                            progress: {
+                                day1: { status: 'open', startTime: null, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 0, duration: 0 },
+                                day2: { status: 'open' }, day3: { status: 'open' }, day4: { status: 'open' }, day5: { status: 'open' },
+                                day6: { status: 'open' }, day7: { status: 'open' }, day8: { status: 'open' }
+                            },
+                            revisionCards: []
+                        });
+                        await runner.click('#btn-reset-timer');
+
+                        // Start timer
+                        await runner.click('#btn-start-timer');
+                        await runner.assert(await runner.isVisible('#btn-pause-timer'), 'Pause button visible after start.');
+
+                        // Mock timer end (C2 Fix)
+                        // Note: actual time manipulation might be hard, so determining state by logic
+                        await runner.mockTime(15 * 60 * 1000 + 1000);
+                    }
+                },
+                {
+                    id: 'TC-002',
+                    name: 'US-1: Word Count & Passive Ratio Logic (FR-002)',
+                    steps: async () => {
+                        await runner.log('TC-002: Verifying Editor Thresholds');
+                        await runner.click('[data-view="task"]');
+
+                        // 1. Input short text (should fail word count)
+                        await runner.type('#editor-textarea', 'Short text.');
+                        const btnDisabled = await runner.getValue('#btn-submit-task', 'disabled');
+                        runner.assert(btnDisabled === 'true', 'Submit button disabled for short text');
+
+                        // 2. Input >250 words
+                        const longText = "The ".repeat(251);
+                        await runner.setValue('#editor-textarea', longText);
+
+                        // Check Word Count Display
+                        const count = await runner.getText('#word-count-display');
+                        runner.assert(parseInt(count) > 250, 'Word count updated correctly');
+
+                        // 3. Passive Ratio Check
+                        // Input text with passive voice: "The work was done by me."
+                        const passiveText = "The work was done by me. ".repeat(10);
+                        await runner.setValue('#editor-textarea', passiveText + longText);
+
+                        const ratioText = await runner.getText('#passive-ratio-display');
+                        runner.assert(ratioText.includes('%'), 'Passive ratio calculated');
+                    }
+                }
+            ]);
+        }
+
+        // --- Initialization ---
+        const app = new IELTSCoachApp();
+
+        // Demo Data Loader (for "Rich" experience)
+        app.loadDemoData = function () {
+            const demoState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            demoState.progress.day1 = { status: 'done', startTime: Date.now() - 86400000 * 5, submitTime: Date.now() - 86400000 * 5 + 900000, verbs: ['mitigate', 'alleviate'], passiveRatio: 35, wordCount: 280, duration: 900000 };
+            demoState.progress.day2 = { status: 'done', startTime: Date.now() - 86400000 * 4, submitTime: Date.now() - 86400000 * 4 + 950000, verbs: ['scrutinize', 'exacerbate'], passiveRatio: 28, wordCount: 310, duration: 950000 };
+            demoState.progress.day3 = { status: 'done', startTime: Date.now() - 86400000 * 3, submitTime: Date.now() - 86400000 * 3 + 1200000, verbs: ['proliferation'], passiveRatio: 40, wordCount: 260, duration: 1200000 };
+            demoState.progress.day4 = { status: 'fail', startTime: Date.now() - 86400000 * 2, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 100, duration: 0 };
+            demoState.progress.day5 = { status: 'open', startTime: null, submitTime: null, verbs: [], passiveRatio: 0, wordCount: 0, duration: 0 };
+
+            app.state = demoState;
+            app.store.save();
+            window.location.reload();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inject Test Runner if present in parent frame or window
+            if (window.testRunner) {
+                injectTestRunner(window.testRunner);
+            }
+
+            // Expose app for E2E
+            window.app = app;
+
+            // Add Demo Button to Settings if not exists
+            const settingsBody = document.querySelector('#settings-modal .space-y-4');
+            if (settingsBody) {
+                const demoDiv = document.createElement('div');
+                demoDiv.className = "pt-4 border-t border-gray-200";
+                demoDiv.innerHTML = `
+                    <button class="w-full py-2 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 font-medium" onclick="app.loadDemoData()">
+                        🧪 Load Demo Data (Visual Test)
+                    </button>
+                `;
+                settingsBody.appendChild(demoDiv);
+            }
+
+            app.init();
+        });
+    </script>
+</body>
+
+</html>

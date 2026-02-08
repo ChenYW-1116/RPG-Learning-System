@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app-title">結構化寫作訓練系統</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* Custom Scrollbar Design */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* slate-300 */
+            border-radius: 4px;
+        }
+        
+        /* Custom Blur Utility for Blind Retranslation */
+        .blur-lg {
+            filter: blur(8px);
+        }
+        
+        /* Ensure main content takes up required height */
+        .view-section {
+            min-height: calc(100vh - 64px); /* Accounting for fixed header height */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased">
+
+    <!-- Header and Navigation -->
+    <header class="sticky top-0 z-10 bg-white shadow-md py-3 px-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-indigo-600" data-i18n="app-title">結構化寫作訓練系統</h1>
+            
+            <!-- Navigation -->
+            <nav class="flex space-x-4">
+                <a href="#" class="nav-link text-gray-600 hover:text-indigo-600 font-medium transition duration-150" data-view="sprint" data-i18n="nav-sprint">動詞衝刺</a>
+                <a href="#" class="nav-link text-gray-600 hover:text-indigo-600 font-medium transition duration-150" data-view="blind" data-i18n="nav-blind">盲寫回譯</a>
+                <a href="#" class="nav-link text-gray-600 hover:text-indigo-600 font-medium transition duration-150" data-view="dashboard" data-i18n="nav-dashboard">效能儀表板</a>
+            </nav>
+            
+            <!-- Settings Button -->
+            <button id="btn-settings-modal" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 transition duration-150" aria-label="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- ==================================================================== -->
+        <!-- Module 1: 動詞衝刺 (Verb Sprint) -->
+        <!-- ==================================================================== -->
+        <section id="view-sprint" class="view-section container mx-auto p-4 transition-opacity duration-300" style="display: block;">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6" data-i18n="sprint-title">動詞衝刺訓練 (Verb Sprint)</h2>
+            
+            <div class="lg:grid lg:grid-cols-3 gap-6">
+                
+                <!-- Column 1: Timer and Controls (Card) -->
+                <div class="lg:col-span-1 bg-white rounded-lg shadow-lg p-6 mb-6 lg:mb-0">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4" data-i18n="sprint-timer">剩餘時間</h3>
+                    
+                    <!-- Timer Display -->
+                    <div id="timer-display" class="text-7xl font-extrabold text-indigo-600 text-center mb-6">
+                        15:00
+                    </div>
+                    
+                    <!-- Control Buttons -->
+                    <div class="flex justify-between space-x-3">
+                        <button id="btn-timer-start" class="flex-1 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition duration-150 shadow-md" data-i18n="btn-start">開始衝刺</button>
+                        <button id="btn-timer-pause" class="flex-1 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition duration-150 shadow-md" data-i18n="btn-pause">暫停</button>
+                        <button id="btn-timer-reset" class="flex-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-150 shadow-md" data-i18n="btn-reset">重設</button>
+                    </div>
+                    
+                    <!-- Targets -->
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <p class="text-sm text-gray-600 mb-2 font-medium" data-i18n="target-verbs">目標新動詞: 6+</p>
+                        <p class="text-sm text-gray-600 font-medium" data-i18n="target-passive">目標被動語態比例: ≥ 30%</p>
+                    </div>
+                </div>
+                
+                <!-- Column 2 & 3: Tracking and Data Input (Card) -->
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                    
+                    <!-- Verb Tracking Status -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="label-new-verbs">所需新動詞數量</label>
+                            <div id="status-new-verbs" class="mt-1 text-3xl font-bold text-indigo-600">6</div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="label-passive-ratio">被動語態預覽</label>
+                            <div id="status-passive-ratio" class="mt-1 text-3xl font-bold text-gray-800">0.0%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Verb List Input -->
+                    <div class="mb-6">
+                        <label for="verb-list-input" class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label-verb-list">輸入使用的動詞清單 (每行一個)</label>
+                        <textarea id="verb-list-input" rows="6" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-gray-800" placeholder="e.g., utilize&#10;implement&#10;demonstrate"></textarea>
+                    </div>
+                    
+                    <!-- Grammarly JSON Input -->
+                    <div>
+                        <label for="grammarly-json-input" class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label-grammarly-json">貼上 Grammarly JSON 結果</label>
+                        <textarea id="grammarly-json-input" rows="4" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-gray-800" placeholder="{... JSON data ...}"></textarea>
+                        <button id="btn-upload-grammarly" class="mt-3 w-full py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition duration-150 shadow-md" data-i18n="btn-calculate-omission">完成比對並計算遺漏率</button>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- Module 2: 盲寫回譯 (Blind Retranslation) -->
+        <!-- ==================================================================== -->
+        <section id="view-blind" class="view-section container mx-auto p-4 transition-opacity duration-300" style="display: none;">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6" data-i18n="blind-title">盲寫回譯訓練 (Blind Retranslation)</h2>
+            
+            <!-- Controls and Metrics -->
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                <button id="btn-toggle-blind" class="py-2 px-4 bg-gray-600 text-white rounded hover:bg-gray-700 transition duration-150 shadow-md w-full sm:w-auto" data-i18n="btn-toggle-blind">切換隱藏/顯示原始文本</button>
+                <div class="text-lg font-medium text-gray-700">
+                    <span data-i18n="label-omission-rate">數據遺漏率 (OR)</span>: 
+                    <span id="status-omission-rate" class="text-indigo-600 font-bold">0.0%</span>
+                </div>
+            </div>
+            
+            <!-- Three Column Input Grid -->
+            <div class="lg:grid lg:grid-cols-3 gap-6">
+                
+                <!-- Column 1: Original English -->
+                <div class="mb-6 lg:mb-0">
+                    <label for="original-english" class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label-original-en">原始英文 (Original English)</label>
+                    <textarea id="original-english" rows="15" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-500 text-gray-800" placeholder="Paste the source text here."></textarea>
+                </div>
+                
+                <!-- Column 2: Chinese Interpretation/Notes -->
+                <div class="mb-6 lg:mb-0">
+                    <label for="chinese-notes" class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label-chinese-notes">中文口譯/筆記 (Chinese Interpretation/Notes)</label>
+                    <textarea id="chinese-notes" rows="15" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-gray-800" placeholder="Your notes or interpretation."></textarea>
+                </div>
+                
+                <!-- Column 3: Retranslated English -->
+                <div>
+                    <label for="retranslated-english" class="block text-sm font-medium text-gray-700 mb-2" data-i18n="label-retranslated-en">回譯英文 (Retranslated English)</label>
+                    <textarea id="retranslated-english" rows="15" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-gray-800" placeholder="Your retranslation based on notes."></textarea>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <button id="btn-calculate-blind" class="w-full py-3 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition duration-150 shadow-lg" data-i18n="btn-calculate-omission">完成比對並計算遺漏率</button>
+            </div>
+        </section>
+
+        <!-- ==================================================================== -->
+        <!-- Module 3: 效能儀表板 (Dashboard) -->
+        <!-- ==================================================================== -->
+        <section id="view-dashboard" class="view-section container mx-auto p-4 transition-opacity duration-300" style="display: none;">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6" data-i18n="dashboard-title">效能儀表板 (Performance Dashboard)</h2>
+            
+            <div class="lg:grid lg:grid-cols-3 gap-6">
+                
+                <!-- Column 1: Data Entry Form (Card) -->
+                <div class="lg:col-span-1 bg-white rounded-lg shadow-lg p-6 mb-6 lg:mb-0">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4 border-b pb-2" data-i18n="dashboard-data-entry">手動錄入測驗成績</h3>
+                    
+                    <form id="data-entry-form" class="space-y-4">
+                        
+                        <!-- Date -->
+                        <div>
+                            <label for="data-date" class="block text-sm font-medium text-gray-700" data-i18n="label-date">日期</label>
+                            <input type="date" id="data-date" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-800" required>
+                        </div>
+                        
+                        <!-- Band Score -->
+                        <div>
+                            <label for="data-band-score" class="block text-sm font-medium text-gray-700" data-i18n="label-band-score">Band Score</label>
+                            <input type="number" id="data-band-score" step="0.5" min="1.0" max="9.0" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-800" placeholder="e.g., 7.5" required>
+                        </div>
+                        
+                        <!-- GIC -->
+                        <div>
+                            <label for="data-gic" class="block text-sm font-medium text-gray-700" data-i18n="label-gic">Grammarly Issue Count (GIC)</label>
+                            <input type="number" id="data-gic" step="1" min="0" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-800" placeholder="e.g., 12" required>
+                        </div>
+                        
+                        <!-- OR -->
+                        <div>
+                            <label for="data-or" class="block text-sm font-medium text-gray-700" data-i18n="label-or">Omission Rate (OR)</label>
+                            <input type="number" id="data-or" step="0.1" min="0.0" max="100.0" class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-800" placeholder="e.g., 5.3" required>
+                        </div>
+                        
+                        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded hover:bg-green-700 transition duration-150 mt-4 shadow-md" data-i18n="btn-submit-data">提交數據</button>
+                    </form>
+                </div>
+                
+                <!-- Column 2 & 3: Chart Container (Card) -->
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-700 mb-4" data-i18n="chart-title">瓶頸指數 (BI) 趨勢圖</h3>
+                    
+                    <!-- Chart Placeholder -->
+                    <div id="bi-chart-container" class="w-full h-80 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-500 rounded-md">
+                        <p>BI Chart Placeholder (Future SVG Rendering)</p>
+                    </div>
+                    
+                    <p class="mt-4 text-sm text-gray-600" data-i18n="chart-target">目標提示: BI &lt; 0.02 為目標紅線</p>
+                </div>
+                
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================================================================== -->
+    <!-- Settings Modal -->
+    <!-- ==================================================================== -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900 bg-opacity-50 transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full p-8 m-4 relative transform transition-all duration-300">
+            
+            <!-- Close button -->
+            <button id="btn-close-settings" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <h3 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-2" data-i18n="settings-title">設定與備份</h3>
+            
+            <div class="space-y-5">
+                
+                <!-- API Key Input -->
+                <div>
+                    <label for="api-key-input" class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label-api-key">AI API 金鑰 (Base64 加密)</label>
+                    <input type="password" id="api-key-input" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-800" placeholder="Enter Base64 encoded key">
+                </div>
+                
+                <!-- Language Switch -->
+                <div>
+                    <label for="lang-switcher" class="block text-sm font-medium text-gray-700 mb-1" data-i18n="label-language">語言切換</label>
+                    <select id="lang-switcher" class="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-800">
+                        <option value="zh-TW">繁體中文 (zh-TW)</option>
+                        <option value="en">English (en)</option>
+                    </select>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="pt-4 border-t border-gray-100 flex justify-between space-x-3">
+                    <button id="btn-save-settings" class="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition duration-150 shadow-sm" data-i18n="btn-save-settings">儲存設定</button>
+                    <button id="btn-clear-data" class="flex-1 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition duration-150 shadow-sm" data-i18n="btn-clear-data">清除所有資料</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- Toast Notification Center -->
+    <!-- ==================================================================== -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-40 space-y-2 pointer-events-none">
+        <!-- Toasts will be dynamically inserted here -->
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- JavaScript Logic -->
+    <!-- ==================================================================== -->
+    <script>
+        const translations = {
+            'zh-TW': {
+                'app-title': '結構化寫作訓練系統', 'nav-sprint': '動詞衝刺', 'nav-blind': '盲寫回譯', 'nav-dashboard': '效能儀表板',
+                'sprint-title': '動詞衝刺訓練 (Verb Sprint)', 'sprint-timer': '剩餘時間', 'btn-start': '開始衝刺',
+                'btn-pause': '暫停', 'btn-reset': '重設', 'label-verb-list': '輸入使用的動詞清單 (每行一個)',
+                'label-new-verbs': '所需新動詞數量', 'label-passive-ratio': '被動語態預覽', 'label-grammarly-json': '貼上 Grammarly JSON 結果',
+                'btn-calculate-omission': '完成比對並計算遺漏率', 'target-verbs': '目標新動詞', 'target-passive': '目標被動語態比例',
+                'blind-title': '盲寫回譯訓練 (Blind Retranslation)', 'label-original-en': '原始英文 (Original English)',
+                'label-chinese-notes': '中文口譯/筆記 (Chinese Interpretation/Notes)', 'label-retranslated-en': '回譯英文 (Retranslated English)',
+                'btn-toggle-blind': '切換隱藏/顯示原始文本', 'label-omission-rate': '數據遺漏率 (OR)',
+                'dashboard-title': '效能儀表板 (Performance Dashboard)', 'dashboard-data-entry': '手動錄入測驗成績',
+                'label-date': '日期', 'label-band-score': 'Band Score', 'label-gic': 'Grammarly Issue Count (GIC)',
+                'label-or': 'Omission Rate (OR)', 'btn-submit-data': '提交數據', 'chart-title': '瓶頸指數 (BI) 趨勢圖',
+                'chart-target': '目標提示: BI < 0.02 為目標紅線', 'settings-title': '設定與備份',
+                'label-api-key': 'AI API 金鑰 (Base64 加密)', 'label-language': '語言切換', 'btn-save-settings': '儲存設定',
+                'btn-clear-data': '清除所有資料', 'toast-success': '操作成功', 'toast-error': '發生錯誤',
+                'toast-processing': '處理中...', 'toast-offline': '離線模式啟用',
+            },
+            'en': {
+                'app-title': 'Structured Writing Training System', 'nav-sprint': 'Verb Sprint', 'nav-blind': 'Blind Retranslation', 'nav-dashboard': 'Performance Dashboard',
+                'sprint-title': 'Verb Sprint Training', 'sprint-timer': 'Time Remaining', 'btn-start': 'Start Sprint',
+                'btn-pause': 'Pause', 'btn-reset': 'Reset', 'label-verb-list': 'Enter Used Verb List (one per line)',
+                'label-new-verbs': 'Required New Verbs', 'label-passive-ratio': 'Passive Voice Preview', 'label-grammarly-json': 'Paste Grammarly JSON Result',
+                'btn-calculate-omission': 'Complete Comparison & Calculate Omission Rate', 'target-verbs': 'Target New Verbs', 'target-passive': 'Target Passive Ratio',
+                'blind-title': 'Blind Retranslation Training', 'label-original-en': 'Original English',
+                'label-chinese-notes': 'Chinese Interpretation/Notes', 'label-retranslated-en': 'Retranslated English',
+                'btn-toggle-blind': 'Toggle Hide/Show Original Text', 'label-omission-rate': 'Omission Rate (OR)',
+                'dashboard-title': 'Performance Dashboard', 'dashboard-data-entry': 'Manual Test Score Entry',
+                'label-date': 'Date', 'label-band-score': 'Band Score', 'label-gic': 'Grammarly Issue Count (GIC)',
+                'label-or': 'Omission Rate (OR)', 'btn-submit-data': 'Submit Data', 'chart-title': 'Bottleneck Index (BI) Trend Chart',
+                'chart-target': 'Target Hint: BI < 0.02 is the target red line', 'settings-title': 'Settings & Backup',
+                'label-api-key': 'AI API Key (Base64 Encrypted)', 'label-language': 'Language Switch', 'btn-save-settings': 'Save Settings',
+                'btn-clear-data': 'Clear All Data', 'toast-success': 'Operation Successful', 'toast-error': 'An Error Occurred',
+                'toast-processing': 'Processing...', 'toast-offline': 'Offline Mode Enabled',
+            }
+        };
+        let currentLang = 'zh-TW'; 
+
+        // --- Core UI Elements ---
+        const views = {
+            sprint: document.getElementById('view-sprint'),
+            blind: document.getElementById('view-blind'),
+            dashboard: document.getElementById('view-dashboard')
+        };
+        const settingsModal = document.getElementById('settings-modal');
+        const langSwitcher = document.getElementById('lang-switcher');
+        const originalEnglishTextarea = document.getElementById('original-english');
+
+        // --- I18N Functions ---
+        function applyTranslation(lang) {
+            const elements = document.querySelectorAll('[data-i18n]');
+            const t = translations[lang];
+            if (!t) return;
+
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = t[key];
+                    } else {
+                        el.textContent = t[key];
+                    }
+                }
+            });
+            currentLang = lang;
+            document.title = translations[currentLang]['app-title'];
+        }
+
+        // --- View Switching ---
+        function switchView(targetView) {
+            Object.keys(views).forEach(viewKey => {
+                views[viewKey].style.display = viewKey === targetView ? 'block' : 'none';
+            });
+        }
+
+        // --- Toast Notification Utility ---
+        function showToast(key, color = 'indigo') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colorMap = {
+                'indigo': 'border-indigo-500',
+                'green': 'border-green-500',
+                'red': 'border-red-500',
+                'yellow': 'border-yellow-500',
+            };
+
+            // Use pointer-events-auto for the toast itself so it can be interacted with if needed (though usually not for simple notifications)
+            toast.className = `bg-white border-l-4 ${colorMap[color]} shadow-xl rounded-lg p-4 max-w-xs transition duration-300 ease-out opacity-0 translate-y-2 pointer-events-auto`;
+            toast.innerHTML = `<p class="text-sm font-medium text-gray-800">${translations[currentLang][key] || key}</p>`;
+            
+            container.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+                toast.classList.add('opacity-100', 'translate-y-0');
+            }, 10);
+
+            // Animate out and remove
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // --- Initialization and Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Initialize Language
+            applyTranslation(currentLang);
+            langSwitcher.value = currentLang;
+
+            // 2. Navigation Click Handlers
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = e.target.getAttribute('data-view');
+                    switchView(target);
+                });
+            });
+
+            // 3. Settings Modal Control
+            document.getElementById('btn-settings-modal').addEventListener('click', () => {
+                settingsModal.classList.remove('hidden');
+                settingsModal.classList.add('flex');
+            });
+            
+            const closeModal = () => {
+                settingsModal.classList.add('hidden');
+                settingsModal.classList.remove('flex');
+            };
+            document.getElementById('btn-close-settings').addEventListener('click', closeModal);
+            document.getElementById('btn-save-settings').addEventListener('click', () => {
+                closeModal();
+                showToast('toast-success', 'indigo');
+            });
+            document.getElementById('btn-clear-data').addEventListener('click', () => {
+                if (confirm(translations[currentLang]['btn-clear-data'] + '?')) {
+                    showToast('toast-error', 'red'); // Simulate dangerous action confirmation
+                }
+            });
+
+            // 4. Language Switch Handler
+            langSwitcher.addEventListener('change', (e) => {
+                applyTranslation(e.target.value);});
+
+            // 5. Initialization
+            // Set initial language based on browser preference or storage
+            const initialLang = localStorage.getItem('lang') || (navigator.language.startsWith('es') ? 'es' : 'en');
+            langSwitcher.value = initialLang;
+            applyTranslation(initialLang);
+
+            // Initial welcome toast
+            showToast('toast-info', 'blue');
+
+        }); // End of DOMContentLoaded listener
+
+    </script>
+</body>
+</html>

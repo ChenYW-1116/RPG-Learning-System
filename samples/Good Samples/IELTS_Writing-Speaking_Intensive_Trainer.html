@@ -1,0 +1,2411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="appTitle">IELTS Sprint Training Camp</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* PUT ALL YOUR CUSTOM CSS HERE */
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; /* slate-100 */ }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; /* slate-300 */ border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; /* slate-400 */ }
+
+        /* Loader Spinner */
+        @keyframes spinner {
+            to { transform: rotate(360deg); }
+        }
+        .loader {
+            animation: spinner 1.5s linear infinite;
+        }
+
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 300px;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fade-in-up 0.3s forwards, fade-out 0.5s 4s forwards;
+        }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-out {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+        .toast.success { background-color: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; } /* green-50, green-700, green-200 */
+        .toast.error { background-color: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; } /* red-50, red-800, red-200 */
+        .toast.info { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; } /* blue-50, blue-800, blue-200 */
+        .toast.warning { background-color: #fffbeb; color: #b45309; border: 1px solid #fde68a; } /* amber-50, amber-700, amber-200 */
+
+
+        /* Passive Voice Highlight */
+        .passive-highlight {
+            background-color: #fef08a; /* yellow-200 */
+            border-bottom: 2px solid #facc15; /* yellow-400 */
+            padding: 1px 0;
+        }
+
+        /* Omitted Word Highlight */
+        .omitted-word {
+            background-color: #fee2e2; /* red-100 */
+            color: #ef4444; /* red-500 */
+            border-bottom: 1px dashed #ef4444; /* red-500 */
+            padding: 1px 0;
+        }
+
+        /* Correct Word Highlight */
+        .correct-word {
+            color: #22c55e; /* green-500 */
+        }
+
+        /* Blind Mask Layer */
+        #blind-mask-layer {
+            display: none; /* Hidden by default */
+        }
+        #blind-mask-layer.active {
+            display: flex;
+        }
+        body.blind-active {
+            user-select: none;
+            pointer-events: none; /* Disable all interactions */
+        }
+
+        /* Radar Chart Specifics */
+        .radar-chart .axis-label {
+            font-size: 0.875rem; /* text-sm */
+            fill: #475569; /* slate-700 */
+        }
+        .radar-chart .data-line {
+            fill: rgba(79, 70, 229, 0.2); /* indigo-600 with opacity */
+            stroke: #4f46e5; /* indigo-600 */
+            stroke-width: 2;
+        }
+        .radar-chart .grid-line {
+            stroke: #e2e8f0; /* slate-200 */
+            stroke-width: 1;
+        }
+        .radar-chart .center-circle {
+            fill: #e2e8f0; /* slate-200 */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <!-- PUT YOUR HTML UI COMPONENTS HERE -->
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Blind Mask Layer -->
+    <div id="blind-mask-layer" class="fixed inset-0 bg-slate-900 bg-opacity-90 z-40 flex items-center justify-center p-8 text-white text-2xl text-center">
+        <div class="space-y-4">
+            <p data-i18n="blindModeWarning">Blind Write Mode Activated.</p>
+            <p data-i18n="blindModeInstructions">Focus on listening and speaking. Do not peek at the original text.</p>
+            <p data-i18n="blindModeDisableHint">Press ESC to exit blind mode (progress will be lost).</p>
+        </div>
+    </div>
+
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center z-10 sticky top-0">
+        <h1 class="text-2xl font-bold text-indigo-600" data-i18n="appTitle">IELTS Sprint Training Camp</h1>
+        <nav class="flex items-center gap-4">
+            <button class="nav-link text-slate-600 font-medium hover:text-blue-600 active:text-blue-600 active:font-bold" data-view="dashboard" data-i18n="navDashboard">Dashboard</button>
+            <button class="nav-link text-slate-600 font-medium hover:text-blue-600 active:text-blue-600 active:font-bold" data-view="sprint" data-i18n="navSprintWrite">Sprint Writing</button>
+            <button class="nav-link text-slate-600 font-medium hover:text-blue-600 active:text-blue-600 active:font-bold" data-view="blindWrite" data-i18n="navBlindWrite">Blind Write & Back Translate</button>
+            <button class="nav-link text-slate-600 font-medium hover:text-blue-600 active:text-blue-600 active:font-bold" data-view="report" data-i18n="navReport">Performance Report</button>
+            <button class="nav-link text-slate-600 font-medium hover:text-blue-600 active:text-blue-600 active:font-bold" data-view="settings" data-i18n="navSettings">Settings</button>
+            <select id="lang-switcher" class="bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-sm text-slate-800">
+                <option value="zh-TW">繁體中文</option>
+                <option value="en">English</option>
+            </select>
+        </nav>
+    </header>
+
+    <main id="app-container" class="flex-1 flex flex-col bg-slate-100 overflow-y-auto">
+        <div id="view-dashboard" class="view-section p-6 max-w-4xl mx-auto space-y-6 hidden">
+            <!-- Dashboard Content -->
+            <h2 class="text-3xl font-bold text-slate-800" data-i18n="dashboardTitle">Dashboard</h2>
+
+            <!-- Progress Overview -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="progressOverview">Progress Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg text-center">
+                        <p class="text-blue-700 text-sm" data-i18n="currentDay">Current Day</p>
+                        <p id="dashboard-current-day" class="text-3xl font-bold text-blue-800 mt-1">1</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg text-center">
+                        <p class="text-green-700 text-sm" data-i18n="completedTasks">Completed Tasks</p>
+                        <p id="dashboard-completed-tasks" class="text-3xl font-bold text-green-800 mt-1">0</p>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                        <p class="text-yellow-700 text-sm" data-i18n="avgPassiveRate">Avg. Passive Rate</p>
+                        <p id="dashboard-avg-passive" class="text-3xl font-bold text-yellow-800 mt-1">0%</p>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg text-center">
+                        <p class="text-red-700 text-sm" data-i18n="avgOmissionRate">Avg. Omission Rate</p>
+                        <p id="dashboard-avg-omission" class="text-3xl font-bold text-red-800 mt-1">0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Task -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4 flex items-center justify-between">
+                    <span data-i18n="dailyTask">Daily Task</span>
+                    <span id="daily-task-status" class="text-sm font-normal text-slate-500"></span>
+                </h3>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+                    <p id="daily-task-prompt" class="text-slate-700" data-i18n="dailyTaskPromptPlaceholder">Loading daily writing challenge...</p>
+                </div>
+                <button id="btn-start-sprint" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2">
+                    <span data-i18n="startSprint">Start Sprint</span>
+                </button>
+            </div>
+
+            <!-- AI Inspiration Generator -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl shadow-sm p-6 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full translate-x-1/2 translate-y-1/2"></div>
+                <h3 class="text-xl font-semibold mb-4 relative z-10" data-i18n="aiInspirationTitle">AI Writing Inspiration Assistant</h3>
+                <div class="relative z-10">
+                    <input type="text" id="ai-topic-input" class="w-full px-4 py-2 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3" data-i18n-placeholder="aiTopicPlaceholder" placeholder="Enter IELTS essay topic (e.g., 'Pros and cons of remote work')">
+                    <button id="btn-generate-inspiration" class="bg-white hover:bg-slate-100 text-indigo-700 font-bold py-2 px-4 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2">
+                        <span data-i18n="generateInspiration">Generate Inspiration</span>
+                        <div class="loader w-4 h-4 border-2 border-indigo-700 border-t-transparent rounded-full hidden"></div>
+                    </button>
+                </div>
+                <div id="ai-inspiration-result" class="mt-6 bg-white p-6 rounded-2xl border-2 border-blue-100 shadow-sm text-slate-800 hidden">
+                    <h4 class="text-lg font-semibold mb-3" data-i18n="aiInspirationResultTitle">Generated Ideas:</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="font-medium text-slate-700 mb-2" data-i18n="prosPoints">Pros Points:</p>
+                            <ul id="inspiration-pros" class="list-disc list-inside text-sm space-y-1"></ul>
+                        </div>
+                        <div>
+                            <p class="font-medium text-slate-700 mb-2" data-i18n="consPoints">Cons Points:</p>
+                            <ul id="inspiration-cons" class="list-disc list-inside text-sm space-y-1"></ul>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="font-medium text-slate-700 mb-2" data-i18n="recommendedVocab">Recommended Vocabulary:</p>
+                        <div id="inspiration-vocab" class="flex flex-wrap gap-2 text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-sprint" class="view-section p-6 max-w-4xl mx-auto space-y-6 hidden">
+            <!-- Sprint Editor Content -->
+            <h2 class="text-3xl font-bold text-slate-800" data-i18n="sprintEditorTitle">Sprint Writing Editor</h2>
+
+            <!-- Writing Task & Timer -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-slate-700" data-i18n="writingTask">Writing Task</h3>
+                    <div id="timer-widget" class="font-mono text-2xl text-red-600 bg-red-50 px-4 py-2 rounded-lg border border-red-200">15:00</div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+                    <p id="sprint-prompt" class="text-slate-700" data-i18n="sprintPromptPlaceholder">Loading daily writing challenge...</p>
+                </div>
+                <textarea id="essay-editor" class="w-full h-64 p-4 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" data-i18n-placeholder="essayEditorPlaceholder" placeholder="Start writing your essay here..."></textarea>
+                <div class="flex flex-col md:flex-row gap-3 mt-4">
+                    <button id="btn-analyze-essay" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto">
+                        <span data-i18n="analyzeEssay">Analyze Essay</span>
+                        <div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full hidden"></div>
+                    </button>
+                    <button id="btn-ai-rewrite" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-3 px-5 rounded-xl border border-indigo-200 transition-colors active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto">
+                        <span data-i18n="aiBand9Rewrite">AI Band 9 Rewrite</span>
+                        <div class="loader w-4 h-4 border-2 border-indigo-700 border-t-transparent rounded-full hidden"></div>
+                    </button>
+                    <button id="btn-submit-sprint" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-5 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto">
+                        <span data-i18n="submitSprint">Submit Sprint</span>
+                        <div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full hidden"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analysis Results -->
+            <div id="analysis-results" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hidden">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="analysisResults">Analysis Results</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-slate-700 mb-2"><strong data-i18n="estimatedScore">Estimated Score:</strong> <span id="analysis-score" class="text-blue-600 font-semibold">N/A</span></p>
+                        <p class="text-slate-700 mb-2"><strong data-i18n="passiveVoiceRatio">Passive Voice Ratio:</strong> <span id="analysis-passive-ratio" class="text-yellow-600 font-semibold">0%</span></p>
+                        <p class="font-medium text-slate-700 mb-2" data-i18n="passiveSentences">Passive Sentences:</p>
+                        <ul id="analysis-passive-sentences" class="list-disc list-inside text-sm text-slate-600 space-y-1"></ul>
+                    </div>
+                    <div>
+                        <p class="font-medium text-slate-700 mb-2" data-i18n="advancedVocabulary">Advanced Vocabulary:</p>
+                        <div id="analysis-advanced-vocab" class="flex flex-wrap gap-2 text-sm"></div>
+                    </div>
+                </div>
+                <div id="passive-voice-warning" class="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg hidden">
+                    <p data-i18n="passiveVoiceTooHigh">Warning: Your passive voice ratio is too high (below 30%). Please revise your essay to use more active voice before proceeding to the next day's task.</p>
+                </div>
+            </div>
+
+            <!-- AI Band 9 Rewrite -->
+            <div id="rewrite-results" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hidden">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="aiBand9RewriteResult">AI Band 9 Rewrite</h3>
+                <div id="rewrite-text" class="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 whitespace-pre-wrap"></div>
+            </div>
+        </div>
+
+        <div id="view-blindWrite" class="view-section p-6 max-w-4xl mx-auto space-y-6 hidden">
+            <!-- Blind Write & Back Translation Content -->
+            <h2 class="text-3xl font-bold text-slate-800" data-i18n="blindWriteTitle">Blind Write & Back Translation</h2>
+
+            <!-- Original Essay Display -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="originalEssay">Original Essay (from Sprint Writing)</h3>
+                <div id="original-essay-display" class="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 whitespace-pre-wrap min-h-[100px]" data-i18n="originalEssayPlaceholder">No essay submitted yet. Complete a sprint to see your original essay here.</div>
+            </div>
+
+            <!-- Speech Recording & Back Translation -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="blindWriteProcess">Blind Write Process</h3>
+                <div class="flex flex-col md:flex-row gap-3 mb-4">
+                    <button id="btn-start-recording" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path></svg>
+                        <span data-i18n="startRecording">Start Recording</span>
+                        <div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full hidden"></div>
+                    </button>
+                    <button id="btn-stop-recording" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-5 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto" disabled>
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        <span data-i18n="stopRecording">Stop Recording</span>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <p class="font-medium text-slate-700 mb-2" data-i18n="speechToText">Speech to Text (Chinese):</p>
+                    <textarea id="speech-to-text-chinese" class="w-full h-32 p-4 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" data-i18n-placeholder="speechToTextPlaceholder" placeholder="Your transcribed Chinese text will appear here..."></textarea>
+                </div>
+                <button id="btn-back-translate" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto">
+                    <span data-i18n="backTranslate">Back Translate to English</span>
+                    <div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full hidden"></div>
+                </button>
+                <div class="mt-4">
+                    <p class="font-medium text-slate-700 mb-2" data-i18n="backTranslatedEssay">Back Translated Essay (English):</p>
+                    <textarea id="back-translated-english" class="w-full h-32 p-4 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" data-i18n-placeholder="backTranslatedPlaceholder" placeholder="The back-translated English text will appear here..."></textarea>
+                    <p class="text-xs text-slate-500 mt-2" data-i18n="deeplWarning">DeepL API (simulated) service terms apply.</p>
+                </div>
+                <button id="btn-evaluate-blind-write" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-5 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2 mt-4 w-full md:w-auto">
+                    <span data-i18n="evaluateBlindWrite">Evaluate Blind Write Performance</span>
+                    <div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full hidden"></div>
+                </button>
+            </div>
+
+            <!-- Blind Write Evaluation Results -->
+            <div id="blind-write-evaluation-results" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hidden">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="evaluationResults">Evaluation Results</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                    <div>
+                        <p class="text-slate-700 mb-2"><strong data-i18n="omissionRate">Omission Rate:</strong> <span id="evaluation-omission-rate" class="text-red-600 font-semibold">0%</span></p>
+                        <p class="text-slate-700 mb-2"><strong data-i18n="accuracy">Accuracy:</strong> <span id="evaluation-accuracy" class="text-green-600 font-semibold">0%</span></p>
+                    </div>
+                    <div>
+                        <p class="font-medium text-slate-700 mb-2" data-i18n="aiPerformanceDiagnosis">AI Performance Diagnosis:</p>
+                        <div id="ai-diagnosis-result" class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-slate-800 text-sm"></div>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-medium text-slate-700 mb-2" data-i18n="originalEssayMarked">Original Essay (Marked for Omissions):</p>
+                    <div id="original-essay-marked" class="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 whitespace-pre-wrap min-h-[100px]"></div>
+                    <div id="omission-rate-warning" class="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg hidden">
+                        <p data-i18n="omissionRateHigh">Warning: Your omission rate is high (≥ 3%). Focus on improving your memory and attention to detail during blind writing exercises.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-report" class="view-section p-6 max-w-4xl mx-auto space-y-6 hidden">
+            <!-- Performance Report Content -->
+            <h2 class="text-3xl font-bold text-slate-800" data-i18n="performanceReportTitle">Performance Report</h2>
+
+            <!-- Mock Exam Scores Input -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="mockExamScoresTitle">Mock Exam Scores</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                    <div>
+                        <label for="mock-ta" class="block text-sm font-medium text-slate-700" data-i18n="taskAchievementShort">TA</label>
+                        <input type="number" id="mock-ta" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" max="9" step="0.5" value="0">
+                    </div>
+                    <div>
+                        <label for="mock-co" class="block text-sm font-medium text-slate-700" data-i18n="coherenceShort">CO</label>
+                        <input type="number" id="mock-co" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" max="9" step="0.5" value="0">
+                    </div>
+                    <div>
+                        <label for="mock-lr" class="block text-sm font-medium text-slate-700" data-i18n="lexicalShort">LR</label>
+                        <input type="number" id="mock-lr" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" max="9" step="0.5" value="0">
+                    </div>
+                    <div>
+                        <label for="mock-gra" class="block text-sm font-medium text-slate-700" data-i18n="grammaticalShort">GRA</label>
+                        <input type="number" id="mock-gra" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" max="9" step="0.5" value="0">
+                    </div>
+                    <div>
+                        <label for="mock-fc" class="block text-sm font-medium text-slate-700" data-i18n="fluencyShort">FC</label>
+                        <input type="number" id="mock-fc" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" min="0" max="9" step="0.5" value="0">
+                    </div>
+                </div>
+                <button id="btn-analyze-bottleneck" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2">
+                    <span data-i18n="analyzeBottleneck">Analyze Bottleneck</span>
+                    <div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full hidden"></div>
+                </button>
+            </div>
+
+            <!-- Bottleneck Index -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="bottleneckIndex">Bottleneck Index</h3>
+                <div class="flex items-center gap-4">
+                    <p id="bottleneck-index-value" class="text-5xl font-bold text-green-600">0.00</p>
+                    <p id="bottleneck-index-status" class="text-slate-700 text-lg" data-i18n="bottleneckIndexStatusExcellent">Excellent!</p>
+                </div>
+            </div>
+
+            <!-- Radar Chart -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="radarChartTitle">Performance Radar Chart</h3>
+                <div class="flex justify-center items-center">
+                    <svg id="radar-chart" class="radar-chart" width="300" height="300" viewBox="0 0 300 300"></svg>
+                </div>
+            </div>
+
+            <!-- Action Items -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="actionItems">Action Items</h3>
+                <ul id="action-items-list" class="list-disc list-inside text-slate-700 space-y-2">
+                    <li data-i18n="actionItemPlaceholder">Based on your performance, here are some suggestions...</li>
+                </ul>
+                <p id="retest-date-suggestion" class="text-sm text-slate-600 mt-4 hidden"></p>
+            </div>
+
+            <!-- Task History -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="taskHistory">Task History</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-i18n="historyDate">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-i18n="historyTaskType">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-i18n="historyPassiveRate">Passive Rate</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-i18n="historyOmissionRate">Omission Rate</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider" data-i18n="historyStatus">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-history-table" class="bg-white divide-y divide-slate-200">
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-center" data-i18n="noHistory">No history yet. Complete a sprint or blind write to see your progress!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-settings" class="view-section p-6 max-w-4xl mx-auto space-y-6 hidden">
+            <!-- Settings Content -->
+            <h2 class="text-3xl font-bold text-slate-800" data-i18n="settingsTitle">Settings</h2>
+
+            <!-- API Keys Management -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-4" data-i18n="apiKeysManagement">API Keys Management</h3>
+                <div class="space-y-4">
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg">
+                        <p data-i18n="apiKeySecurityWarning">Warning: Storing API keys directly in client-side code (like localStorage) is not secure for production environments. For real applications, these keys should be stored and managed on a secure backend server.</p>
+                    </div>
+                    <div>
+                        <label for="gemini-api-key" class="block text-sm font-medium text-slate-700 mb-1">Gemini API Key</label>
+                        <input type="password" id="gemini-api-key" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="apiKeyPlaceholder" placeholder="Enter your Gemini API Key">
+                    </div>
+                    <div>
+                        <label for="grammarly-api-key" class="block text-sm font-medium text-slate-700 mb-1">Grammarly API Key</label>
+                        <input type="password" id="grammarly-api-key" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="apiKeyPlaceholder" placeholder="Enter your Grammarly API Key">
+                        <p class="text-xs text-slate-500 mt-1" data-i18n="grammarlyWarning">This feature attempts to use a real Grammarly API. If the API key is invalid or the service is unavailable, a local simulation will be used instead.</p>
+                    </div>
+                    <div>
+                        <label for="deepl-api-key" class="block text-sm font-medium text-slate-700 mb-1">DeepL API Key</label>
+                        <input type="password" id="deepl-api-key" class="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500" data-i18n-placeholder="apiKeyPlaceholder" placeholder="Enter your DeepL API Key">
+                        <p class="text-xs text-slate-500 mt-1" data-i18n="deeplWarning">This feature attempts to use a real DeepL API. If the API key is invalid or the service is unavailable, a local simulation will be used instead. DeepL API service terms apply.</p>
+                    </div>
+                    <button id="btn-save-settings" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg transition-colors active:scale-95 flex items-center justify-center gap-2">
+                        <span data-i18n="saveSettings">Save Settings</span>
+                        <div class="loader w-4 h-4 border-2 border-white border-t-transparent rounded-full hidden"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // PUT ALL YOUR JAVASCRIPT LOGIC HERE
+        // DATA, STATE, FUNCTIONS, EVENTS - EVERYTHING
+
+        // --- PWA Service Worker Content (should be in a separate file like /service-worker.js) ---
+        /*
+        const CACHE_NAME = 'ielts-sprint-cache-v2'; // Increment version for new caches
+        const urlsToCache = [
+            '/',
+            '/index.html', // Or whatever your main HTML file is
+            'https://cdn.tailwindcss.com',
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+            '/manifest.json',
+            // Add other critical assets like images, specific JS files if they were separate
+        ];
+
+        self.addEventListener('install', (event) => {
+            console.log('Service Worker: Installing...');
+            event.waitUntil(
+                caches.open(CACHE_NAME)
+                    .then((cache) => {
+                        console.log('Service Worker: Opened cache');
+                        return cache.addAll(urlsToCache);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker: Cache.addAll failed:', error);
+                    })
+            );
+        });
+
+        self.addEventListener('fetch', (event) => {
+            event.respondWith(
+                caches.match(event.request)
+                    .then((response) => {
+                        // Cache hit - return response
+                        if (response) {
+                            return response;
+                        }
+                        return fetch(event.request).then(
+                            (response) => {
+                                // Check if we received a valid response
+                                if (!response || response.status !== 200 || response.type !== 'basic') {
+                                    return response;
+                                }
+
+                                // IMPORTANT: Clone the response. A response is a stream
+                                // and can only be consumed once. We must clone it so that
+                                // both the browser and the cache can consume it.
+                                const responseToCache = response.clone();
+
+                                caches.open(CACHE_NAME)
+                                    .then((cache) => {
+                                        cache.put(event.request, responseToCache);
+                                    });
+
+                                return response;
+                            }
+                        ).catch(error => {
+                            console.error('Service Worker: Fetch failed:', error);
+                            // You might want to return a fallback page for offline users here
+                            // For example: return caches.match('/offline.html');
+                        });
+                    })
+            );
+        });
+
+        self.addEventListener('activate', (event) => {
+            console.log('Service Worker: Activating...');
+            const cacheWhitelist = [CACHE_NAME];
+            event.waitUntil(
+                caches.keys().then((cacheNames) => {
+                    return Promise.all(
+                        cacheNames.map((cacheName) => {
+                            if (cacheWhitelist.indexOf(cacheName) === -1) {
+                                console.log('Service Worker: Deleting old cache:', cacheName);
+                                return caches.delete(cacheName);
+                            }
+                        })
+                    );
+                })
+            );
+            return self.clients.claim(); // Ensures the new service worker takes control immediately
+        });
+        */
+        // --- End of Service Worker Content ---
+
+        const app = {
+            state: {
+                currentView: 'dashboard',
+                currentLang: 'en',
+                settings: {
+                    geminiApiKey: '',
+                    grammarlyApiKey: '',
+                    deepLApiKey: '',
+                },
+                sprint: {
+                    prompt: '',
+                    essay: '',
+                    timer: 0,
+                    isActive: false,
+                    analysis: null, // { score: 'N/A', passiveRatio: '0%', passiveSentences: [], advancedVocab: [] }
+                    rewrite: '',
+                },
+                blindWrite: {
+                    originalEssay: '',
+                    transcribedChinese: '',
+                    backTranslatedEnglish: '',
+                    evaluation: null, // { omissionRate: '0%', accuracy: '0%', markedOriginal: '', diagnosis: '' }
+                    isRecording: false,
+                    recordingStartTime: null, // New: Timestamp for recording start
+                    recordingEndTime: null,   // New: Timestamp for recording end
+                    speechToTextTime: null,   // New: Timestamp for speech-to-text completion
+                    backTranslateTime: null,  // New: Timestamp for back-translation completion
+                },
+                dashboard: {
+                    dailyTask: {
+                        prompt: '',
+                        lastUpdated: '', // UTC date string for when this prompt was generated
+                        completed: false, // True if the task for `lastUpdated` was successfully completed
+                    },
+                    inspiration: {
+                        topic: '',
+                        pros: [],
+                        cons: [],
+                        vocab: [],
+                    },
+                },
+                history: [], // [{ date: '', type: 'sprint'/'blindWrite', passiveRate: 0, omissionRate: 0, status: '', timestamps: {} }]
+                progress: {
+                    currentDay: 1, // User is currently on this day's task
+                    completedTasks: 0,
+                    avgPassiveRate: 0,
+                    avgOmissionRate: 0,
+                },
+                report: { // New: For mock exam scores
+                    mockExamScores: {
+                        ta: 0, coherence: 0, lexical: 0, grammatical: 0, fluency: 0
+                    },
+                    bottleneckIndex: 0,
+                    radarChartData: null,
+                    actionItems: [],
+                    retestDate: null,
+                },
+                speechRecognition: null,
+            },
+
+            translations: {
+                'en': {
+                    appTitle: 'IELTS Sprint Training Camp',
+                    navDashboard: 'Dashboard',
+                    navSprintWrite: 'Sprint Writing',
+                    navBlindWrite: 'Blind Write & Back Translate',
+                    navReport: 'Performance Report',
+                    navSettings: 'Settings',
+                    dashboardTitle: 'Dashboard',
+                    progressOverview: 'Progress Overview',
+                    currentDay: 'Current Day',
+                    completedTasks: 'Completed Tasks',
+                    avgPassiveRate: 'Avg. Passive Rate',
+                    avgOmissionRate: 'Avg. Omission Rate',
+                    dailyTask: 'Daily Task',
+                    dailyTaskPromptPlaceholder: 'Loading daily writing challenge...',
+                    dailyTaskUnlocked: 'Unlocked!',
+                    dailyTaskLocked: 'Unlocks in',
+                    startSprint: 'Start Sprint',
+                    aiInspirationTitle: 'AI Writing Inspiration Assistant',
+                    aiTopicPlaceholder: 'Enter IELTS essay topic (e.g., "Pros and cons of remote work")',
+                    generateInspiration: 'Generate Inspiration',
+                    aiInspirationResultTitle: 'Generated Ideas:',
+                    prosPoints: 'Pros Points:',
+                    consPoints: 'Cons Points:',
+                    recommendedVocab: 'Recommended Vocabulary:',
+                    sprintEditorTitle: 'Sprint Writing Editor',
+                    writingTask: 'Writing Task',
+                    sprintPromptPlaceholder: 'Loading daily writing challenge...',
+                    essayEditorPlaceholder: 'Start writing your essay here...',
+                    analyzeEssay: 'Analyze Essay',
+                    aiBand9Rewrite: 'AI Band 9 Rewrite',
+                    submitSprint: 'Submit Sprint',
+                    analysisResults: 'Analysis Results',
+                    estimatedScore: 'Estimated Score:',
+                    passiveVoiceRatio: 'Passive Voice Ratio:',
+                    passiveSentences: 'Passive Sentences:',
+                    advancedVocabulary: 'Advanced Vocabulary:',
+                    aiBand9RewriteResult: 'AI Band 9 Rewrite',
+                    passiveVoiceTooHigh: 'Warning: Your passive voice ratio is too high (below 30%). Please revise your essay to use more active voice before proceeding to the next day\'s task.',
+                    blindWriteTitle: 'Blind Write & Back Translation',
+                    originalEssay: 'Original Essay (from Sprint Writing)',
+                    originalEssayPlaceholder: 'No essay submitted yet. Complete a sprint to see your original essay here.',
+                    blindWriteProcess: 'Blind Write Process',
+                    startRecording: 'Start Recording',
+                    stopRecording: 'Stop Recording',
+                    speechToText: 'Speech to Text (Chinese):',
+                    speechToTextPlaceholder: 'Your transcribed Chinese text will appear here...',
+                    backTranslate: 'Back Translate to English',
+                    backTranslatedEssay: 'Back Translated Essay (English):',
+                    backTranslatedPlaceholder: 'The back-translated English text will appear here...',
+                    deeplWarning: 'This feature attempts to use a real DeepL API. If the API key is invalid or the service is unavailable, a local simulation will be used instead. DeepL API service terms apply.',
+                    evaluateBlindWrite: 'Evaluate Blind Write Performance',
+                    evaluationResults: 'Evaluation Results',
+                    omissionRate: 'Omission Rate:',
+                    accuracy: 'Accuracy:',
+                    aiPerformanceDiagnosis: 'AI Performance Diagnosis:',
+                    originalEssayMarked: 'Original Essay (Marked for Omissions):',
+                    omissionRateHigh: 'Warning: Your omission rate is high (≥ 3%). Focus on improving your memory and attention to detail during blind writing exercises.',
+                    performanceReportTitle: 'Performance Report',
+                    mockExamScoresTitle: 'Mock Exam Scores',
+                    uploadScores: 'Upload Scores',
+                    analyzeBottleneck: 'Analyze Bottleneck',
+                    bottleneckIndex: 'Bottleneck Index',
+                    bottleneckIndexStatusExcellent: 'Excellent!',
+                    bottleneckIndexStatusGood: 'Good, keep it up!',
+                    bottleneckIndexStatusImprove: 'Needs Improvement!',
+                    radarChartTitle: 'Performance Radar Chart',
+                    actionItems: 'Action Items',
+                    actionItemPlaceholder: 'Based on your performance, here are some suggestions...',
+                    retestSuggestion: 'Based on your progress, a recommended retest date is {date}.',
+                    taskHistory: 'Task History',
+                    historyDate: 'Date',
+                    historyTaskType: 'Type',
+                    historyPassiveRate: 'Passive Rate',
+                    historyOmissionRate: 'Omission Rate',
+                    historyStatus: 'Status',
+                    noHistory: 'No history yet. Complete a sprint or blind write to see your progress!',
+                    settingsTitle: 'Settings',
+                    apiKeysManagement: 'API Keys Management',
+                    apiKeyPlaceholder: 'Enter your API Key',
+                    grammarlyWarning: 'This feature attempts to use a real Grammarly API. If the API key is invalid or the service is unavailable, a local simulation will be used instead.',
+                    apiKeySecurityWarning: 'Warning: Storing API keys directly in client-side code (like localStorage) is not secure for production environments. For real applications, these keys should be stored and managed on a secure backend server.',
+                    saveSettings: 'Save Settings',
+                    toastSuccess: 'Success!',
+                    toastError: 'Error!',
+                    toastInfo: 'Info!',
+                    toastWarning: 'Warning!',
+                    sprintSubmitted: 'Sprint submitted!',
+                    timerEnded: 'Time\'s up! Sprint automatically submitted.',
+                    analysisComplete: 'Essay analysis complete!',
+                    rewriteComplete: 'AI rewrite complete!',
+                    recordingStarted: 'Recording started...',
+                    recordingStopped: 'Recording stopped.',
+                    speechRecognized: 'Speech recognized!',
+                    backTranslationComplete: 'Back translation complete!',
+                    evaluationComplete: 'Blind write evaluation complete!',
+                    settingsSaved: 'Settings saved successfully!',
+                    noApiKey: 'API Key is required for this feature.',
+                    blindModeWarning: 'Blind Write Mode Activated.',
+                    blindModeInstructions: 'Focus on listening and speaking. Do not peek at the original text.',
+                    blindModeDisableHint: 'Press ESC to exit blind mode (progress will be lost).',
+                    blindModeExit: 'Exited blind mode. Progress lost.',
+                    taskAchievement: 'Task Achievement',
+                    coherence: 'Coherence',
+                    lexical: 'Lexical Resource',
+                    grammatical: 'Grammatical Range & Accuracy',
+                    fluency: 'Fluency & Coherence',
+                    taskAchievementShort: 'TA',
+                    coherenceShort: 'CO',
+                    lexicalShort: 'LR',
+                    grammaticalShort: 'GRA',
+                    fluencyShort: 'FC',
+                    actionItemPassiveHigh: 'Your essay has a high passive voice ratio. Focus on using more active voice to make your writing more direct and impactful.',
+                    actionItemPassiveModerate: 'Your passive voice usage is moderate. Try to vary your sentence structures and introduce more active constructions.',
+                    actionItemPassiveLow: 'Excellent active voice usage! Keep up the good work.',
+                    actionItemOmissionHigh: 'Your blind write shows a high omission rate. Practice recalling key vocabulary and sentence structures from the original text more accurately.',
+                    actionItemOmissionModerate: 'Your omission rate is moderate. Work on improving your memory and attention to detail during blind writing exercises.',
+                    actionItemOmissionLow: 'Great job with minimal omissions! Your recall is strong.',
+                },
+                'zh-TW': {
+                    appTitle: '雅思衝刺訓練營',
+                    navDashboard: '儀表板',
+                    navSprintWrite: '衝刺寫作',
+                    navBlindWrite: '盲寫回譯',
+                    navReport: '表現報告',
+                    navSettings: '設定',
+                    dashboardTitle: '儀表板',
+                    progressOverview: '進度概覽',
+                    currentDay: '目前天數',
+                    completedTasks: '已完成任務',
+                    avgPassiveRate: '平均被動語態比例',
+                    avgOmissionRate: '平均遺漏率',
+                    dailyTask: '每日任務',
+                    dailyTaskPromptPlaceholder: '正在載入每日寫作挑戰...',
+                    dailyTaskUnlocked: '已解鎖！',
+                    dailyTaskLocked: '剩餘時間',
+                    startSprint: '開始衝刺',
+                    aiInspirationTitle: 'AI 寫作靈感助手',
+                    aiTopicPlaceholder: '輸入雅思作文題目 (例如：「遠端工作的優缺點」)',
+                    generateInspiration: '生成靈感',
+                    aiInspirationResultTitle: '生成觀點：',
+                    prosPoints: '正面觀點：',
+                    consPoints: '反面觀點：',
+                    recommendedVocab: '推薦詞彙：',
+                    sprintEditorTitle: '衝刺寫作編輯器',
+                    writingTask: '寫作任務',
+                    sprintPromptPlaceholder: '正在載入每日寫作挑戰...',
+                    essayEditorPlaceholder: '請在此處開始撰寫您的文章...',
+                    analyzeEssay: '分析文章',
+                    aiBand9Rewrite: 'AI 高階改寫',
+                    submitSprint: '提交衝刺',
+                    analysisResults: '分析結果',
+                    estimatedScore: '預估分數：',
+                    passiveVoiceRatio: '被動語態比例：',
+                    passiveSentences: '被動語態句子：',
+                    advancedVocabulary: '進階詞彙：',
+                    aiBand9RewriteResult: 'AI Band 9 改寫',
+                    passiveVoiceTooHigh: '警告：您的文章被動語態比例過高 (低於 30%)。請修改您的文章，使用更多主動語態，才能進入下一天的任務。',
+                    blindWriteTitle: '盲寫與回譯',
+                    originalEssay: '原始文章 (來自衝刺寫作)',
+                    originalEssayPlaceholder: '尚未提交文章。完成一次衝刺寫作即可在此查看您的原始文章。',
+                    blindWriteProcess: '盲寫流程',
+                    startRecording: '開始錄音',
+                    stopRecording: '停止錄音',
+                    speechToText: '語音轉文字 (中文)：',
+                    speechToTextPlaceholder: '您轉錄的中文文字將會顯示在此...',
+                    backTranslate: '回譯成英文',
+                    backTranslatedEssay: '回譯文章 (英文)：',
+                    backTranslatedPlaceholder: '回譯的英文文章將會顯示在此...',
+                    deeplWarning: '此功能嘗試使用真實的 DeepL API。如果 API 密鑰無效或服務不可用，將使用本地模擬。DeepL API 服務條款適用。',
+                    evaluateBlindWrite: '評估盲寫表現',
+                    evaluationResults: '評估結果',
+                    omissionRate: '遺漏率：',
+                    accuracy: '精準度：',
+                    aiPerformanceDiagnosis: 'AI 表現診斷：',
+                    originalEssayMarked: '原始文章 (標記遺漏)：',
+                    omissionRateHigh: '警告：您的遺漏率偏高 (≥ 3%)。請專注於提高盲寫練習中的記憶力和對細節的關注。',
+                    performanceReportTitle: '表現報告',
+                    mockExamScoresTitle: '模擬考試分數',
+                    uploadScores: '上傳分數',
+                    analyzeBottleneck: '分析瓶頸',
+                    bottleneckIndex: '瓶頸指數',
+                    bottleneckIndexStatusExcellent: '表現優異！',
+                    bottleneckIndexStatusGood: '不錯，繼續努力！',
+                    bottleneckIndexStatusImprove: '需要改進！',
+                    radarChartTitle: '表現雷達圖',
+                    actionItems: '行動建議',
+                    actionItemPlaceholder: '根據您的表現，這裡有一些建議...',
+                    retestSuggestion: '根據您的進度，建議的再測日期是 {date}。',
+                    taskHistory: '任務歷史',
+                    historyDate: '日期',
+                    historyTaskType: '類型',
+                    historyPassiveRate: '被動語態比例',
+                    historyOmissionRate: '遺漏率',
+                    historyStatus: '狀態',
+                    noHistory: '尚無歷史記錄。完成一次衝刺寫作或盲寫即可查看您的進度！',
+                    settingsTitle: '設定',
+                    apiKeysManagement: 'API Keys 管理',
+                    apiKeyPlaceholder: '輸入您的 API Key',
+                    grammarlyWarning: '此功能嘗試使用真實的 Grammarly API。如果 API 密鑰無效或服務不可用，將使用本地模擬。',
+                    apiKeySecurityWarning: '警告：在客戶端代碼（如 localStorage）中直接存儲 API 密鑰對於生產環境來說是不安全的。對於實際應用程序，這些密鑰應存儲在安全的後端服務器上並進行管理。',
+                    saveSettings: '保存設定',
+                    toastSuccess: '成功！',
+                    toastError: '錯誤！',
+                    toastInfo: '資訊！',
+                    toastWarning: '警告！',
+                    sprintSubmitted: '衝刺已提交！',
+                    timerEnded: '時間到！衝刺已自動提交。',
+                    analysisComplete: '文章分析完成！',
+                    rewriteComplete: 'AI 改寫完成！',
+                    recordingStarted: '開始錄音...',
+                    recordingStopped: '錄音已停止。',
+                    speechRecognized: '語音已識別！',
+                    backTranslationComplete: '回譯完成！',
+                    evaluationComplete: '盲寫評估完成！',
+                    settingsSaved: '設定已成功保存！',
+                    noApiKey: '此功能需要 API Key。',
+                    blindModeWarning: '盲寫模式已啟用。',
+                    blindModeInstructions: '專注於聽力與口說。請勿偷看原文。',
+                    blindModeDisableHint: '按 ESC 鍵退出盲寫模式 (進度將會遺失)。',
+                    blindModeExit: '已退出盲寫模式。進度已遺失。',
+                    taskAchievement: '任務達成',
+                    coherence: '連貫與銜接',
+                    lexical: '詞彙資源',
+                    grammatical: '語法多樣性與準確性',
+                    fluency: '流利度與連貫性',
+                    taskAchievementShort: '任務達成',
+                    coherenceShort: '連貫與銜接',
+                    lexicalShort: '詞彙資源',
+                    grammaticalShort: '語法多樣性與準確性',
+                    fluencyShort: '流利度與連貫性',
+                    actionItemPassiveHigh: '您的文章被動語態比例偏高。請專注於使用更多主動語態，使您的寫作更直接、更有力。',
+                    actionItemPassiveModerate: '您的被動語態使用量適中。嘗試改變句型結構，引入更多主動語態。',
+                    actionItemPassiveLow: '主動語態使用非常出色！請繼續保持。',
+                    actionItemOmissionHigh: '您的盲寫遺漏率偏高。請練習更準確地回憶原文中的關鍵詞彙和句型結構。',
+                    actionItemOmissionModerate: '您的遺漏率適中。請努力提高盲寫練習中的記憶力和對細節的關注。',
+                    actionItemOmissionLow: '遺漏極少，表現出色！您的記憶力很強。',
+                }
+            },
+
+            // --- Utility Functions ---
+            utils: {
+                formatTime(seconds) {
+                    if (isNaN(seconds) || seconds < 0) return '00:00';
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+                },
+
+                // Simple passive voice detection using regex
+                calculatePassiveVoice(text) {
+                    if (!text) return { ratio: '0.00', sentences: [] };
+                    const sentences = text.split(/[.!?]\s*/).filter(s => s.trim().length > 0);
+                    let passiveSentences = [];
+                    let passiveCount = 0;
+
+                    // Regex for common passive voice structures (be + past participle)
+                    const passiveRegex = /\b(?:am|is|are|was|were|be|being|been)\s+(?:[a-z]+ed|broken|chosen|done|driven|eaten|fallen|given|gone|known|made|seen|taken|written|bought|caught|taught|understood|felt|kept|left|lost|paid|said|sold|sent|told|thought)\b/gi;
+
+                    sentences.forEach(sentence => {
+                        if (passiveRegex.test(sentence)) {
+                            passiveCount++;
+                            passiveSentences.push(sentence.trim());
+                        }
+                    });
+
+                    const passiveRatio = sentences.length > 0 ? (passiveCount / sentences.length) * 100 : 0;
+                    return {
+                        ratio: passiveRatio.toFixed(2),
+                        sentences: passiveSentences
+                    };
+                },
+
+                // Simple word-by-word comparison for omission and accuracy
+                compareEssays(original, userTranslated) {
+                    if (!original || !userTranslated) {
+                        return { omissionRate: '0.00', accuracy: '0.00', markedOriginal: original || '' };
+                    }
+
+                    const originalWords = original.toLowerCase().match(/\b\w+\b/g) || [];
+                    const userWords = userTranslated.toLowerCase().match(/\b\w+\b/g) || [];
+
+                    let omittedCount = 0;
+                    let correctCount = 0;
+                    let markedOriginalHtml = '';
+
+                    const originalWordSet = new Set(originalWords);
+                    const userWordSet = new Set(userWords);
+
+                    // For omission rate: words in original but not in user translation
+                    // This is a simplified approach. A more robust solution would involve sequence alignment.
+                    originalWords.forEach(word => {
+                        if (!userWordSet.has(word)) {
+                            omittedCount++;
+                        }
+                    });
+
+                    // For accuracy: words in user translation that are also in original
+                    userWords.forEach(word => {
+                        if (originalWordSet.has(word)) {
+                            correctCount++;
+                        }
+                    });
+
+                    const omissionRate = originalWords.length > 0 ? (omittedCount / originalWords.length) * 100 : 0;
+                    const accuracy = userWords.length > 0 ? (correctCount / userWords.length) * 100 : 0;
+
+                    // Generate marked original HTML
+                    // Only highlight if omission rate is >= 3% as per guideline
+                    if (omissionRate >= 3) {
+                        markedOriginalHtml = originalWords.map(word => {
+                            if (!userWordSet.has(word)) {
+                                return `<span class="omitted-word">${word}</span>`;
+                            }
+                            return word;
+                        }).join(' ');
+                    } else {
+                        markedOriginalHtml = original; // No highlighting if below threshold
+                    }
+
+
+                    return {
+                        omissionRate: omissionRate.toFixed(2),
+                        accuracy: accuracy.toFixed(2),
+                        markedOriginal: markedOriginalHtml
+                    };
+                },
+
+                // Simulated advanced vocabulary extraction
+                extractAdvancedVocab(text) {
+                    if (!text) return [];
+                    const advancedWords = [
+                        { word: 'ubiquitous', explanation: '無處不在的' },
+                        { word: 'plethora', explanation: '過多，大量' },
+                        { word: 'paradigm', explanation: '範例，典範' },
+                        { word: 'ostensibly', explanation: '表面上，據稱' },
+                        { word: 'ameliorate', explanation: '改善，減輕' },
+                        { word: 'deleterious', explanation: '有害的' },
+                        { word: 'propagate', explanation: '傳播，繁殖' },
+                        { word: 'conundrum', explanation: '難題，謎語' },
+                        { word: 'exacerbate', explanation: '使惡化，加劇' },
+                        { word: 'myriad', explanation: '無數的，大量的' }
+                    ];
+                    return advancedWords.filter(v => new RegExp(`\\b${v.word}\\b`, 'i').test(text));
+                },
+
+                getTodayDateUTC() {
+                    const now = new Date();
+                    return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())).toISOString().split('T')[0];
+                },
+
+                // Calculate time until next UTC+0 00:05
+                getTimeUntilNextDailyUpdate() {
+                    const now = new Date();
+                    const utcNow = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
+
+                    let nextUpdate = new Date(utcNow);
+                    nextUpdate.setUTCHours(0, 5, 0, 0); // Target 00:05 UTC
+
+                    if (utcNow.getTime() >= nextUpdate.getTime()) {
+                        nextUpdate.setUTCDate(nextUpdate.getUTCDate() + 1);
+                    }
+                    return Math.max(0, Math.floor((nextUpdate.getTime() - utcNow.getTime()) / 1000));
+                }
+            },
+
+            // --- API Simulation ---
+            api: {
+                // Simulate Gemini API calls
+                geminiApi: {
+                    async analyzeEssay(essayText, apiKey) {
+                        if (!apiKey) {
+                            console.warn("Gemini API Key is missing. Using simulated analysis for other metrics.");
+                            // Fallback to simulated analysis if API key is not provided
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+                        const advancedVocab = app.utils.extractAdvancedVocab(essayText);
+                        const score = (Math.random() * (9 - 6) + 6).toFixed(1); // Simulate score between 6.0 and 9.0
+                        return {
+                            estimatedScore: score,
+                            advancedVocabulary: advancedVocab,
+                            feedback: "Great start! Focus on varying sentence structures for higher bands."
+                        };
+                    },
+
+                    async rewriteEssay(essayText, apiKey) {
+                        if (!apiKey) throw new Error(app.translations[app.state.currentLang].noApiKey);
+                        await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate network delay
+                        const rewritten = `This is a simulated Band 9 rewrite of your essay: "${essayText.substring(0, Math.min(essayText.length, 50))}..." The original content has been significantly enhanced for lexical resource, grammatical range and accuracy, and coherence. It now features more complex sentence structures, a wider range of high-level vocabulary, and sophisticated cohesive devices.`;
+                        return rewritten;
+                    },
+
+                    async generateInspiration(topic, apiKey) {
+                        if (!apiKey) throw new Error(app.translations[app.state.currentLang].noApiKey);
+                        await new Promise(resolve => setTimeout(resolve, 2500)); // Simulate network delay
+                        return {
+                            pros: [
+                                `Enhanced global collaboration on ${topic.toLowerCase()}.`,
+                                `Increased efficiency and reduced costs for ${topic.toLowerCase()} initiatives.`,
+                                `Greater accessibility and inclusivity in ${topic.toLowerCase()} development.`,
+                            ],
+                            cons: [
+                                `Potential for job displacement in traditional ${topic.toLowerCase()} sectors.`,
+                                `Ethical concerns regarding data privacy and ${topic.toLowerCase()} misuse.`,
+                                `Challenges in regulating and governing rapidly evolving ${topic.toLowerCase()} technologies.`,
+                            ],
+                            vocab: [
+                                { word: 'catalyst', explanation: '催化劑' },
+                                { word: 'disparate', explanation: '不同的' },
+                                { word: 'ubiquitous', explanation: '無處不在的' },
+                                { word: 'mitigate', explanation: '緩和' },
+                                { word: 'paradigm shift', explanation: '範式轉移' }
+                            ]
+                        };
+                    },
+
+                    async diagnoseBlindWrite(original, userTranslated, apiKey) {
+                        if (!apiKey) {
+                            console.warn("Gemini API Key is missing. Using simulated diagnosis for blind write.");
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+                        const diagnosis = `Your translation shows good understanding! Try to use more varied sentence structures and precise vocabulary to match the original's nuance. Keep practicing!`;
+                        return diagnosis;
+                    }
+                },
+
+                // Grammarly API Integration (Real API placeholder with fallback)
+                grammarlyApi: {
+                    async checkPassiveVoice(text, apiKey) {
+                        if (!apiKey || apiKey.trim() === '') {
+                            console.warn("Grammarly API Key is missing. Falling back to local passive voice detection.");
+                            return app.utils.calculatePassiveVoice(text);
+                        }
+
+                        // Placeholder for a real Grammarly API endpoint
+                        const GRAMMARLY_API_ENDPOINT = 'https://api.grammarly.com/v1/passive-voice-check'; // Hypothetical endpoint
+
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+                            const response = await fetch(GRAMMARLY_API_ENDPOINT, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${apiKey}` // Assuming Bearer token authentication
+                                },
+                                body: JSON.stringify({ text: text }),
+                                signal: controller.signal
+                            });
+
+                            clearTimeout(timeoutId);
+
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'No error message' }));
+                                throw new Error(`Grammarly API error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+                            }
+
+                            const data = await response.json();
+                            // Assuming Grammarly API returns { passiveVoiceRatio: number, passiveSentences: string[] }
+                            if (data && typeof data.passiveVoiceRatio === 'number' && Array.isArray(data.passiveSentences)) {
+                                return {
+                                    ratio: data.passiveVoiceRatio.toFixed(2),
+                                    sentences: data.passiveSentences
+                                };
+                            } else {
+                                throw new Error("Invalid response format from Grammarly API.");
+                            }
+                        } catch (error) {
+                            if (error.name === 'AbortError') {
+                                console.error("Grammarly API call timed out.");
+                                app.ui.showToast(app.translations[app.state.currentLang].toastError + `: Grammarly API timed out. Using local analysis.`, 'error');
+                            } else {
+                                console.error("Error calling Grammarly API:", error);
+                                app.ui.showToast(app.translations[app.state.currentLang].toastError + `: Grammarly API failed. Using local analysis.`, 'error');
+                            }
+                            // Fallback to local detection on API failure or timeout
+                            return app.utils.calculatePassiveVoice(text);
+                        }
+                    }
+                },
+
+                // DeepL API Integration (Real API placeholder with fallback)
+                deepLApi: {
+                    async backTranslate(chineseText, apiKey) {
+                        if (!apiKey || apiKey.trim() === '') {
+                            console.warn("DeepL API Key is missing. Falling back to simulated translation.");
+                            return app.api.deepLApi._simulateBackTranslate(chineseText);
+                        }
+
+                        // Placeholder for a real DeepL API endpoint
+                        const DEEPL_API_ENDPOINT = 'https://api-free.deepl.com/v2/translate'; // Example DeepL API endpoint
+
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+                            const response = await fetch(DEEPL_API_ENDPOINT, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `DeepL-Auth-Key ${apiKey}` // Assuming DeepL API key authentication
+                                },
+                                body: JSON.stringify({
+                                    text: [chineseText],
+                                    target_lang: 'EN'
+                                }),
+                                signal: controller.signal
+                            });
+
+                            clearTimeout(timeoutId);
+
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'No error message' }));
+                                throw new Error(`DeepL API error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+                            }
+
+                            const data = await response.json();
+                            if (data && Array.isArray(data.translations) && data.translations.length > 0) {
+                                return data.translations[0].text;
+                            } else {
+                                throw new Error("Invalid response format from DeepL API.");
+                            }
+                        } catch (error) {
+                            if (error.name === 'AbortError') {
+                                console.error("DeepL API call timed out.");
+                                app.ui.showToast(app.translations[app.state.currentLang].toastError + `: DeepL API timed out. Using simulated translation.`, 'error');
+                            } else {
+                                console.error("Error calling DeepL API:", error);
+                                app.ui.showToast(app.translations[app.state.currentLang].toastError + `: DeepL API failed. Using simulated translation.`, 'error');
+                            }
+                            // Fallback to simulated translation on API failure or timeout
+                            return app.api.deepLApi._simulateBackTranslate(chineseText);
+                        }
+                    },
+
+                    _simulateBackTranslate(chineseText) {
+                        // Simulate network delay
+                        return new Promise(resolve => {
+                            setTimeout(() => {
+                                const mockTranslations = {
+                                    "你好世界": "Hello world",
+                                    "這是一個測試": "This is a test",
+                                    "雅思寫作口說衝刺訓練營": "IELTS Writing and Speaking Sprint Training Camp",
+                                    "遠端工作的優缺點": "Pros and cons of remote work",
+                                    "今天天氣很好": "The weather is nice today",
+                                    "我喜歡學習英文": "I like learning English",
+                                    "人工智慧的發展對社會的影響": "The impact of artificial intelligence development on society"
+                                };
+                                const translated = mockTranslations[chineseText.trim()] || `(Simulated English translation of: "${chineseText.substring(0, Math.min(chineseText.length, 50))}...")`;
+                                resolve(translated);
+                            }, 2000);
+                        });
+                    }
+                }
+            },
+
+            // --- UI Management ---
+            ui: {
+                showToast(message, type = 'info') {
+                    const toastContainer = document.getElementById('toast-container');
+                    if (!toastContainer) {
+                        console.error("Toast container not found.");
+                        return;
+                    }
+                    const toast = document.createElement('div');
+                    toast.className = `toast ${type}`;
+                    toast.textContent = message;
+                    toastContainer.appendChild(toast);
+
+                    // Force reflow to restart animation
+                    void toast.offsetWidth;
+
+                    toast.style.opacity = 1;
+                    toast.style.transform = 'translateY(0)';
+
+                    setTimeout(() => {
+                        toast.style.opacity = 0;
+                        toast.style.transform = 'translateY(-20px)';
+                        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+                    }, 4000); // Disappear after 4 seconds
+                },
+
+                // Wrapper for async actions to handle loading state and toasts with retry
+                async performAction(actionFn, buttonId, successMsg, errorMsg, maxRetries = 0) {
+                    const button = document.getElementById(buttonId);
+                    const loader = button ? button.querySelector('.loader') : null;
+
+                    if (button) {
+                        button.disabled = true;
+                        if (loader) loader.classList.remove('hidden');
+                    }
+
+                    let retries = 0;
+                    while (retries <= maxRetries) {
+                        try {
+                            const result = await actionFn();
+                            app.ui.showToast(successMsg, 'success');
+                            return result;
+                        } catch (error) {
+                            console.error("Action failed:", error);
+                            if (retries < maxRetries) {
+                                app.ui.showToast(`${app.translations[app.state.currentLang].toastInfo}: Retrying... (${retries + 1}/${maxRetries})`, 'info');
+                                await new Promise(res => setTimeout(res, 1000 * (retries + 1))); // Exponential backoff
+                                retries++;
+                            } else {
+                                app.ui.showToast(`${errorMsg}: ${error.message || error}`, 'error');
+                                throw error; // Re-throw after all retries fail
+                            }
+                        } finally {
+                            if (retries >= maxRetries) { // Only re-enable button after final attempt
+                                if (button) {
+                                    button.disabled = false;
+                                    if (loader) loader.classList.add('hidden');
+                                }
+                            }
+                        }
+                    }
+                },
+
+                updateTextContent() {
+                    const elements = document.querySelectorAll('[data-i18n]');
+                    elements.forEach(el => {
+                        const key = el.getAttribute('data-i18n');
+                        if (app.translations[app.state.currentLang][key]) {
+                            el.textContent = app.translations[app.state.currentLang][key];
+                        }
+                    });
+
+                    const placeholders = document.querySelectorAll('[data-i18n-placeholder]');
+                    placeholders.forEach(el => {
+                        const key = el.getAttribute('data-i18n-placeholder');
+                        if (app.translations[app.state.currentLang][key]) {
+                            el.placeholder = app.translations[app.state.currentLang][key];
+                        }
+                    });
+
+                    // Update document title
+                    document.title = app.translations[app.state.currentLang].appTitle;
+                },
+
+                renderRadarChart(data) {
+                    const svg = document.getElementById('radar-chart');
+                    if (!svg) return;
+
+                    // Clear previous chart
+                    svg.innerHTML = '';
+
+                    const width = 300;
+                    const height = 300;
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    const radius = Math.min(width, height) / 2 - 30; // Leave space for labels
+                    const numAxes = data.labels.length;
+                    const angleSlice = (Math.PI * 2) / numAxes;
+
+                    // Create grid lines
+                    for (let i = 0; i < 4; i++) { // 4 concentric circles
+                        const r = radius * ((i + 1) / 4);
+                        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", centerX);
+                        circle.setAttribute("cy", centerY);
+                        circle.setAttribute("r", r);
+                        circle.setAttribute("class", "grid-line");
+                        circle.setAttribute("fill", "none");
+                        svg.appendChild(circle);
+                    }
+
+                    // Create axes and labels
+                    data.labels.forEach((label, i) => {
+                        const angle = angleSlice * i - Math.PI / 2; // Start from top
+                        const x = centerX + radius * Math.cos(angle);
+                        const y = centerY + radius * Math.sin(angle);
+
+                        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        line.setAttribute("x1", centerX);
+                        line.setAttribute("y1", centerY);
+                        line.setAttribute("x2", x);
+                        line.setAttribute("y2", y);
+                        line.setAttribute("class", "grid-line");
+                        svg.appendChild(line);
+
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute("x", centerX + (radius + 15) * Math.cos(angle));
+                        text.setAttribute("y", centerY + (radius + 15) * Math.sin(angle));
+                        text.setAttribute("text-anchor", Math.abs(Math.cos(angle)) < 0.01 ? "middle" : (Math.cos(angle) > 0 ? "start" : "end"));
+                        text.setAttribute("dominant-baseline", Math.abs(Math.sin(angle)) < 0.01 ? "middle" : (Math.sin(angle) > 0 ? "hanging" : "auto"));
+                        text.setAttribute("class", "axis-label");
+                        text.textContent = app.translations[app.state.currentLang][label];
+                        svg.appendChild(text);
+                    });
+
+                    // Draw data polygon
+                    const points = data.values.map((value, i) => {
+                        const angle = angleSlice * i - Math.PI / 2;
+                        const r = radius * (value / 9); // Scale value to max 9
+                        const x = centerX + r * Math.cos(angle);
+                        const y = centerY + r * Math.sin(angle);
+                        return `${x},${y}`;
+                    }).join(" ");
+
+                    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                    polygon.setAttribute("points", points);
+                    polygon.setAttribute("class", "data-line");
+                    svg.appendChild(polygon);
+
+                    // Add center circle
+                    const centerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    centerCircle.setAttribute("cx", centerX);
+                    centerCircle.setAttribute("cy", centerY);
+                    centerCircle.setAttribute("r", 3);
+                    centerCircle.setAttribute("class", "center-circle");
+                    svg.appendChild(centerCircle);
+                },
+
+                toggleBlindMask(active) {
+                    const mask = document.getElementById('blind-mask-layer');
+                    if (!mask) return;
+                    if (active) {
+                        mask.classList.add('active');
+                        document.body.classList.add('blind-active');
+                    } else {
+                        mask.classList.remove('active');
+                        document.body.classList.remove('blind-active');
+                    }
+                },
+            },
+
+            // --- State Management & Persistence ---
+            store: {
+                loadState() {
+                    try {
+                        const serializedState = localStorage.getItem('ieltsApp');
+                        if (serializedState === null) {
+                            return undefined;
+                        }
+                        const loadedState = JSON.parse(serializedState);
+                        // Merge with default state to ensure all properties exist
+                        return { ...app.state, ...loadedState };
+                    } catch (error) {
+                        console.error("Error loading state from localStorage:", error);
+                        return undefined;
+                    }
+                },
+
+                saveState() {
+                    try {
+                        // Exclude non-serializable or transient state
+                        const stateToSave = { ...app.state };
+                        delete stateToSave.speechRecognition;
+                        const serializedState = JSON.stringify(stateToSave);
+                        localStorage.setItem('ieltsApp', serializedState);
+                    } catch (error) {
+                        console.error("Error saving state to localStorage:", error);
+                    }
+                },
+
+                // Initialize state from localStorage or defaults
+                init() {
+                    const loaded = app.store.loadState();
+                    if (loaded) {
+                        app.state = loaded;
+                    }
+
+                    // Ensure daily task is updated if a new day has started or status needs update
+                    app.handlers.checkAndGenerateDailyTask();
+                    app.handlers.updateProgressOverview(); // Update progress on load
+                }
+            },
+
+            // --- Routing ---
+            router: {
+                navigateTo(viewName) {
+                    if (app.state.blindWrite.isRecording) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastWarning + ': ' + app.translations[app.state.currentLang].blindModeWarning, 'warning');
+                        return; // Prevent navigation during recording
+                    }
+                    if (app.state.sprint.isActive) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastWarning + ': ' + app.translations[app.state.currentLang].sprintEditorTitle + ' is active. Please submit or stop.', 'warning');
+                        return; // Prevent navigation during sprint
+                    }
+
+                    app.state.currentView = viewName;
+                    app.store.saveState();
+                    app.router.renderView();
+                },
+
+                renderView() {
+                    document.querySelectorAll('.view-section').forEach(section => {
+                        section.classList.add('hidden');
+                    });
+                    const targetView = document.getElementById(`view-${app.state.currentView}`);
+                    if (targetView) {
+                        targetView.classList.remove('hidden');
+                    }
+
+
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('text-blue-600', 'font-bold');
+                        link.classList.add('text-slate-600', 'font-medium');
+                        if (link.dataset.view === app.state.currentView) {
+                            link.classList.add('text-blue-600', 'font-bold');
+                            link.classList.remove('text-slate-600', 'font-medium');
+                        }
+                    });
+
+                    // Specific view rendering logic
+                    if (app.state.currentView === 'dashboard') {
+                        app.handlers.updateDailyTaskStatus();
+                        app.handlers.updateProgressOverview();
+                        app.handlers.renderInspirationResults();
+                    } else if (app.state.currentView === 'sprint') {
+                        const sprintPromptEl = document.getElementById('sprint-prompt');
+                        const essayEditorEl = document.getElementById('essay-editor');
+                        if (sprintPromptEl) sprintPromptEl.textContent = app.state.sprint.prompt || app.translations[app.state.currentLang].sprintPromptPlaceholder;
+                        if (essayEditorEl) essayEditorEl.value = app.state.sprint.essay;
+                        app.handlers.updateTimerDisplay();
+                        app.handlers.renderSprintAnalysis();
+                        app.handlers.renderRewriteResults();
+                        app.handlers.toggleSprintEditorLock(app.state.sprint.isActive); // Apply editor lock
+                    } else if (app.state.currentView === 'blindWrite') {
+                        const originalEssayDisplayEl = document.getElementById('original-essay-display');
+                        const speechToTextChineseEl = document.getElementById('speech-to-text-chinese');
+                        const backTranslatedEnglishEl = document.getElementById('back-translated-english');
+                        if (originalEssayDisplayEl) originalEssayDisplayEl.innerHTML = app.state.blindWrite.originalEssay || app.translations[app.state.currentLang].originalEssayPlaceholder;
+                        if (speechToTextChineseEl) speechToTextChineseEl.value = app.state.blindWrite.transcribedChinese;
+                        if (backTranslatedEnglishEl) backTranslatedEnglishEl.value = app.state.blindWrite.backTranslatedEnglish;
+                        app.handlers.renderBlindWriteEvaluation();
+                        app.ui.toggleBlindMask(false); // Ensure mask is off when navigating to blind write
+                    } else if (app.state.currentView === 'report') {
+                        app.handlers.loadMockExamScores(); // Load scores for display
+                        app.handlers.renderTaskHistory(); // History is always rendered
+                        // Bottleneck, Radar, Action Items are rendered on explicit button click now
+                    } else if (app.state.currentView === 'settings') {
+                        const geminiKeyEl = document.getElementById('gemini-api-key');
+                        const grammarlyKeyEl = document.getElementById('grammarly-api-key');
+                        const deeplKeyEl = document.getElementById('deepl-api-key');
+                        if (geminiKeyEl) geminiKeyEl.value = app.state.settings.geminiApiKey;
+                        if (grammarlyKeyEl) grammarlyKeyEl.value = app.state.settings.grammarlyApiKey;
+                        if (deeplKeyEl) deeplKeyEl.value = app.state.settings.deepLApiKey;
+                    }
+                }
+            },
+
+            // --- Event Handlers & Core Logic ---
+            handlers: {
+                // --- Global Handlers ---
+                handleNavClick(event) {
+                    const view = event.target.dataset.view;
+                    if (view) {
+                        app.router.navigateTo(view);
+                    }
+                },
+
+                handleLangChange(event) {
+                    app.state.currentLang = event.target.value;
+                    app.store.saveState();
+                    app.ui.updateTextContent();
+                    app.router.renderView(); // Re-render view to update dynamic content
+                },
+
+                // --- Dashboard Handlers ---
+                checkAndGenerateDailyTask() {
+                    const today = app.utils.getTodayDateUTC();
+                    const dailyTask = app.state.dashboard.dailyTask;
+
+                    if (dailyTask.lastUpdated !== today) {
+                        // It's a new day
+                        if (dailyTask.lastUpdated && dailyTask.completed) {
+                            // Previous day's task was completed, increment currentDay
+                            app.state.progress.currentDay++;
+                            app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': ' + app.translations[app.state.currentLang].dailyTaskUnlocked, 'info');
+                        } else if (dailyTask.lastUpdated && !dailyTask.completed) {
+                            // Previous day's task was not completed, do not increment day
+                            app.ui.showToast(app.translations[app.state.currentLang].toastWarning + ': ' + app.translations[app.state.currentLang].passiveVoiceTooHigh, 'warning');
+                        }
+
+                        // Generate a new daily task prompt
+                        const tasks = [
+                            "Analyze the causes and effects of global warming, and propose solutions.",
+                            "Discuss the advantages and disadvantages of online education compared to traditional classroom learning.",
+                            "To what extent do you agree or disagree that governments should invest more in public transport than in road construction?",
+                            "Some people believe that all children should learn a foreign language at primary school. Do the advantages of this outweigh the disadvantages?",
+                            "The internet has made it easier for people to access information. Do the benefits of this outweigh the drawbacks?"
+                        ];
+                        dailyTask.prompt = tasks[Math.floor(Math.random() * tasks.length)];
+                        dailyTask.lastUpdated = today;
+                        dailyTask.completed = false; // Reset completion status for the new day
+                        app.store.saveState();
+                    }
+                    document.getElementById('daily-task-prompt').textContent = dailyTask.prompt;
+                    app.handlers.updateDailyTaskStatus();
+                    app.handlers.updateStartSprintButtonState();
+                },
+
+                dailyTaskTimerInterval: null,
+                updateDailyTaskStatus() {
+                    const statusEl = document.getElementById('daily-task-status');
+                    if (!statusEl) return;
+
+                    const dailyTask = app.state.dashboard.dailyTask;
+                    const today = app.utils.getTodayDateUTC();
+
+                    if (dailyTask.lastUpdated === today && dailyTask.completed) {
+                        statusEl.textContent = app.translations[app.state.currentLang].dailyTaskUnlocked; // Task completed for today
+                        if (app.handlers.dailyTaskTimerInterval) {
+                            clearInterval(app.handlers.dailyTaskTimerInterval);
+                            app.handlers.dailyTaskTimerInterval = null;
+                        }
+                    } else if (dailyTask.lastUpdated === today && !dailyTask.completed) {
+                        statusEl.textContent = app.translations[app.state.currentLang].dailyTaskUnlocked; // Task active for today
+                        if (app.handlers.dailyTaskTimerInterval) {
+                            clearInterval(app.handlers.dailyTaskTimerInterval);
+                            app.handlers.dailyTaskTimerInterval = null;
+                        }
+                    } else {
+                        // This state should ideally be handled by checkAndGenerateDailyTask on load
+                        // But if it occurs (e.g., after a very long idle period without reload),
+                        // show countdown to next update.
+                        if (!app.handlers.dailyTaskTimerInterval) {
+                            app.handlers.dailyTaskTimerInterval = setInterval(() => {
+                                const timeLeft = app.utils.getTimeUntilNextDailyUpdate();
+                                if (timeLeft <= 0) {
+                                    clearInterval(app.handlers.dailyTaskTimerInterval);
+                                    app.handlers.dailyTaskTimerInterval = null;
+                                    app.handlers.checkAndGenerateDailyTask(); // Trigger update
+                                } else {
+                                    statusEl.textContent = `${app.translations[app.state.currentLang].dailyTaskLocked} ${app.utils.formatTime(timeLeft)}`;
+                                }
+                            }, 1000);
+                        }
+                    }
+                },
+
+                updateStartSprintButtonState() {
+                    const btnStartSprint = document.getElementById('btn-start-sprint');
+                    if (!btnStartSprint) return;
+
+                    const dailyTask = app.state.dashboard.dailyTask;
+                    const today = app.utils.getTodayDateUTC();
+
+                    if (dailyTask.lastUpdated === today && dailyTask.completed) {
+                        // Task for today is completed, disable button until next day
+                        btnStartSprint.disabled = true;
+                        btnStartSprint.textContent = app.translations[app.state.currentLang].dailyTaskUnlocked; // Or 'Completed for today'
+                    } else {
+                        btnStartSprint.disabled = false;
+                        btnStartSprint.innerHTML = `<span data-i18n="startSprint">${app.translations[app.state.currentLang].startSprint}</span>`;
+                    }
+                },
+
+
+                handleStartSprintFromDashboard() {
+                    const dailyTask = app.state.dashboard.dailyTask;
+                    const today = app.utils.getTodayDateUTC();
+
+                    if (dailyTask.lastUpdated !== today || !dailyTask.prompt) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Daily task not ready. Please wait or refresh.', 'info');
+                        app.handlers.checkAndGenerateDailyTask(); // Attempt to re-generate if needed
+                        return;
+                    }
+                    if (dailyTask.completed) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Daily task already completed for today!', 'info');
+                        return;
+                    }
+
+                    app.state.sprint.prompt = dailyTask.prompt;
+                    app.state.sprint.essay = ''; // Clear previous essay
+                    app.state.sprint.analysis = null;
+                    app.state.sprint.rewrite = '';
+                    app.router.navigateTo('sprint');
+                    app.handlers.startSprintTimer();
+                },
+
+                async handleGenerateInspiration() {
+                    const topicInput = document.getElementById('ai-topic-input');
+                    if (!topicInput) return;
+                    const topic = topicInput.value.trim();
+                    if (!topic) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Please enter a topic.', 'info');
+                        return;
+                    }
+
+                    await app.ui.performAction(async () => {
+                        const result = await app.api.geminiApi.generateInspiration(topic, app.state.settings.geminiApiKey);
+                        app.state.dashboard.inspiration = { topic, ...result };
+                        app.store.saveState();
+                        app.handlers.renderInspirationResults();
+                    }, 'btn-generate-inspiration', app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].generateInspiration);
+                },
+
+                renderInspirationResults() {
+                    const resultDiv = document.getElementById('ai-inspiration-result');
+                    const prosList = document.getElementById('inspiration-pros');
+                    const consList = document.getElementById('inspiration-cons');
+                    const vocabDiv = document.getElementById('inspiration-vocab');
+
+                    if (!resultDiv || !prosList || !consList || !vocabDiv) return;
+
+                    prosList.innerHTML = '';
+                    consList.innerHTML = '';
+                    vocabDiv.innerHTML = '';
+
+                    if (app.state.dashboard.inspiration.pros.length > 0) {
+                        resultDiv.classList.remove('hidden');
+                        app.state.dashboard.inspiration.pros.forEach(item => {
+                            const li = document.createElement('li');
+                            li.textContent = item;
+                            prosList.appendChild(li);
+                        });
+                        app.state.dashboard.inspiration.cons.forEach(item => {
+                            const li = document.createElement('li');
+                            li.textContent = item;
+                            consList.appendChild(li);
+                        });
+                        app.state.dashboard.inspiration.vocab.forEach(item => {
+                            const span = document.createElement('span');
+                            span.className = 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs';
+                            span.textContent = `${item.word} (${item.explanation})`;
+                            vocabDiv.appendChild(span);
+                        });
+                    } else {
+                        resultDiv.classList.add('hidden');
+                    }
+                },
+
+                updateProgressOverview() {
+                    let totalPassiveRate = 0;
+                    let totalOmissionRate = 0;
+                    let sprintCount = 0;
+                    let blindWriteCount = 0;
+
+                    app.state.history.forEach(item => {
+                        if (item.type === 'sprint' && typeof item.passiveRate === 'number') {
+                            totalPassiveRate += item.passiveRate;
+                            sprintCount++;
+                        }
+                        if (item.type === 'blindWrite' && typeof item.omissionRate === 'number') {
+                            totalOmissionRate += item.omissionRate;
+                            blindWriteCount++;
+                        }
+                    });
+
+                    app.state.progress.completedTasks = app.state.history.filter(item => item.status === 'Completed' || item.status === 'Excellent' || item.status === 'Good').length;
+                    app.state.progress.avgPassiveRate = sprintCount > 0 ? (totalPassiveRate / sprintCount) : 0;
+                    app.state.progress.avgOmissionRate = blindWriteCount > 0 ? (totalOmissionRate / blindWriteCount) : 0;
+
+                    const currentDayEl = document.getElementById('dashboard-current-day');
+                    const completedTasksEl = document.getElementById('dashboard-completed-tasks');
+                    const avgPassiveEl = document.getElementById('dashboard-avg-passive');
+                    const avgOmissionEl = document.getElementById('dashboard-avg-omission');
+
+                    if (currentDayEl) currentDayEl.textContent = app.state.progress.currentDay;
+                    if (completedTasksEl) completedTasksEl.textContent = app.state.progress.completedTasks;
+                    if (avgPassiveEl) avgPassiveEl.textContent = `${app.state.progress.avgPassiveRate.toFixed(1)}%`;
+                    if (avgOmissionEl) avgOmissionEl.textContent = `${app.state.progress.avgOmissionRate.toFixed(1)}%`;
+
+                    app.store.saveState();
+                },
+
+                // --- Sprint Editor Handlers ---
+                sprintTimerInterval: null,
+                startSprintTimer() {
+                    if (app.state.sprint.isActive) return;
+
+                    app.state.sprint.timer = 15 * 60; // 15 minutes
+                    app.state.sprint.isActive = true;
+                    app.handlers.updateTimerDisplay();
+                    app.handlers.toggleSprintEditorLock(true); // Lock editor
+
+                    app.sprintTimerInterval = setInterval(() => {
+                        app.state.sprint.timer--;
+                        app.handlers.updateTimerDisplay();
+                        if (app.state.sprint.timer <= 0) {
+                            app.handlers.stopSprintTimer();
+                            app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': ' + app.translations[app.state.currentLang].timerEnded, 'info');
+                            app.handlers.handleSubmitSprint(); // Auto-submit
+                        }
+                    }, 1000);
+                    app.store.saveState();
+                },
+
+                stopSprintTimer() {
+                    clearInterval(app.sprintTimerInterval);
+                    app.sprintTimerInterval = null;
+                    app.state.sprint.isActive = false;
+                    app.handlers.toggleSprintEditorLock(false); // Unlock editor
+                    app.store.saveState();
+                },
+
+                updateTimerDisplay() {
+                    const timerWidget = document.getElementById('timer-widget');
+                    if (timerWidget) timerWidget.textContent = app.utils.formatTime(app.state.sprint.timer);
+                },
+
+                toggleSprintEditorLock(lock) {
+                    const essayEditor = document.getElementById('essay-editor');
+                    const btnAnalyze = document.getElementById('btn-analyze-essay');
+                    const btnRewrite = document.getElementById('btn-ai-rewrite');
+                    const btnSubmit = document.getElementById('btn-submit-sprint');
+
+                    if (essayEditor) essayEditor.disabled = lock;
+                    if (btnAnalyze) btnAnalyze.disabled = lock;
+                    if (btnRewrite) btnRewrite.disabled = lock;
+                    // Submit button should remain enabled even if timer ends for manual submission
+                    // But if it's locked by timer, it should be disabled for new input.
+                    // Let's disable submit button only during analysis/rewrite, not just because timer is running.
+                    // For timer end, auto-submit handles it.
+                },
+
+                handleEssayEditorInput() {
+                    const essayEditor = document.getElementById('essay-editor');
+                    if (essayEditor) {
+                        app.state.sprint.essay = essayEditor.value;
+                        app.store.saveState();
+                    }
+                },
+
+                async handleAnalyzeEssay() {
+                    const essayText = app.state.sprint.essay;
+                    if (!essayText.trim()) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Please write an essay first.', 'info');
+                        return;
+                    }
+
+                    await app.ui.performAction(async () => {
+                        // Use Grammarly API for passive voice, Gemini for other analysis
+                        const [grammarlyResult, geminiAnalysis] = await Promise.all([
+                            app.api.grammarlyApi.checkPassiveVoice(essayText, app.state.settings.grammarlyApiKey),
+                            app.api.geminiApi.analyzeEssay(essayText, app.state.settings.geminiApiKey)
+                        ]);
+
+                        app.state.sprint.analysis = {
+                            estimatedScore: geminiAnalysis.estimatedScore,
+                            passiveVoiceRatio: grammarlyResult.ratio,
+                            passiveSentences: grammarlyResult.sentences,
+                            advancedVocabulary: geminiAnalysis.advancedVocabulary,
+                            feedback: geminiAnalysis.feedback
+                        };
+                        app.store.saveState();
+                        app.handlers.renderSprintAnalysis();
+                    }, 'btn-analyze-essay', app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].analysisComplete);
+                },
+
+                renderSprintAnalysis() {
+                    const analysisResultsDiv = document.getElementById('analysis-results');
+                    const analysisScore = document.getElementById('analysis-score');
+                    const analysisPassiveRatio = document.getElementById('analysis-passive-ratio');
+                    const passiveSentencesList = document.getElementById('analysis-passive-sentences');
+                    const advancedVocabDiv = document.getElementById('analysis-advanced-vocab');
+                    const passiveVoiceWarning = document.getElementById('passive-voice-warning');
+
+                    if (!analysisResultsDiv || !analysisScore || !analysisPassiveRatio || !passiveSentencesList || !advancedVocabDiv || !passiveVoiceWarning) return;
+
+                    passiveSentencesList.innerHTML = '';
+                    advancedVocabDiv.innerHTML = '';
+                    passiveVoiceWarning.classList.add('hidden'); // Hide by default
+
+                    if (app.state.sprint.analysis) {
+                        analysisResultsDiv.classList.remove('hidden');
+                        analysisScore.textContent = app.state.sprint.analysis.estimatedScore;
+                        const passiveRatio = parseFloat(app.state.sprint.analysis.passiveVoiceRatio);
+                        analysisPassiveRatio.textContent = `${passiveRatio}%`;
+
+                        if (passiveRatio < 30) {
+                            passiveVoiceWarning.classList.remove('hidden');
+                        }
+
+                        app.state.sprint.analysis.passiveSentences.forEach(sentence => {
+                            const li = document.createElement('li');
+                            li.innerHTML = sentence.replace(
+                                /\b(?:am|is|are|was|were|be|being|been)\s+(?:[a-z]+ed|broken|chosen|done|driven|eaten|fallen|given|gone|known|made|seen|taken|written|bought|caught|taught|understood|felt|kept|left|lost|paid|said|sold|sent|told|thought)\b/gi,
+                                (match) => `<span class="passive-highlight">${match}</span>`
+                            );
+                            passiveSentencesList.appendChild(li);
+                        });
+                        app.state.sprint.analysis.advancedVocabulary.forEach(item => {
+                            const span = document.createElement('span');
+                            span.className = 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs';
+                            span.textContent = `${item.word} (${item.explanation})`;
+                            advancedVocabDiv.appendChild(span);
+                        });
+                    } else {
+                        analysisResultsDiv.classList.add('hidden');
+                    }
+                },
+
+                async handleAIRewrite() {
+                    const essayText = app.state.sprint.essay;
+                    if (!essayText.trim()) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Please write an essay first.', 'info');
+                        return;
+                    }
+
+                    await app.ui.performAction(async () => {
+                        const rewrite = await app.api.geminiApi.rewriteEssay(essayText, app.state.settings.geminiApiKey);
+                        app.state.sprint.rewrite = rewrite;
+                        app.store.saveState();
+                        app.handlers.renderRewriteResults();
+                    }, 'btn-ai-rewrite', app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].rewriteComplete);
+                },
+
+                renderRewriteResults() {
+                    const rewriteResultsDiv = document.getElementById('rewrite-results');
+                    const rewriteText = document.getElementById('rewrite-text');
+
+                    if (!rewriteResultsDiv || !rewriteText) return;
+
+                    if (app.state.sprint.rewrite) {
+                        rewriteResultsDiv.classList.remove('hidden');
+                        rewriteText.textContent = app.state.sprint.rewrite;
+                    } else {
+                        rewriteResultsDiv.classList.add('hidden');
+                    }
+                },
+
+                handleSubmitSprint() {
+                    app.handlers.stopSprintTimer(); // Ensure timer is stopped
+                    const essayText = app.state.sprint.essay;
+                    if (!essayText.trim()) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Essay is empty, not submitting.', 'info');
+                        return;
+                    }
+
+                    let passiveRate = 0;
+                    if (app.state.sprint.analysis) {
+                        passiveRate = parseFloat(app.state.sprint.analysis.passiveVoiceRatio);
+                    } else {
+                        // If not analyzed, do a quick local analysis for history
+                        passiveRate = parseFloat(app.utils.calculatePassiveVoice(essayText).ratio);
+                    }
+
+                    const dailyTask = app.state.dashboard.dailyTask;
+                    if (passiveRate < 30) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastWarning + ': ' + app.translations[app.state.currentLang].passiveVoiceTooHigh, 'warning');
+                        dailyTask.completed = false; // Task not passed
+                    } else {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].sprintSubmitted, 'success');
+                        dailyTask.completed = true; // Task passed
+                    }
+
+                    app.state.history.push({
+                        date: new Date().toISOString().split('T')[0],
+                        type: 'sprint',
+                        passiveRate: passiveRate,
+                        omissionRate: null, // Not applicable for sprint
+                        status: dailyTask.completed ? (passiveRate < 10 ? 'Excellent' : 'Good') : 'Failed', // Update status based on completion
+                        timestamps: {
+                            submission: new Date().toISOString()
+                        }
+                    });
+
+                    app.state.blindWrite.originalEssay = essayText; // Set original essay for blind write
+                    app.state.sprint.essay = ''; // Clear editor after submission
+                    app.state.sprint.analysis = null;
+                    app.state.sprint.rewrite = '';
+
+                    app.store.saveState();
+                    app.handlers.updateProgressOverview();
+                    app.handlers.updateStartSprintButtonState(); // Update button state on dashboard
+                    app.router.renderView(); // Re-render sprint view to clear fields and analysis
+                },
+
+                // --- Blind Write Handlers ---
+                speechRecognition: null,
+                handleStartRecording() {
+                    if (!('webkitSpeechRecognition' in window)) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastError + ': Web Speech API not supported in this browser.', 'error');
+                        return;
+                    }
+                    if (app.state.blindWrite.isRecording) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Recording already in progress.', 'info');
+                        return;
+                    }
+
+                    app.ui.toggleBlindMask(true); // Activate blind mask
+
+                    const SpeechRecognition = window.webkitSpeechRecognition;
+                    app.state.speechRecognition = new SpeechRecognition();
+                    app.state.speechRecognition.continuous = true;
+                    app.state.speechRecognition.interimResults = true;
+                    app.state.speechRecognition.lang = 'zh-TW'; // Chinese language for recognition
+
+                    let finalTranscript = '';
+
+                    app.state.speechRecognition.onstart = () => {
+                        app.state.blindWrite.isRecording = true;
+                        app.state.blindWrite.recordingStartTime = new Date().toISOString(); // Record start time
+                        app.store.saveState();
+                        const btnStart = document.getElementById('btn-start-recording');
+                        const btnStop = document.getElementById('btn-stop-recording');
+                        if (btnStart) {
+                            btnStart.disabled = true;
+                            btnStart.querySelector('.loader')?.classList.remove('hidden');
+                        }
+                        if (btnStop) btnStop.disabled = false;
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': ' + app.translations[app.state.currentLang].recordingStarted, 'info');
+                        const speechToTextChineseEl = document.getElementById('speech-to-text-chinese');
+                        if (speechToTextChineseEl) speechToTextChineseEl.value = ''; // Clear previous text
+                    };
+
+                    app.state.speechRecognition.onresult = (event) => {
+                        let interimTranscript = '';
+                        for (let i = event.resultIndex; i < event.results.length; ++i) {
+                            if (event.results[i].isFinal) {
+                                finalTranscript += event.results[i][0].transcript;
+                            } else {
+                                interimTranscript += event.results[i][0].transcript;
+                            }
+                        }
+                        const speechToTextChineseEl = document.getElementById('speech-to-text-chinese');
+                        if (speechToTextChineseEl) speechToTextChineseEl.value = finalTranscript + interimTranscript;
+                        app.state.blindWrite.transcribedChinese = finalTranscript + interimTranscript;
+                    };
+
+                    app.state.speechRecognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        app.ui.showToast(app.translations[app.state.currentLang].toastError + `: Speech recognition error: ${event.error}`, 'error');
+                        app.handlers.handleStopRecording(); // Stop on error
+                    };
+
+                    app.state.speechRecognition.onend = () => {
+                        if (app.state.blindWrite.isRecording) { // If still recording, restart (for continuous)
+                            app.state.speechRecognition.start();
+                        } else {
+                            app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': ' + app.translations[app.state.currentLang].recordingStopped, 'info');
+                            app.state.blindWrite.speechToTextTime = new Date().toISOString(); // Record speech-to-text completion time
+                            app.store.saveState();
+                        }
+                    };
+
+                    app.state.speechRecognition.start();
+                },
+
+                handleStopRecording() {
+                    if (app.state.speechRecognition) {
+                        app.state.speechRecognition.stop();
+                        app.state.speechRecognition = null;
+                    }
+                    app.state.blindWrite.isRecording = false;
+                    app.state.blindWrite.recordingEndTime = new Date().toISOString(); // Record end time
+                    app.store.saveState();
+                    const btnStart = document.getElementById('btn-start-recording');
+                    const btnStop = document.getElementById('btn-stop-recording');
+                    if (btnStart) {
+                        btnStart.disabled = false;
+                        btnStart.querySelector('.loader')?.classList.add('hidden');
+                    }
+                    if (btnStop) btnStop.disabled = true;
+                    app.ui.showToast(app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].speechRecognized, 'success');
+                    app.ui.toggleBlindMask(false); // Deactivate blind mask
+                },
+
+                handleBlindMaskEsc(event) {
+                    if (event.key === 'Escape' && app.state.blindWrite.isRecording) {
+                        app.handlers.handleStopRecording();
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': ' + app.translations[app.state.currentLang].blindModeExit, 'info');
+                        app.state.blindWrite.transcribedChinese = ''; // Clear transcribed text if exited
+                        const speechToTextChineseEl = document.getElementById('speech-to-text-chinese');
+                        if (speechToTextChineseEl) speechToTextChineseEl.value = '';
+                        app.store.saveState();
+                    }
+                },
+
+                async handleBackTranslate() {
+                    const chineseText = app.state.blindWrite.transcribedChinese;
+                    if (!chineseText.trim()) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Please record or enter Chinese text first.', 'info');
+                        return;
+                    }
+
+                    await app.ui.performAction(async () => {
+                        const translated = await app.api.deepLApi.backTranslate(chineseText, app.state.settings.deepLApiKey);
+                        app.state.blindWrite.backTranslatedEnglish = translated;
+                        const backTranslatedEnglishEl = document.getElementById('back-translated-english');
+                        if (backTranslatedEnglishEl) backTranslatedEnglishEl.value = translated;
+                        app.state.blindWrite.backTranslateTime = new Date().toISOString(); // Record back-translation completion time
+                        app.store.saveState();
+                    }, 'btn-back-translate', app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].backTranslationComplete, 2); // 2 retries
+                },
+
+                async handleEvaluateBlindWrite() {
+                    const originalEssay = app.state.blindWrite.originalEssay;
+                    const userTranslated = app.state.blindWrite.backTranslatedEnglish;
+
+                    if (!originalEssay.trim()) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': No original essay to compare. Complete a sprint first.', 'info');
+                        return;
+                    }
+                    if (!userTranslated.trim()) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': No back-translated essay to evaluate.', 'info');
+                        return;
+                    }
+
+                    await app.ui.performAction(async () => {
+                        const evaluation = app.utils.compareEssays(originalEssay, userTranslated);
+                        const diagnosis = await app.api.geminiApi.diagnoseBlindWrite(originalEssay, userTranslated, app.state.settings.geminiApiKey);
+                        app.state.blindWrite.evaluation = { ...evaluation, diagnosis };
+                        app.store.saveState();
+                        app.handlers.renderBlindWriteEvaluation();
+
+                        // Save to history
+                        app.state.history.push({
+                            date: new Date().toISOString().split('T')[0],
+                            type: 'blindWrite',
+                            passiveRate: null, // Not applicable for blind write
+                            omissionRate: parseFloat(evaluation.omissionRate),
+                            status: parseFloat(evaluation.omissionRate) < 3 ? 'Excellent' : (parseFloat(evaluation.omissionRate) < 10 ? 'Good' : 'Needs Improvement'), // Adjusted thresholds
+                            timestamps: {
+                                recordingStart: app.state.blindWrite.recordingStartTime,
+                                recordingEnd: app.state.blindWrite.recordingEndTime,
+                                speechToText: app.state.blindWrite.speechToTextTime,
+                                backTranslate: app.state.blindWrite.backTranslateTime,
+                                evaluation: new Date().toISOString()
+                            }
+                        });
+                        app.store.saveState();
+                        app.handlers.updateProgressOverview();
+                    }, 'btn-evaluate-blind-write', app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].evaluationComplete);
+                },
+
+                renderBlindWriteEvaluation() {
+                    const evaluationResultsDiv = document.getElementById('blind-write-evaluation-results');
+                    const omissionRateEl = document.getElementById('evaluation-omission-rate');
+                    const accuracyEl = document.getElementById('evaluation-accuracy');
+                    const diagnosisEl = document.getElementById('ai-diagnosis-result');
+                    const markedOriginalEl = document.getElementById('original-essay-marked');
+                    const omissionRateWarning = document.getElementById('omission-rate-warning');
+
+                    if (!evaluationResultsDiv || !omissionRateEl || !accuracyEl || !diagnosisEl || !markedOriginalEl || !omissionRateWarning) return;
+
+                    omissionRateWarning.classList.add('hidden'); // Hide by default
+
+                    if (app.state.blindWrite.evaluation) {
+                        evaluationResultsDiv.classList.remove('hidden');
+                        const omissionRate = parseFloat(app.state.blindWrite.evaluation.omissionRate);
+                        omissionRateEl.textContent = `${omissionRate}%`;
+                        accuracyEl.textContent = `${app.state.blindWrite.evaluation.accuracy}%`;
+                        diagnosisEl.textContent = app.state.blindWrite.evaluation.diagnosis;
+                        markedOriginalEl.innerHTML = app.state.blindWrite.evaluation.markedOriginal;
+
+                        if (omissionRate >= 3) {
+                            omissionRateWarning.classList.remove('hidden');
+                        }
+                    } else {
+                        evaluationResultsDiv.classList.add('hidden');
+                    }
+                },
+
+                handleSpeechToTextInput() {
+                    const speechToTextChineseEl = document.getElementById('speech-to-text-chinese');
+                    if (speechToTextChineseEl) {
+                        app.state.blindWrite.transcribedChinese = speechToTextChineseEl.value;
+                        app.store.saveState();
+                    }
+                },
+
+                handleBackTranslatedInput() {
+                    const backTranslatedEnglishEl = document.getElementById('back-translated-english');
+                    if (backTranslatedEnglishEl) {
+                        app.state.blindWrite.backTranslatedEnglish = backTranslatedEnglishEl.value;
+                        app.store.saveState();
+                    }
+                },
+
+                // --- Report Handlers ---
+                loadMockExamScores() {
+                    const taEl = document.getElementById('mock-ta');
+                    const coEl = document.getElementById('mock-co');
+                    const lrEl = document.getElementById('mock-lr');
+                    const graEl = document.getElementById('mock-gra');
+                    const fcEl = document.getElementById('mock-fc');
+
+                    if (taEl) taEl.value = app.state.report.mockExamScores.ta;
+                    if (coEl) coEl.value = app.state.report.mockExamScores.coherence;
+                    if (lrEl) lrEl.value = app.state.report.mockExamScores.lexical;
+                    if (graEl) graEl.value = app.state.report.mockExamScores.grammatical;
+                    if (fcEl) fcEl.value = app.state.report.mockExamScores.fluency;
+                },
+
+                handleAnalyzeBottleneck() {
+                    const taEl = document.getElementById('mock-ta');
+                    const coEl = document.getElementById('mock-co');
+                    const lrEl = document.getElementById('mock-lr');
+                    const graEl = document.getElementById('mock-gra');
+                    const fcEl = document.getElementById('mock-fc');
+
+                    const mockScores = {
+                        ta: parseFloat(taEl?.value || '0'),
+                        coherence: parseFloat(coEl?.value || '0'),
+                        lexical: parseFloat(lrEl?.value || '0'),
+                        grammatical: parseFloat(graEl?.value || '0'),
+                        fluency: parseFloat(fcEl?.value || '0'),
+                    };
+
+                    // Validate scores (0-9 range)
+                    const isValid = Object.values(mockScores).every(score => score >= 0 && score <= 9);
+                    if (!isValid) {
+                        app.ui.showToast(app.translations[app.state.currentLang].toastError + ': Please enter valid mock exam scores (0-9).', 'error');
+                        return;
+                    }
+
+                    app.state.report.mockExamScores = mockScores;
+                    app.store.saveState();
+
+                    app.handlers.renderBottleneckIndex(mockScores);
+                    app.handlers.renderReportRadarChart(mockScores);
+                    app.handlers.renderActionItems(mockScores);
+                },
+
+                renderBottleneckIndex(scores = null) {
+                    const bottleneckValueEl = document.getElementById('bottleneck-index-value');
+                    const bottleneckStatusEl = document.getElementById('bottleneck-index-status');
+                    if (!bottleneckValueEl || !bottleneckStatusEl) return;
+
+                    let avgPassive = app.state.progress.avgPassiveRate / 100; // Convert to decimal
+                    let avgOmission = app.state.progress.avgOmissionRate / 100; // Convert to decimal
+
+                    // If mock scores are provided, use them to influence bottleneck
+                    let taScore = scores ? scores.ta : Math.max(5, 9 - (avgOmission * 4));
+                    let graScore = scores ? scores.grammatical : Math.max(5, 9 - (avgPassive * 4));
+
+                    // A more sophisticated bottleneck index: penalize low scores and high rates
+                    // Assume ideal scores are 9.0. Bottleneck is deviation from ideal.
+                    const idealScore = 9.0;
+                    const idealPassive = 0.05; // 5% passive is good
+                    const idealOmission = 0.01; // 1% omission is good
+
+                    let bottleneckIndex = 0;
+                    if (taScore > 0) bottleneckIndex += (idealScore - taScore) / idealScore;
+                    if (graScore > 0) bottleneckIndex += (idealScore - graScore) / idealScore;
+                    bottleneckIndex += Math.max(0, avgPassive - idealPassive);
+                    bottleneckIndex += Math.max(0, avgOmission - idealOmission);
+
+                    // Normalize to a reasonable range, e.g., 0-1
+                    bottleneckIndex = Math.min(1, bottleneckIndex / 4); // Divide by number of components
+
+                    app.state.report.bottleneckIndex = bottleneckIndex;
+                    bottleneckValueEl.textContent = bottleneckIndex.toFixed(2);
+
+                    bottleneckValueEl.classList.remove('text-green-600', 'text-yellow-600', 'text-red-600');
+                    if (bottleneckIndex <= 0.02) { // Excellent (very close to ideal)
+                        bottleneckValueEl.classList.add('text-green-600');
+                        bottleneckStatusEl.textContent = app.translations[app.state.currentLang].bottleneckIndexStatusExcellent;
+                    } else if (bottleneckIndex <= 0.08) { // Good
+                        bottleneckValueEl.classList.add('text-yellow-600');
+                        bottleneckStatusEl.textContent = app.translations[app.state.currentLang].bottleneckIndexStatusGood;
+                    } else { // Needs Improvement
+                        bottleneckValueEl.classList.add('text-red-600');
+                        bottleneckStatusEl.textContent = app.translations[app.state.currentLang].bottleneckIndexStatusImprove;
+                    }
+                    app.store.saveState();
+                },
+
+                renderReportRadarChart(scores = null) {
+                    // Simulate IELTS band scores for radar chart
+                    const avgPassive = app.state.progress.avgPassiveRate / 100;
+                    const avgOmission = app.state.progress.avgOmissionRate / 100;
+
+                    const currentScores = scores || app.state.report.mockExamScores;
+
+                    // Use mock scores if provided and valid, otherwise derive from progress
+                    const derivedScores = {
+                        taskAchievement: currentScores.ta > 0 ? currentScores.ta : Math.max(5, 9 - (avgOmission * 4)),
+                        coherence: currentScores.coherence > 0 ? currentScores.coherence : Math.max(5, 8 - (avgOmission * 2)),
+                        lexical: currentScores.lexical > 0 ? currentScores.lexical : Math.max(5, 9 - (avgPassive * 3)),
+                        grammatical: currentScores.grammatical > 0 ? currentScores.grammatical : Math.max(5, 9 - (avgPassive * 4)),
+                        fluency: currentScores.fluency > 0 ? currentScores.fluency : Math.max(5, 8 - (avgOmission * 1.5))
+                    };
+
+                    const radarData = {
+                        labels: ['taskAchievement', 'coherence', 'lexical', 'grammatical', 'fluency'],
+                        values: [
+                            derivedScores.taskAchievement,
+                            derivedScores.coherence,
+                            derivedScores.lexical,
+                            derivedScores.grammatical,
+                            derivedScores.fluency
+                        ]
+                    };
+                    app.state.report.radarChartData = radarData;
+                    app.ui.renderRadarChart(radarData);
+                    app.store.saveState();
+                },
+
+                renderActionItems(scores = null) {
+                    const actionItemsList = document.getElementById('action-items-list');
+                    const retestDateSuggestionEl = document.getElementById('retest-date-suggestion');
+                    if (!actionItemsList || !retestDateSuggestionEl) return;
+
+                    actionItemsList.innerHTML = '';
+                    retestDateSuggestionEl.classList.add('hidden');
+
+                    const avgPassive = app.state.progress.avgPassiveRate;
+                    const avgOmission = app.state.progress.avgOmissionRate;
+                    const bottleneckIndex = app.state.report.bottleneckIndex;
+
+                    let suggestions = [];
+
+                    // Generate suggestions based on bottleneck index and specific rates
+                    if (bottleneckIndex >= 0.02) { // Trigger suggestions if bottleneck is significant
+                        if (avgPassive > 20) {
+                            suggestions.push(app.translations[app.state.currentLang].actionItemPassiveHigh);
+                        } else if (avgPassive > 10) {
+                            suggestions.push(app.translations[app.state.currentLang].actionItemPassiveModerate);
+                        } else {
+                            // Even with low passive, if bottleneck is high, suggest general improvement
+                            if (bottleneckIndex >= 0.05) {
+                                suggestions.push(app.translations[app.state.currentLang].actionItemPassiveLow); // Still good, but something else is an issue
+                            }
+                        }
+
+                        if (avgOmission > 25) {
+                            suggestions.push(app.translations[app.state.currentLang].actionItemOmissionHigh);
+                        } else if (avgOmission > 10) {
+                            suggestions.push(app.translations[app.state.currentLang].actionItemOmissionModerate);
+                        } else {
+                            if (bottleneckIndex >= 0.05) {
+                                suggestions.push(app.translations[app.state.currentLang].actionItemOmissionLow); // Still good, but something else is an issue
+                            }
+                        }
+
+                        // Add a general suggestion if not enough specific ones
+                        if (suggestions.length < 1) {
+                            suggestions.push(app.translations[app.state.currentLang].actionItemPlaceholder);
+                        }
+
+                        // Generate retest date suggestion
+                        const retestDays = (bottleneckIndex * 30) + 7; // More bottleneck, longer until retest, min 7 days
+                        const retestDate = new Date();
+                        retestDate.setDate(retestDate.getDate() + Math.round(retestDays));
+                        app.state.report.retestDate = retestDate.toISOString().split('T')[0];
+                        retestDateSuggestionEl.textContent = app.translations[app.state.currentLang].retestSuggestion.replace('{date}', app.state.report.retestDate);
+                        retestDateSuggestionEl.classList.remove('hidden');
+
+                    } else {
+                        // If bottleneck is low, just a general positive message
+                        suggestions.push(app.translations[app.state.currentLang].actionItemPlaceholder);
+                        app.state.report.retestDate = null;
+                    }
+
+                    app.state.report.actionItems = suggestions;
+                    suggestions.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item;
+                        actionItemsList.appendChild(li);
+                    });
+                    app.store.saveState();
+                },
+
+                renderTaskHistory() {
+                    const tableBody = document.getElementById('task-history-table');
+                    if (!tableBody) return;
+                    tableBody.innerHTML = '';
+
+                    if (app.state.history.length === 0) {
+                        const row = tableBody.insertRow();
+                        const cell = row.insertCell();
+                        cell.colSpan = 5;
+                        cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-center';
+                        cell.textContent = app.translations[app.state.currentLang].noHistory;
+                        return;
+                    }
+
+                    app.state.history.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+
+                    app.state.history.forEach(record => {
+                        const row = tableBody.insertRow();
+                        row.className = 'hover:bg-slate-50';
+
+                        const dateCell = row.insertCell();
+                        dateCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900';
+                        dateCell.textContent = record.date;
+
+                        const typeCell = row.insertCell();
+                        typeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-slate-700';
+                        typeCell.textContent = record.type === 'sprint' ? app.translations[app.state.currentLang].navSprintWrite : app.translations[app.state.currentLang].navBlindWrite;
+
+                        const passiveCell = row.insertCell();
+                        passiveCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-slate-700';
+                        passiveCell.textContent = record.passiveRate !== null ? `${record.passiveRate.toFixed(1)}%` : 'N/A';
+
+                        const omissionCell = row.insertCell();
+                        omissionCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-slate-700';
+                        omissionCell.textContent = record.omissionRate !== null ? `${record.omissionRate.toFixed(1)}%` : 'N/A';
+
+                        const statusCell = row.insertCell();
+                        statusCell.className = 'px-6 py-4 whitespace-nowrap text-sm';
+                        let statusClass = '';
+                        if (record.status === 'Excellent') statusClass = 'text-green-600 font-semibold';
+                        else if (record.status === 'Good') statusClass = 'text-yellow-600 font-semibold';
+                        else if (record.status === 'Needs Improvement') statusClass = 'text-red-600 font-semibold';
+                        else statusClass = 'text-slate-500'; // For 'Failed' or other states
+                        statusCell.innerHTML = `<span class="${statusClass}">${record.status}</span>`;
+                    });
+                },
+
+                // --- Settings Handlers ---
+                async handleSaveSettings() {
+                    const geminiKeyEl = document.getElementById('gemini-api-key');
+                    const grammarlyKeyEl = document.getElementById('grammarly-api-key');
+                    const deeplKeyEl = document.getElementById('deepl-api-key');
+
+                    if (geminiKeyEl) app.state.settings.geminiApiKey = geminiKeyEl.value;
+                    if (grammarlyKeyEl) app.state.settings.grammarlyApiKey = grammarlyKeyEl.value;
+                    if (deeplKeyEl) app.state.settings.deepLApiKey = deeplKeyEl.value;
+                    app.store.saveState();
+                    app.ui.showToast(app.translations[app.state.currentLang].toastSuccess + ': ' + app.translations[app.state.currentLang].settingsSaved, 'success');
+                }
+            },
+
+            // --- Initialization ---
+            init() {
+                // Load state and apply language
+                app.store.init();
+                const langSwitcher = document.getElementById('lang-switcher');
+                if (langSwitcher) langSwitcher.value = app.state.currentLang;
+                app.ui.updateTextContent();
+
+                // Set up event listeners
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', app.handlers.handleNavClick);
+                });
+                if (langSwitcher) langSwitcher.addEventListener('change', app.handlers.handleLangChange);
+
+                // Dashboard
+                document.getElementById('btn-start-sprint')?.addEventListener('click', app.handlers.handleStartSprintFromDashboard);
+                document.getElementById('btn-generate-inspiration')?.addEventListener('click', app.handlers.handleGenerateInspiration);
+
+                // Sprint Editor
+                document.getElementById('essay-editor')?.addEventListener('input', app.handlers.handleEssayEditorInput);
+                document.getElementById('btn-analyze-essay')?.addEventListener('click', app.handlers.handleAnalyzeEssay);
+                document.getElementById('btn-ai-rewrite')?.addEventListener('click', app.handlers.handleAIRewrite);
+                document.getElementById('btn-submit-sprint')?.addEventListener('click', app.handlers.handleSubmitSprint);
+
+                // Blind Write & Back Translation
+                document.getElementById('btn-start-recording')?.addEventListener('click', app.handlers.handleStartRecording);
+                document.getElementById('btn-stop-recording')?.addEventListener('click', app.handlers.handleStopRecording);
+                document.getElementById('speech-to-text-chinese')?.addEventListener('input', app.handlers.handleSpeechToTextInput);
+                document.getElementById('back-translated-english')?.addEventListener('input', app.handlers.handleBackTranslatedInput);
+                document.getElementById('btn-back-translate')?.addEventListener('click', app.handlers.handleBackTranslate);
+                document.getElementById('btn-evaluate-blind-write')?.addEventListener('click', app.handlers.handleEvaluateBlindWrite);
+                document.addEventListener('keydown', app.handlers.handleBlindMaskEsc); // Listen for ESC key
+
+                // Report
+                document.getElementById('btn-analyze-bottleneck')?.addEventListener('click', app.handlers.handleAnalyzeBottleneck);
+                document.getElementById('mock-ta')?.addEventListener('input', () => app.store.saveState());
+                document.getElementById('mock-co')?.addEventListener('input', () => app.store.saveState());
+                document.getElementById('mock-lr')?.addEventListener('input', () => app.store.saveState());
+                document.getElementById('mock-gra')?.addEventListener('input', () => app.store.saveState());
+                document.getElementById('mock-fc')?.addEventListener('input', () => app.store.saveState());
+
+
+                // Settings
+                document.getElementById('btn-save-settings')?.addEventListener('click', app.handlers.handleSaveSettings);
+
+                // Initial render of the current view
+                app.router.renderView();
+
+                // PWA Service Worker Registration
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('/service-worker.js')
+                            .then(registration => {
+                                console.log('ServiceWorker registered: ', registration);
+                            })
+                            .catch(registrationError => {
+                                console.log('ServiceWorker registration failed: ', registrationError);
+                            });
+                    });
+                }
+
+                // Prevent common developer tool shortcuts and right-click in blind mode
+                document.addEventListener('contextmenu', (e) => {
+                    if (app.state.blindWrite.isRecording) {
+                        e.preventDefault();
+                        app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Right-click disabled in blind mode.', 'info');
+                    }
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (app.state.blindWrite.isRecording) {
+                        // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U (view source)
+                        if (e.key === 'F12' ||
+                            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                            (e.ctrlKey && e.key === 'U')) {
+                            e.preventDefault();
+                            app.ui.showToast(app.translations[app.state.currentLang].toastInfo + ': Developer tools shortcuts disabled in blind mode.', 'info');
+                        }
+                    }
+                });
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", app.init);
+
+        // Standardized Test Hook
+        window.injectTestRunner = function(runner) {
+            // Allow external tools to access the app instance
+            runner.app = app;
+            console.log("🧪 Test Runner Hook Injected");
+        };
+    </script>
+</body>
+</html>

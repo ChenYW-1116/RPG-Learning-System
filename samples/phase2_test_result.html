@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">結構化寫作訓練系統</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom Styles for Premium Feel */
+        :root {
+            --color-primary: #4f46e5; /* Indigo-600 */
+            --color-background: #f8fafc; /* Slate-50 */
+        }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--color-background);
+            color: #1e293b; /* Slate-800 */
+        }
+        .premium-card {
+            background-color: white;
+            border: 1px solid #e2e8f0; /* Slate-200 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); /* shadow-md */
+            border-radius: 1rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            transition: all 0.2s;
+        }
+        .input-field {
+            border: 1px solid #cbd5e1; /* Slate-300 */
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+        }
+        .input-field:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            outline: none;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Indigo-700 */
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
+        /* Specific style for hiding/blurring text */
+        .blur-text {
+            filter: blur(4px);
+            user-select: none;
+        }
+        .blur-text:hover {
+            filter: blur(0px); /* Subtle hint on hover */
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+
+    <!-- Main Application Container -->
+    <div id="app" class="max-w-7xl mx-auto">
+
+        <!-- Header and Navigation -->
+        <header class="flex justify-between items-center pb-8 border-b border-slate-200 mb-8">
+            <h1 class="text-3xl font-extrabold text-indigo-700" data-i18n="app_title">結構化寫作訓練系統</h1>
+            <nav class="flex space-x-2">
+                <button data-module="verb-sprint" class="nav-btn btn-primary" data-i18n="nav_verb_sprint">動詞衝刺</button>
+                <button data-module="blind-retranslation" class="nav-btn bg-white text-slate-600 hover:bg-slate-100" data-i18n="nav_blind_retranslation">盲寫回譯</button>
+                <button data-module="dashboard" class="nav-btn bg-white text-slate-600 hover:bg-slate-100" data-i18n="nav_dashboard">效能儀表板</button>
+                <button id="settings-btn" class="p-3 rounded-lg text-slate-500 hover:bg-slate-100 transition-all duration-200 ml-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="content-area">
+            <!-- Modules will be injected here -->
+        </main>
+
+    </div>
+
+    <!-- Toast Notification Container (Fixed Bottom Right) -->
+    <div id="toast-container" class="fixed bottom-6 right-6 space-y-3 z-50">
+        <!-- Toasts appear here -->
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center transition-opacity duration-300">
+        <div class="premium-card w-full max-w-lg shadow-lg p-8 transform transition-all duration-300 scale-95 opacity-0" id="settings-modal-content">
+            <h2 class="text-2xl font-bold mb-6 text-indigo-700" data-i18n="settings_title">系統設定與管理</h2>
+            
+            <div class="space-y-6">
+                <!-- Language Switcher -->
+                <div>
+                    <label for="lang-switcher" class="block text-sm font-medium text-slate-700 mb-2" data-i18n="settings_language">語言切換</label>
+                    <select id="lang-switcher" class="input-field w-full">
+                        <option value="zh-TW">繁體中文 (zh-TW)</option>
+                        <option value="en">English (en)</option>
+                    </select>
+                </div>
+
+                <!-- API Key Input -->
+                <div>
+                    <label for="api-key-input" class="block text-sm font-medium text-slate-700 mb-2" data-i18n="settings_api_key">AI API 金鑰 (Base64)</label>
+                    <input type="password" id="api-key-input" class="input-field w-full" placeholder="sk-xxxxxxxxxxxxxxxxxxxx">
+                </div>
+
+                <!-- Data Management -->
+                <div class="pt-4 border-t border-slate-100">
+                    <button id="save-settings-btn" class="btn btn-primary w-full mb-3" data-i18n="settings_save">儲存設定</button>
+                    <button id="clear-data-btn" class="btn bg-red-500 text-white hover:bg-red-600 w-full" data-i18n="settings_clear_data">清除所有資料</button>
+                    <p class="text-xs text-slate-500 mt-2" data-i18n="settings_clear_warning">此操作將永久刪除所有儲存的效能數據和設定。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE STATE MANAGEMENT & PERSISTENCE ---
+        const STORAGE_KEY = 'writing_trainer_state_v1';
+
+        const DEFAULT_STATE = {
+            currentModule: 'verb-sprint',
+            language: 'zh-TW',
+            settings: {
+                apiKey: '',
+            },
+            timer: {
+                duration: 900, // 15 minutes
+                remaining: 900,
+                isRunning: false,
+                intervalId: null,
+            },
+            verbSprint: {
+                newVerbsRequired: 6,
+                passiveRatio: 0.0,
+                inputVerbs: '',
+                grammarlyJson: '',
+            },
+            retranslation: {
+                originalEnglish: '',
+                chineseNotes: '',
+                retranslatedEnglish: '',
+                omissionRate: 0.0,
+                isOriginalHidden: true,
+            },
+            performanceData: [
+                // Mock Data for Chart Demonstration
+                { date: '2023-10-01', bandScore: 7.0, gic: 15, or: 0.03 },
+                { date: '2023-10-15', bandScore: 6.5, gic: 18, or: 0.05 },
+                { date: '2023-11-01', bandScore: 7.5, gic: 12, or: 0.015 },
+            ]
+        };
+
+        let APP_STATE = loadState();
+
+        function loadState() {
+            try {
+                const serializedState = localStorage.getItem(STORAGE_KEY);
+                if (serializedState === null) {
+                    return DEFAULT_STATE;
+                }
+                const loadedState = JSON.parse(serializedState);
+                
+                // Merge loaded state with defaults to ensure new keys exist
+                return { ...DEFAULT_STATE, ...loadedState, timer: DEFAULT_STATE.timer }; // Reset timer on load
+            } catch (err) {
+                console.error("Error loading state:", err);
+                return DEFAULT_STATE;
+            }
+        }
+
+        function saveState() {
+            try {
+                // Do not save intervalId
+                const stateToSave = { ...APP_STATE };
+                if (stateToSave.timer.intervalId) {
+                    clearInterval(stateToSave.timer.intervalId);
+                    stateToSave.timer.intervalId = null;
+                }
+                
+                const serializedState = JSON.stringify(stateToSave);
+                localStorage.setItem(STORAGE_KEY, serializedState);
+            } catch (err) {
+                Toast.error(translations[APP_STATE.language].toast_save_error);
+                console.error("Error saving state:", err);
+            }
+        }
+
+        function updateState(newState) {
+            APP_STATE = { ...APP_STATE, ...newState };
+            saveState();
+            render();
+        }
+
+        // --- I18N (Internationalization) ---
+
+        const translations = {
+            'zh-TW': {
+                app_title: '結構化寫作訓練系統',
+                nav_verb_sprint: '動詞衝刺',
+                nav_blind_retranslation: '盲寫回譯',
+                nav_dashboard: '效能儀表板',
+                settings_title: '系統設定與管理',
+                settings_language: '語言切換',
+                settings_api_key: 'AI API 金鑰 (Base64)',
+                settings_save: '儲存設定',
+                settings_clear_data: '清除所有資料',
+                settings_clear_warning: '此操作將永久刪除所有儲存的效能數據和設定。',
+                
+                // Verb Sprint
+                vs_title: '動詞衝刺訓練',
+                vs_goal: '目標設定',
+                vs_goal_desc: '15分鐘內使用 ≥ 6個新動詞，且被動語態比例 ≥ 30%',
+                vs_timer: '剩餘時間',
+                vs_start: '開始衝刺',
+                vs_pause: '暫停',
+                vs_reset: '重設',
+                vs_verb_list: '動詞清單 (每行一個)',
+                vs_status_title: '即時狀態',
+                vs_new_verbs: '所需新動詞數量',
+                vs_passive_ratio: '被動語態預覽',
+                vs_grammarly_input: '貼上 Grammarly JSON 結果',
+                vs_calculate: '完成比對並計算遺漏率',
+                
+                // Blind Retranslation
+                br_title: '盲寫回譯訓練',
+                br_original: '原始英文 (Original English)',
+                br_notes: '中文口譯/筆記 (Chinese Interpretation/Notes)',
+                br_retranslated: '回譯英文 (Retranslated English)',
+                br_toggle_hide: '切換隱藏/顯示原始文本',
+                br_omission_rate: '數據遺漏率 (OR)',
+                br_calculate: '完成比對並計算遺漏率',
+
+                // Dashboard
+                db_title: '效能儀表板',
+                db_data_entry: '手動錄入測驗成績',
+                db_date: '日期',
+                db_band_score: 'Band Score',
+                db_gic: 'Grammarly Issue Count (GIC)',
+                db_or: 'Omission Rate (OR)',
+                db_submit: '提交數據',
+                db_chart_title: '瓶頸指數 (BI) 趨勢圖',
+                db_chart_target: '目標紅線：BI < 0.02',
+                db_no_data: '尚無數據，請錄入成績以顯示圖表。',
+
+                // Toasts
+                toast_success: '成功',
+                toast_error: '錯誤',
+                toast_processing: '處理中...',
+                toast_settings_saved: '設定已儲存。',
+                toast_data_cleared: '所有資料已清除。',
+                toast_data_submitted: '成績數據已提交。',
+                toast_save_error: '資料儲存失敗，請檢查瀏覽器權限。',
+            },
+            'en': {
+                app_title: 'Structured Writing Training System',
+                nav_verb_sprint: 'Verb Sprint',
+                nav_blind_retranslation: 'Blind Retranslation',
+                nav_dashboard: 'Performance Dashboard',
+                settings_title: 'System Settings & Management',
+                settings_language: 'Language Switcher',
+                settings_api_key: 'AI API Key (Base64)',
+                settings_save: 'Save Settings',
+                settings_clear_data: 'Clear All Data',
+                settings_clear_warning: 'This action will permanently delete all stored performance data and settings.',
+
+                // Verb Sprint
+                vs_title: 'Verb Sprint Training',
+                vs_goal: 'Goal Setting',
+                vs_goal_desc: 'Use ≥ 6 new verbs in 15 minutes, with Passive Voice Ratio ≥ 30%',
+                vs_timer: 'Time Remaining',
+                vs_start: 'Start Sprint',
+                vs_pause: 'Pause',
+                vs_reset: 'Reset',
+                vs_verb_list: 'Verb List (One per line)',
+                vs_status_title: 'Real-time Status',
+                vs_new_verbs: 'Required New Verbs',
+                vs_passive_ratio: 'Passive Voice Preview',
+                vs_grammarly_input: 'Paste Grammarly JSON Result',
+                vs_calculate: 'Complete Comparison & Calculate Omission Rate',
+
+                // Blind Retranslation
+                br_title: 'Blind Retranslation Training',
+                br_original: 'Original English',
+                br_notes: 'Chinese Interpretation/Notes',
+                br_retranslated: 'Retranslated English',
+                br_toggle_hide: 'Toggle Hide/Show Original Text',
+                br_omission_rate: 'Omission Rate (OR)',
+                br_calculate: 'Complete Comparison & Calculate Omission Rate',
+
+                // Dashboard
+                db_title: 'Performance Dashboard',
+                db_data_entry: 'Manual Test Score Entry',
+                db_date: 'Date',
+                db_band_score: 'Band Score',
+                db_gic: 'Grammarly Issue Count (GIC)',
+                db_or: 'Omission Rate (OR)',
+                db_submit: 'Submit Data',
+                db_chart_title: 'Bottleneck Index (BI) Trend Chart',
+                db_chart_target: 'Target Red Line: BI < 0.02',
+                db_no_data: 'No data yet. Please enter scores to display the chart.',
+
+                // Toasts
+                toast_success: 'Success',
+                toast_error: 'Error',
+                toast_processing: 'Processing...',
+                toast_settings_saved: 'Settings saved.',
+                toast_data_cleared: 'All data cleared.',
+                toast_data_submitted: 'Score data submitted.',
+                toast_save_error: 'Failed to save data. Check browser permissions.',
+            }
+        };
+
+        function applyTranslations(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            document.title = translations[lang].app_title;
+        }
+
+        // --- TOAST NOTIFICATION SYSTEM ---
+
+        const Toast = {
+            container: document.getElementById('toast-container'),
+            show: function(message, type = 'success', duration = 4000) {
+                const colors = {
+                    success: 'bg-green-500',
+                    error: 'bg-red-500',
+                    info: 'bg-indigo-500',
+                    processing: 'bg-yellow-500'
+                };
+                const titleKey = `toast_${type === 'success' ? 'success' : type === 'error' ? 'error' : 'processing'}`;
+                const title = translations[APP_STATE.language][titleKey] || type;
+
+                const toastEl = document.createElement('div');
+                toastEl.className = `p-4 rounded-lg text-white shadow-lg ${colors[type]} transition-all duration-300 transform translate-x-full opacity-0`;
+                toastEl.style.minWidth = '250px';
+                toastEl.innerHTML = `
+                    <p class="font-bold">${title}</p>
+                    <p class="text-sm">${message}</p>
+                `;
+
+                this.container.appendChild(toastEl);
+
+                // Animate in
+                setTimeout(() => {
+                    toastEl.classList.remove('translate-x-full', 'opacity-0');
+                    toastEl.classList.add('translate-x-0', 'opacity-100');
+                }, 10);
+
+                // Animate out and remove
+                if (type !== 'processing') {
+                    setTimeout(() => {
+                        toastEl.classList.remove('translate-x-0', 'opacity-100');
+                        toastEl.classList.add('translate-x-full', 'opacity-0');
+                        setTimeout(() => toastEl.remove(), 300);
+                    }, duration);
+                }
+                return toastEl;
+            },
+            success: function(message) { this.show(message, 'success'); },
+            error: function(message) { this.show(message, 'error'); },
+            processing: function(message) { return this.show(message, 'processing', 60000); }
+        };
+
+        // --- MODULE RENDERING FUNCTIONS ---
+
+        const contentArea = document.getElementById('content-area');
+
+        function renderVerbSprint() {
+            const T = translations[APP_STATE.language];
+            const { remaining, isRunning } = APP_STATE.timer;
+            const { newVerbsRequired, passiveRatio, inputVerbs } = APP_STATE.verbSprint;
+
+            const minutes = String(Math.floor(remaining / 60)).padStart(2, '0');
+            const seconds = String(remaining % 60).padStart(2, '0');
+            const timeDisplay = `${minutes}:${seconds}`;
+
+            contentArea.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Timer & Controls (Col 1) -->
+                    <div class="premium-card lg:col-span-1 h-fit">
+                        <h2 class="text-xl font-semibold mb-4 text-indigo-600" data-i18n="vs_title">${T.vs_title}</h2>
+                        <p class="text-sm text-slate-500 mb-6" data-i18n="vs_goal_desc">${T.vs_goal_desc}</p>
+                        
+                        <div class="text-center mb-8">
+                            <p class="text-slate-500 text-sm mb-2" data-i18n="vs_timer">${T.vs_timer}</p>
+                            <div id="timer-display" class="text-7xl font-mono font-extrabold text-slate-800">${timeDisplay}</div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button id="start-sprint-btn" class="btn flex-1 ${isRunning ? 'bg-slate-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 text-white'}" ${isRunning ? 'disabled' : ''} data-i18n="vs_start">${T.vs_start}</button>
+                            <button id="pause-sprint-btn" class="btn flex-1 bg-yellow-500 hover:bg-yellow-600 text-white" ${!isRunning ? 'disabled' : ''} data-i18n="vs_pause">${T.vs_pause}</button>
+                            <button id="reset-sprint-btn" class="btn flex-1 bg-red-500 hover:bg-red-600 text-white" data-i18n="vs_reset">${T.vs_reset}</button>
+                        </div>
+                    </div>
+
+                    <!-- Input & Status (Col 2) -->
+                    <div class="premium-card lg:col-span-2 space-y-6">
+                        <h3 class="text-xl font-semibold text-indigo-600" data-i18n="vs_verb_list">${T.vs_verb_list}</h3>
+                        <textarea id="verb-input" rows="8" class="input-field w-full resize-none" placeholder="Enter verbs here (e.g., 'synthesize', 'articulate', 'demonstrate').">${inputVerbs}</textarea>
+                        
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                            <div>
+                                <p class="text-sm font-medium text-slate-700" data-i18n="vs_new_verbs">${T.vs_new_verbs}</p>
+                                <p class="text-3xl font-bold text-indigo-600">${inputVerbs.split('\n').filter(v => v.trim()).length} / ${newVerbsRequired}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-700" data-i18n="vs_passive_ratio">${T.vs_passive_ratio}</p>
+                                <p class="text-3xl font-bold text-red-600">${(passiveRatio * 100).toFixed(1)}%</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grammarly Integration (Bottom Row) -->
+                    <div class="premium-card lg:col-span-3 space-y-4">
+                        <h3 class="text-xl font-semibold text-indigo-600">Grammarly Integration</h3>
+                        <textarea id="grammarly-json-input" rows="4" class="input-field w-full resize-none" placeholder='${T.vs_grammarly_input}'></textarea>
+                        <button id="process-grammarly-btn" class="btn btn-primary" data-i18n="vs_calculate">${T.vs_calculate}</button>
+                    </div>
+                </div>
+            `;
+            attachVerbSprintListeners();
+        }
+
+        function renderBlindRetranslation() {
+            const T = translations[APP_STATE.language];
+            const { originalEnglish, chineseNotes, retranslatedEnglish, omissionRate, isOriginalHidden } = APP_STATE.retranslation;
+
+            const blurClass = isOriginalHidden ? 'blur-text' : '';
+
+            contentArea.innerHTML = `
+                <div class="premium-card space-y-6">
+                    <h2 class="text-2xl font-bold text-indigo-600" data-i18n="br_title">${T.br_title}</h2>
+                    
+                    <div class="flex justify-between items-center">
+                        <p class="text-xl font-semibold text-slate-700" data-i18n="br_omission_rate">${T.br_omission_rate}: <span class="text-red-600">${(omissionRate * 100).toFixed(1)}%</span></p>
+                        <button id="toggle-hide-btn" class="btn bg-slate-200 text-slate-700 hover:bg-slate-300" data-i18n="br_toggle_hide">${T.br_toggle_hide}</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Column 1: Original English -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2" data-i18n="br_original">${T.br_original}</label>
+                            <textarea id="original-english-input" rows="15" class="input-field w-full resize-none ${blurClass}">${originalEnglish}</textarea>
+                        </div>
+                        
+                        <!-- Column 2: Chinese Notes -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2" data-i18n="br_notes">${T.br_notes}</label>
+                            <textarea id="chinese-notes-input" rows="15" class="input-field w-full resize-none">${chineseNotes}</textarea>
+                        </div>
+                        
+                        <!-- Column 3: Retranslated English -->
+                        <div>
+                            <label class="block text-sm font-medium mb-2" data-i18n="br_retranslated">${T.br_retranslated}</label>
+                            <textarea id="retranslated-english-input" rows="15" class="input-field w-full resize-none">${retranslatedEnglish}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <button id="calculate-omission-btn" class="btn btn-primary" data-i18n="br_calculate">${T.br_calculate}</button>
+                    </div>
+                </div>
+            `;
+            attachRetranslationListeners();
+        }
+
+        function renderDashboard() {
+            const T = translations[APP_STATE.language];
+            
+            contentArea.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Data Entry Form (Col 1) -->
+                    <div class="premium-card lg:col-span-1 h-fit space-y-4">
+                        <h2 class="text-xl font-bold text-indigo-600" data-i18n="db_data_entry">${T.db_data_entry}</h2>
+                        <form id="score-entry-form" class="space-y-4">
+                            
+                            <div>
+                                <label for="score-date" class="block text-sm font-medium mb-1" data-i18n="db_date">${T.db_date}</label>
+                                <input type="date" id="score-date" class="input-field w-full" value="${new Date().toISOString().split('T')[0]}" required>
+                            </div>
+                            
+                            <div>
+                                <label for="band-score" class="block text-sm font-medium mb-1" data-i18n="db_band_score">${T.db_band_score}</label>
+                                <input type="number" id="band-score" class="input-field w-full" step="0.5" min="1.0" max="9.0" value="7.0" required>
+                            </div>
+                            
+                            <div>
+                                <label for="gic-count" class="block text-sm font-medium mb-1" data-i18n="db_gic">${T.db_gic}</label>
+                                <input type="number" id="gic-count" class="input-field w-full" step="1" min="0" value="15" required>
+                            </div>
+                            
+                            <div>
+                                <label for="omission-rate" class="block text-sm font-medium mb-1" data-i18n="db_or">${T.db_or}</label>
+                                <input type="number" id="omission-rate" class="input-field w-full" step="0.001" min="0.0" max="1.0" value="0.030" required>
+                            </div>
+
+                            <button type="submit" class="btn bg-green-600 hover:bg-green-700 text-white w-full" data-i18n="db_submit">${T.db_submit}</button>
+                        </form>
+                    </div>
+
+                    <!-- Chart Area (Col 2-3) -->
+                    <div class="premium-card lg:col-span-2 space-y-4">
+                        <h2 class="text-xl font-bold text-indigo-600" data-i18n="db_chart_title">${T.db_chart_title}</h2>
+                        <p class="text-sm text-red-500 font-semibold" data-i18n="db_chart_target">${T.db_chart_target}</p>
+                        <div id="bi-chart-container" class="w-full h-80">
+                            <!-- SVG Chart will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            attachDashboardListeners();
+            renderBIChart();
+        }
+
+        // --- CHART RENDERING LOGIC (SVG) ---
+
+        function calculateBI(data) {
+            return data.map(d => ({
+                ...d,
+                bi: d.bandScore > 0 ? d.or / d.bandScore : 0
+            })).sort((a, b) => new Date(a.date) - new Date(b.date));
+        }
+
+        function renderBIChart() {
+            const container = document.getElementById('bi-chart-container');
+            if (!container) return;
+            
+            const data = calculateBI(APP_STATE.performanceData);
+            const T = translations[APP_STATE.language];
+
+            container.innerHTML = ''; // Clear previous chart
+
+            if (data.length < 2) {
+                container.innerHTML = `<div class="h-full flex items-center justify-center text-slate-500 italic">${T.db_no_data}</div>`;
+                return;
+            }
+
+            const WIDTH = container.clientWidth;
+            const HEIGHT = 320;
+            const PADDING = 40;
+            const CHART_HEIGHT = HEIGHT - 2 * PADDING;
+            const CHART_WIDTH = WIDTH - 2 * PADDING;
+
+            const biValues = data.map(d => d.bi);
+            const maxBI = Math.max(...biValues, 0.025); // Ensure scale accommodates target line
+            const minBI = 0;
+
+            // Scaling functions
+            const scaleX = (index) => PADDING + (index / (data.length - 1)) * CHART_WIDTH;
+            const scaleY = (bi) => PADDING + CHART_HEIGHT * (1 - (bi - minBI) / (maxBI - minBI));
+
+            let pathD = data.map((d, i) => {
+                const x = scaleX(i);
+                const y = scaleY(d.bi);
+                return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+            }).join(' ');
+
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('width', WIDTH);
+            svg.setAttribute('height', HEIGHT);
+            svg.setAttribute('viewBox', `0 0 ${WIDTH} ${HEIGHT}`);
+            svg.setAttribute('class', 'bg-white rounded-lg');
+
+            // 1. Draw Target Red Line (BI = 0.02)
+            const targetY = scaleY(0.02);
+            svg.innerHTML += `
+                <line x1="${PADDING}" y1="${targetY}" x2="${WIDTH - PADDING}" y2="${targetY}" stroke="#ef4444" stroke-dasharray="4" stroke-width="1.5"/>
+                <text x="${WIDTH - PADDING + 5}" y="${targetY + 5}" font-size="12" fill="#ef4444">0.02</text>
+            `;
+
+            // 2. Draw BI Trend Line
+            svg.innerHTML += `<path d="${pathD}" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round"/>`;
+
+            // 3. Draw Data Points (Circles)
+            data.forEach((d, i) => {
+                const x = scaleX(i);
+                const y = scaleY(d.bi);
+                svg.innerHTML += `
+                    <circle cx="${x}" cy="${y}" r="4" fill="#4f46e5" stroke="white" stroke-width="2">
+                        <title>${d.date}: BI ${(d.bi * 100).toFixed(3)}%</title>
+                    </circle>
+                `;
+            });
+
+            // 4. Draw X-Axis Labels (Dates)
+            data.forEach((d, i) => {
+                const x = scaleX(i);
+                svg.innerHTML += `
+                    <text x="${x}" y="${HEIGHT - PADDING + 15}" font-size="10" text-anchor="middle" fill="#64748b" transform="rotate(20, ${x}, ${HEIGHT - PADDING + 15})">
+                        ${d.date.substring(5)}
+                    </text>
+                `;
+            });
+
+            // 5. Draw Y-Axis Labels (BI values)
+            const yAxisLabels = [minBI, 0.01, 0.02, maxBI].filter(val => val >= minBI && val <= maxBI).sort((a, b) => a - b);
+            yAxisLabels.forEach(val => {
+                const y = scaleY(val);
+                svg.innerHTML += `
+                    <line x1="${PADDING - 5}" y1="${y}" x2="${PADDING}" y2="${y}" stroke="#cbd5e1"/>
+                    <text x="${PADDING - 10}" y="${y + 4}" font-size="10" text-anchor="end" fill="#64748b">${(val * 100).toFixed(2)}%</text>
+                `;
+            });
+
+            // 6. Draw Axes
+            svg.innerHTML += `
+                <line x1="${PADDING}" y1="${PADDING}" x2="${PADDING}" y2="${HEIGHT - PADDING}" stroke="#94a3b8" stroke-width="1"/>
+                <line x1="${PADDING}" y1="${HEIGHT - PADDING}" x2="${WIDTH - PADDING}" y2="${HEIGHT - PADDING}" stroke="#94a3b8" stroke-width="1"/>
+            `;
+
+            container.appendChild(svg);
+        }
+
+
+        // --- EVENT HANDLERS ---
+
+        function attachGlobalListeners() {
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const module = e.target.getAttribute('data-module');
+                    updateState({ currentModule: module });
+                });
+            });
+
+            // Settings Modal
+            document.getElementById('settings-btn').addEventListener('click', showSettingsModal);
+            document.getElementById('settings-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'settings-modal') hideSettingsModal();
+            });
+            document.getElementById('save-settings-btn').addEventListener('click', handleSaveSettings);
+            document.getElementById('clear-data-btn').addEventListener('click', handleClearData);
+            document.getElementById('lang-switcher').addEventListener('change', handleLanguageChange);
+        }
+
+        // --- Module 1: Verb Sprint Handlers ---
+
+        let timerInterval;
+
+        function startTimer() {
+            if (APP_STATE.timer.isRunning) return;
+            
+            const T = translations[APP_STATE.language];
+            Toast.processing(T.vs_start);
+
+            updateState({ timer: { ...APP_STATE.timer, isRunning: true } });
+
+            timerInterval = setInterval(() => {
+                if (APP_STATE.timer.remaining > 0) {
+                    APP_STATE.timer.remaining -= 1;
+                    document.getElementById('timer-display').textContent = 
+                        `${String(Math.floor(APP_STATE.timer.remaining / 60)).padStart(2, '0')}:${String(APP_STATE.timer.remaining % 60).padStart(2, '0')}`;
+                } else {
+                    clearInterval(timerInterval);
+                    updateState({ timer: { ...APP_STATE.timer, isRunning: false } });
+                    Toast.success("Time's up! Sprint finished.");
+                }
+            }, 1000);
+
+            // Update state with new interval ID (though we don't save it, good practice)
+            APP_STATE.timer.intervalId = timerInterval;
+            render(); // Re-render buttons
+        }
+
+        function pauseTimer() {
+            clearInterval(APP_STATE.timer.intervalId);
+            updateState({ timer: { ...APP_STATE.timer, isRunning: false, intervalId: null } });
+            Toast.show('Sprint Paused.', 'info');
+        }
+
+        function resetTimer() {
+            clearInterval(APP_STATE.timer.intervalId);
+            updateState({ 
+                timer: { ...DEFAULT_STATE.timer },
+                verbSprint: { ...APP_STATE.verbSprint, inputVerbs: '', passiveRatio: 0.0 }
+            });
+            Toast.show('Sprint Reset.', 'error');
+        }
+
+        function handleVerbInput(e) {
+            updateState({ verbSprint: { ...APP_STATE.verbSprint, inputVerbs: e.target.value } });
+        }
+
+        function handleGrammarlyProcess() {
+            const jsonInput = document.getElementById('grammarly-json-input').value;
+            let passiveRatio = 0.0;
+            
+            // --- SIMULATED GRAMMARLY PROCESSING ---
+            if (jsonInput.trim().length > 10) {
+                try {
+                    const data = JSON.parse(jsonInput);
+                    // Simulate calculation: assume 'passive_voice_count' and 'total_sentences' exist
+                    const passiveCount = data.passive_voice_count || Math.floor(Math.random() * 10);
+                    const totalSentences = data.total_sentences || 30;
+                    
+                    passiveRatio = passiveCount / totalSentences;
+                    if (passiveRatio > 1) passiveRatio = 0.35; // Cap simulation
+                    
+                    Toast.success(translations[APP_STATE.language].toast_success + `: Passive Ratio calculated: ${(passiveRatio * 100).toFixed(1)}%`);
+                } catch (e) {
+                    Toast.error("Invalid JSON format.");
+                    return;
+                }
+            } else {
+                 // Fallback simulation
+                 passiveRatio = Math.random() * 0.4;
+                 Toast.success("Simulated calculation complete.");
+            }
+            // --- END SIMULATION ---
+
+            updateState({ verbSprint: { ...APP_STATE.verbSprint, passiveRatio, grammarlyJson: jsonInput } });
+        }
+
+        function attachVerbSprintListeners() {
+            document.getElementById('start-sprint-btn')?.addEventListener('click', startTimer);
+            document.getElementById('pause-sprint-btn')?.addEventListener('click', pauseTimer);
+            document.getElementById('reset-sprint-btn')?.addEventListener('click', resetTimer);
+            document.getElementById('verb-input')?.addEventListener('input', handleVerbInput);
+            document.getElementById('process-grammarly-btn')?.addEventListener('click', handleGrammarlyProcess);
+        }
+
+        // --- Module 2: Retranslation Handlers ---
+
+        function handleRetranslationInput(e) {
+            const key = e.target.id.replace('-input', '');
+            updateState({ retranslation: { ...APP_STATE.retranslation, [key]: e.target.value } });
+        }
+
+        function handleToggleHide() {
+            updateState({ retranslation: { ...APP_STATE.retranslation, isOriginalHidden: !APP_STATE.retranslation.isOriginalHidden } });
+        }
+
+        function handleCalculateOmission() {
+            const { originalEnglish, retranslatedEnglish } = APP_STATE.retranslation;
+            
+            // --- SIMULATED OMISSION RATE CALCULATION ---
+            const originalWords = originalEnglish.split(/\s+/).filter(w => w.length > 0).length;
+            const retranslatedWords = retranslatedEnglish.split(/\s+/).filter(w => w.length > 0).length;
+            
+            let omissionRate = 0.0;
+
+            if (originalWords > 10) {
+                // Simple simulation: Omission is proportional to word count difference
+                const difference = Math.abs(originalWords - retranslatedWords);
+                omissionRate = Math.min(0.5, difference / originalWords * 0.5 + Math.random() * 0.05);
+            }
+            // --- END SIMULATION ---
+
+            Toast.success(translations[APP_STATE.language].toast_success + `: Omission Rate calculated: ${(omissionRate * 100).toFixed(1)}%`);
+            updateState({ retranslation: { ...APP_STATE.retranslation, omissionRate } });
+        }
+
+        function attachRetranslationListeners() {
+            document.getElementById('original-english-input')?.addEventListener('input', handleRetranslationInput);
+            document.getElementById('chinese-notes-input')?.addEventListener('input', handleRetranslationInput);
+            document.getElementById('retranslated-english-input')?.addEventListener('input', handleRetranslationInput);
+            document.getElementById('toggle-hide-btn')?.addEventListener('click', handleToggleHide);
+            document.getElementById('calculate-omission-btn')?.addEventListener('click', handleCalculateOmission);
+        }
+
+        // --- Module 3: Dashboard Handlers ---
+
+        function handleScoreSubmission(e) {
+            e.preventDefault();
+            
+            const date = document.getElementById('score-date').value;
+            const bandScore = parseFloat(document.getElementById('band-score').value);
+            const gic = parseInt(document.getElementById('gic-count').value, 10);
+            const or = parseFloat(document.getElementById('omission-rate').value);
+
+            if (!date || isNaN(bandScore) || isNaN(gic) || isNaN(or)) {
+                Toast.error("Please fill in all fields correctly.");
+                return;
+            }
+
+            const newEntry = { date, bandScore, gic, or };
+            
+            // Check for existing entry on the same date and replace it
+            const existingIndex = APP_STATE.performanceData.findIndex(d => d.date === date);
+            let updatedData;
+
+            if (existingIndex !== -1) {
+                updatedData = APP_STATE.performanceData.map((d, i) => i === existingIndex ? newEntry : d);
+            } else {
+                updatedData = [...APP_STATE.performanceData, newEntry];
+            }
+
+            // Sort by date
+            updatedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            updateState({ performanceData: updatedData });
+            Toast.success(translations[APP_STATE.language].toast_data_submitted);
+        }
+
+        function attachDashboardListeners() {
+            document.getElementById('score-entry-form')?.addEventListener('submit', handleScoreSubmission);
+            // Chart rendering is handled directly in renderDashboard
+        }
+
+        // --- Settings Modal Handlers ---
+
+        function showSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            const content = document.getElementById('settings-modal-content');
+            
+            // Load current settings into inputs
+            document.getElementById('lang-switcher').value = APP_STATE.language;
+            document.getElementById('api-key-input').value = APP_STATE.settings.apiKey;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.style.opacity = 1;
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function hideSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            const content = document.getElementById('settings-modal-content');
+
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            modal.style.opacity = 0;
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function handleSaveSettings() {
+            const newLang = document.getElementById('lang-switcher').value;
+            const newApiKey = document.getElementById('api-key-input').value;
+
+            updateState({ 
+                language: newLang,
+                settings: { apiKey: newApiKey }
+            });
+            
+            Toast.success(translations[newLang].toast_settings_saved);
+            hideSettingsModal();
+        }
+
+        function handleLanguageChange(e) {
+            const newLang = e.target.value;
+            APP_STATE.language = newLang; // Update temporarily for immediate translation
+            applyTranslations(newLang);
+        }
+
+        function handleClearData() {
+            if (confirm(translations[APP_STATE.language].settings_clear_warning)) {
+                localStorage.removeItem(STORAGE_KEY);
+                // Reset to default state, preserving current language
+                const lang = APP_STATE.language;
+                APP_STATE = { ...DEFAULT_STATE, language: lang };
+                saveState();
+                Toast.success(translations[lang].toast_data_cleared);
+                hideSettingsModal();
+                render();
+            }
+        }
+
+        // --- MAIN RENDER FUNCTION ---
+
+        function render() {
+            // 1. Apply translations based on current state
+            applyTranslations(APP_STATE.language);
+
+            // 2. Update navigation button styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.getAttribute('data-module') === APP_STATE.currentModule) {
+                    btn.classList.add('btn-primary');
+                    btn.classList.remove('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+                } else {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('bg-white', 'text-slate-600', 'hover:bg-slate-100');
+                }
+            });
+
+            // 3. Render current module content
+            switch (APP_STATE.currentModule) {
+                case 'verb-sprint':
+                    renderVerbSprint();
+                    break;
+                case 'blind-retranslation':
+                    renderBlindRetranslation();
+                    break;
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                default:
+                    renderVerbSprint();
+            }
+        }
+
+        // --- INITIALIZATION ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            attachGlobalListeners();
+            render();
+        });
+
+        // Ensure timer cleanup if page is closed/reloaded while running
+        window.addEventListener('beforeunload', () => {
+            if (APP_STATE.timer.intervalId) {
+                clearInterval(APP_STATE.timer.intervalId);
+            }
+            saveState(); // Ensure last state is saved
+        });
+
+    </script>
+</body>
+</html>

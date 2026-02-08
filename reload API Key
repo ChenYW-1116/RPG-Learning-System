@@ -1,0 +1,70 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// �️‍♀️ API KEY 深度驗證腳本 (Gemini Native Protocol)
+// ═══════════════════════════════════════════════════════════════════════════
+// 使用方法：複製此內容，在瀏覽器 Console (F12) 貼上並執行
+// ═══════════════════════════════════════════════════════════════════════════
+
+(async () => {
+    console.clear();
+    console.log('🚀 開始驗證 API Keys...');
+
+    // 1. 取得目前配置
+    const cfg = JSON.parse(localStorage.getItem('speckit_config'))?.gemini;
+    if (!cfg) return console.error('❌ 找不到配置！請先執行上方的重置腳本。');
+
+    const keys = [cfg.key, ...(cfg.keys || [])].filter(k => k);
+    const model = cfg.model || 'gemini-2.5-flash-preview-09-2025';
+
+    console.log(`📋 檢測清單: ${keys.length} 個 Keys`);
+    console.log(`🤖 測試模型: ${model}`);
+    console.log('---------------------------------------------------');
+
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const label = i === 0 ? `Key #1 (Phase 2)` : `Key #${i+1} (Reverse)`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        
+        console.log(`🔍 正在測試 ${label}...`);
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: "user", parts: [{ text: "Hello, valid?" }] }],
+                    generationConfig: { maxOutputTokens: 10 }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.candidates && data.candidates.length > 0) {
+                    console.log(`✅ ${label}: 驗證成功！`);
+                    console.log(`   回應: "${data.candidates[0].content.parts[0].text.trim()}"`);
+                } else {
+                    console.warn(`⚠️ ${label}: 請求成功但無內容 (可能是模型問題)`);
+                    console.log('Response:', data);
+                }
+            } else {
+                const errText = await response.text();
+                let errMsg = `HTTP ${response.status}`;
+                try {
+                    const errJson = JSON.parse(errText);
+                    errMsg += ` - ${errJson.error?.message || errText}`;
+                } catch (e) { errMsg += ` - ${errText}`; }
+                
+                console.error(`❌ ${label}: 驗證失敗！`);
+                console.error(`   原因: ${errMsg}`);
+            }
+        } catch (e) {
+            console.error(`❌ ${label}: 連線錯誤！`, e);
+        }
+        console.log('---------------------------------------------------');
+    }
+})();
+
+
+let c = JSON.parse(localStorage.getItem('speckit_config'));
+c.gemini.model = 'gemini-2.5-flash';
+localStorage.setItem('speckit_config', JSON.stringify(c));
+location.reload();

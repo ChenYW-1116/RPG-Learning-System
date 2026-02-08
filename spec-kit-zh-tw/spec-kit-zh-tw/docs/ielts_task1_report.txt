@@ -1,0 +1,40 @@
+============================================================
+IELTS Writing Task 1 RCA Analysis Report
+============================================================
+
+--- 分數統計 ---
+      cc_paragraphing  cc_referencing  cc_sequencing_markers  gra_complex_structures  gra_error_free_density  gra_passive_voice  lr_conciseness  lr_paraphrasing  lr_process_verbs  lr_topic_nouns  overall_band  ta_data_accuracy  ta_overview_clarity  ta_step_coverage
+mean         0.866667        0.833333               0.783333                0.766667                0.866667                0.8        0.816667             0.85          0.833333        0.833333           7.5          0.883333             0.883333          0.816667
+min          0.800000        0.800000               0.700000                0.700000                0.850000                0.6        0.800000             0.80          0.750000        0.800000           7.0          0.800000             0.850000          0.700000
+max          0.900000        0.900000               0.850000                0.800000                0.900000                0.9        0.850000             0.90          0.900000        0.900000           8.0          0.950000             0.900000          0.950000
+
+--- RCA 瓶頸分析 ---
+                Metric                 Metric_Name  Impact_Weight  Avg_Score  Bottleneck_Index
+      lr_process_verbs           LR: Process Verbs       0.152941   0.833333          0.025490
+ cc_sequencing_markers      CC: Sequencing Markers       0.108824   0.783333          0.023578
+      ta_step_coverage       TA: Key Step Coverage       0.088235   0.816667          0.016176
+        lr_conciseness LR: Precision & Conciseness       0.088235   0.816667          0.016176
+     gra_passive_voice  GRA: Passive Voice Control       0.058824   0.800000          0.011765
+        cc_referencing             CC: Referencing       0.064706   0.833333          0.010784
+       lr_paraphrasing      LR: Paraphrasing Power       0.070588   0.850000          0.010588
+       cc_paragraphing    CC: Logical Paragraphing       0.079412   0.866667          0.010588
+   ta_overview_clarity        TA: Overview Clarity       0.085294   0.883333          0.009951
+      ta_data_accuracy        TA: Factual Accuracy       0.082353   0.883333          0.009608
+        lr_topic_nouns        LR: Topic Vocabulary       0.047059   0.833333          0.007843
+gra_complex_structures       GRA: Sentence Variety       0.032353   0.766667          0.007549
+gra_error_free_density   GRA: Error-Free Sentences       0.041176   0.866667          0.005490
+
+--- AI 建議報告 ---
+【診斷摘要】  
+整體表現穩定，數據準確度與概述清晰度皆達 0.88，顯示已具備高階描述能力；然而「流程動詞多樣性」與「順序銜接詞」兩項得分偏低，導致段落節奏單調，成為阻礙衝上 8 分的關鍵。
+
+【關鍵瓶頸分析】  
+流程動詞（lr_process_verbs）雖僅佔 15% 權重，但因其變化不足，連帶使「步驟覆蓋」與「銜接標記」顯得重複。當同一動詞（如 increase）高頻出現，閱卷者易判定「詞彙廣度」受限，直接壓低 LR 與 CC 雙項評分，形成連鎖失分。
+
+【具體改進建議】  
+1. 建立「流程動詞→名詞」對照表：每日從真題圖表挑 5 個數值變化，強迫用名詞化片語（a sharp rise / a recovery）替換原動詞句。  
+2. 銜接詞「3+1」練習：每段先寫 3 句「順序描述」（subsequently, following this），再強制加入 1 句「對照／總結」（in contrast, overall），避免單一標記氾濫。  
+3. 錄音倒推法：用 30 秒口頭描述一張小圖，即刻抄錄原文，標註重複動詞並現場改寫；每週累積 10 組，強化即時多樣化反應。
+
+【下一步行動計畫】  
+未來 5 篇作文聚焦「動靜結合」：開頭段用名詞化概述，主體段每兩組數據至少變換一次流程動詞，結尾段以「對照銜接詞」收束。每篇完成後，用對照表核對是否出現 5 個以上不同「上升 / 下降」表達，達標才遞交。

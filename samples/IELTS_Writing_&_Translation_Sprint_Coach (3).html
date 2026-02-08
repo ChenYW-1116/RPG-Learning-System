@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Sprint Coach</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style type="text/tailwindcss">
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* PUT ALL YOUR CUSTOM CSS HERE */
+        .card {
+            @apply bg-white rounded-xl shadow-lg border border-gray-100 p-6;
+        }
+
+        .btn-primary {
+            @apply bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+        }
+
+        .btn-secondary {
+            @apply bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+        }
+
+        .input-field {
+            @apply w-full border border-gray-300 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150;
+        }
+
+        /* Concealed Text Style (T014) */
+        .concealed-text {
+            background-color: #1f2937;
+            /* bg-gray-800 */
+            color: #1f2937;
+            /* text-gray-800 */
+            user-select: none;
+            pointer-events: none;
+            transition: background-color 0.5s;
+        }
+
+        /* Toast Animation */
+        .toast-enter {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .toast-enter-active {
+            transform: translateX(0);
+            opacity: 1;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+
+        .toast-exit {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-exit-active {
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform 0.5s ease-in, opacity 0.5s ease-in;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+    <div id="app-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Header and Navigation -->
+        <header class="sticky top-0 z-10 bg-white shadow-md mb-8 rounded-b-xl">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <h1 class="text-2xl font-bold text-indigo-600">IELTS Coach</h1>
+                    <div class="flex items-center space-x-4">
+                        <select id="language-selector" class="p-2 border border-gray-300 rounded-md text-sm">
+                            <option value="en">English</option>
+                            <option value="zh">繁體中文</option>
+                        </select>
+                        <span id="user-id-display" class="text-sm text-gray-500"></span>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <nav class="-mb-px flex space-x-8" id="nav-tabs">
+                    <!-- Tabs rendered dynamically -->
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content">
+            <!-- Dynamic View Content Renders Here -->
+            <div class="text-center p-20 text-gray-500">Loading Application...</div>
+        </main>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-3">
+            <!-- Toasts appear here -->
+        </div>
+
+    </div>
+
+    <script>
+        // PUT ALL YOUR JAVASCRIPT LOGIC HERE
+        // DATA, STATE, FUNCTIONS, EVENTS - EVERYTHING
+
+        // --- I18N & Configuration ---
+
+        const C1_VERBS = ["articulate", "mitigate", "juxtapose", "elucidate", "substantiate", "ameliorate", "delineate", "perpetuate", "conflate", "exacerbate", "transcend", "reiterate", "scrutinize", "underscore", "galvanize", "disseminate", "synthesize", "reconcile"];
+        const PASSIVE_RATIO_TARGET = 30; // Percentage for the meter
+        const OMISSION_RATE_TARGET = 3; // Percentage
+        const BI_TARGET = 0.02;
+
+        const I18N = {
+            en: {
+                title: "IELTS Sprint Coach",
+                tabs: ["Sprint Dashboard", "Blind Translation", "BI Report"],
+                dashboard: {
+                    title: "Verb Sprint Writing (US-1)",
+                    generate: "Generate Daily Task",
+                    submit: "Submit Draft",
+                    verbs_list: "Required C1 Verbs (6)",
+                    flowchart_title: "Task 2 Prompt & Requirements",
+                    passive_meter: "Passive Voice Ratio",
+                    passive_goal: `Goal: ≥ ${PASSIVE_RATIO_TARGET}%`,
+                    writing_area: "Write your IELTS Task 2 draft here...",
+                    placeholder_flow: "Click 'Generate Daily Task' to start the training session.",
+                    passive_check_fail: "Passive ratio too low. Must reach 30% to submit.",
+                    passive_check_ok: "Passive ratio achieved! Ready to submit.",
+                    task_generated: "Task generated successfully for today.",
+                    task_exists: "Task already generated for today. Continue writing.",
+                },
+                translation: {
+                    title: "Blind Translation Module (US-2)",
+                    conceal: "Conceal Original Text",
+                    unconceal: "Unconceal Original Text",
+                    start_stt: "Start STT Simulation",
+                    stop_stt: "Stop STT Simulation",
+                    original_text: "Original Sprint Draft (Concealed)",
+                    translation_area: "Enter your back-translation here (or use STT)",
+                    analyze: "Analyze Omissions",
+                    analysis_title: "Omission Analysis",
+                    omission_rate: "Omission Rate",
+                    omission_goal: `Goal: < ${OMISSION_RATE_TARGET}%`,
+                    keywords_total: "Total Key Phrases",
+                    keywords_found: "Found Key Phrases",
+                    keywords_omitted: "Omitted Key Phrases",
+                    no_draft: "Please complete and submit the Sprint Draft first.",
+                    analysis_ok: "Omission analysis complete. Rate is within target.",
+                    analysis_fail: "Omission rate too high. Review your memory.",
+                    stt_sim_text: "The rapid advancement of artificial intelligence necessitates a careful articulation of ethical guidelines. Governments must mitigate potential societal risks by implementing robust regulatory frameworks. This approach juxtaposes innovation with responsibility, ensuring technology serves humanity.",
+                },
+                report: {
+                    title: "Bottleneck Index Report (US-3)",
+                    calculate: "Calculate BI",
+                    bi_score: "Bottleneck Index (BI)",
+                    bi_target: `Target: < ${BI_TARGET.toFixed(3)}`,
+                    bi_ok: "Excellent! BI is below target.",
+                    bi_fail: "Needs improvement. BI is above target.",
+                    weighted_errors: "Weighted Error Breakdown",
+                    passive_error: "Passive Voice Error (0.5x)",
+                    omission_error: "Omission Error (1.5x)",
+                    grammar_error: "Simulated Grammar Error (0.8x)",
+                    vocab_error: "Simulated Vocabulary Error (1.2x)",
+                    total_words: "Translated Word Count",
+                    recommendation: "Micro-Practice Recommendation",
+                    rec_omission: "Focus on active recall and chunking long phrases.",
+                    rec_passive: "Practice using diverse passive structures in complex sentences.",
+                    rec_grammar: "Review advanced sentence structures and subordination.",
+                    rec_vocabulary: "Expand domain-specific vocabulary and collocations.",
+                    no_data: "Complete the Sprint and Translation modules to generate the BI report.",
+                },
+                toast: {
+                    success: "Success",
+                    error: "Error",
+                    info: "Info",
+                    action_in_progress: "Action in progress...",
+                    task_submitted: "Sprint draft submitted successfully.",
+                    translation_analyzed: "Translation analysis complete.",
+                    bi_calculated: "BI Report generated.",
+                    stt_started: "STT Simulation started...",
+                    stt_stopped: "STT Simulation stopped. Text injected.",
+                    concealed: "Original text concealed.",
+                    unconcealed: "Original text revealed.",
+                }
+            },
+            zh: {
+                title: "雅思衝刺教練",
+                tabs: ["衝刺儀表板", "盲寫回譯", "瓶頸指數報告"],
+                dashboard: {
+                    title: "動詞衝刺寫作 (US-1)",
+                    generate: "生成每日任務",
+                    submit: "提交草稿",
+                    verbs_list: "必用 C1 動詞 (6個)",
+                    flowchart_title: "Task 2 提示與要求",
+                    passive_meter: "被動語態比例",
+                    passive_goal: `目標: ≥ ${PASSIVE_RATIO_TARGET}%`,
+                    writing_area: "在此撰寫您的雅思 Task 2 草稿...",
+                    placeholder_flow: "點擊「生成每日任務」以開始訓練。",
+                    passive_check_fail: "被動語態比例過低。必須達到 30% 才能提交。",
+                    passive_check_ok: "被動語態比例達標！可以提交。",
+                    task_generated: "今日任務已成功生成。",
+                    task_exists: "今日任務已存在。請繼續寫作。",
+                },
+                translation: {
+                    title: "盲寫回譯模組 (US-2)",
+                    conceal: "遮蔽原文",
+                    unconceal: "解除遮蔽",
+                    start_stt: "啟動 STT 模擬",
+                    stop_stt: "停止 STT 模擬",
+                    original_text: "原始衝刺草稿 (已遮蔽)",
+                    translation_area: "在此輸入您的回譯文本 (或使用 STT)",
+                    analyze: "分析遺漏詞組",
+                    analysis_title: "遺漏分析",
+                    omission_rate: "遺漏率",
+                    omission_goal: `目標: < ${OMISSION_RATE_TARGET}%`,
+                    keywords_total: "總關鍵詞組數",
+                    keywords_found: "已找到關鍵詞組",
+                    keywords_omitted: "遺漏關鍵詞組",
+                    no_draft: "請先完成並提交衝刺草稿。",
+                    analysis_ok: "遺漏分析完成。遺漏率達標。",
+                    analysis_fail: "遺漏率過高。請複習記憶。",
+                    stt_sim_text: "人工智能的快速發展，需要仔細闡明倫理準則。政府必須通過實施強有力的監管框架來減輕潛在的社會風險。這種方法將創新與責任並置，確保技術服務於人類。",
+                },
+                report: {
+                    title: "瓶頸指數報告 (US-3)",
+                    calculate: "計算 BI",
+                    bi_score: "瓶頸指數 (BI)",
+                    bi_target: `目標: < ${BI_TARGET.toFixed(3)}`,
+                    bi_ok: "優秀！BI 低於目標。",
+                    bi_fail: "需要改進。BI 高於目標。",
+                    weighted_errors: "加權錯誤細項",
+                    passive_error: "被動語態錯誤 (0.5x)",
+                    omission_error: "遺漏錯誤 (1.5x)",
+                    grammar_error: "模擬語法錯誤 (0.8x)",
+                    vocab_error: "模擬詞彙錯誤 (1.2x)",
+                    total_words: "翻譯文本總詞數",
+                    recommendation: "微型練習建議",
+                    rec_omission: "專注於主動回憶和長詞組的組塊記憶。",
+                    rec_passive: "練習在複雜句子中使用多樣化的被動結構。",
+                    rec_grammar: "複習進階句型和從屬結構。",
+                    rec_vocabulary: "擴展特定領域的詞彙和搭配。",
+                    no_data: "請完成衝刺寫作和回譯模組以生成 BI 報告。",
+                },
+                toast: {
+                    success: "成功",
+                    error: "錯誤",
+                    info: "資訊",
+                    action_in_progress: "處理中...",
+                    task_submitted: "衝刺草稿已成功提交。",
+                    translation_analyzed: "翻譯分析完成。",
+                    bi_calculated: "BI 報告已生成。",
+                    stt_started: "STT 模擬已啟動...",
+                    stt_stopped: "STT 模擬已停止。文字已注入。",
+                    concealed: "原文已遮蔽。",
+                    unconcealed: "原文已顯示。",
+                }
+            }
+        };
+
+        // --- State Management (T012) ---
+
+        const INITIAL_STATE = {
+            userId: 'user-' + Math.random().toString(36).substring(2, 9),
+            language: 'zh',
+            currentView: 'dashboard',
+            sprintTask: null, // { date, verbs: [], prompt: string }
+            sprintDraft: "",
+            sprintResult: null, // { passiveRatio, isMet, draftHash }
+            translationText: "",
+            translationConcealed: true,
+            translationResult: null, // { omissionRate, keywords, ... }
+            biReport: null,
+        };
+
+        let app = {
+            state: INITIAL_STATE,
+            T: I18N[INITIAL_STATE.language],
+            isActionRunning: false,
+            router: {}, // Fix: Initialize router object
+        };
+
+        function saveState() {
+            try {
+                // Data encryption simulation (Base64 encoding)
+                const encryptedState = btoa(JSON.stringify(app.state));
+                localStorage.setItem('ieltsCoachState', encryptedState);
+            } catch (e) {
+                console.error("Failed to save state:", e);
+            }
+        }
+
+        function loadState() {
+            try {
+                const encryptedState = localStorage.getItem('ieltsCoachState');
+                if (encryptedState) {
+                    const decodedState = JSON.parse(atob(encryptedState));
+                    // Merge loaded state, preserving new keys if structure changes
+                    app.state = { ...INITIAL_STATE, ...decodedState };
+                    // Ensure language is set correctly after loading
+                    app.T = I18N[app.state.language] || I18N['zh'];
+                }
+            } catch (e) {
+                console.error("Failed to load or decode state, resetting.", e);
+                app.state = INITIAL_STATE;
+            }
+        }
+
+        // --- Utility Functions ---
+
+        /** Deterministic Pseudo-Random Number Generator (PRNG) */
+        function seededRandom(seed) {
+            let x = Math.sin(seed++) * 10000;
+            return x - Math.floor(x);
+        }
+
+        /** Fisher-Yates Shuffle using PRNG */
+        function shuffle(array, seed) {
+            let currentIndex = array.length, randomIndex;
+            let currentSeed = seed;
+
+            while (currentIndex !== 0) {
+                // Use PRNG to get a deterministic random index
+                randomIndex = Math.floor(seededRandom(currentSeed++) * currentIndex);
+                currentIndex--;
+
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        /** Web Crypto API SHA-256 Hashing */
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        /** Toast Notification System */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const colorMap = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-indigo-500',
+            };
+            const iconMap = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️',
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast-enter p-4 rounded-lg shadow-xl text-white max-w-xs w-full transition-all duration-300 ${colorMap[type]}`;
+            toast.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl">${iconMap[type]}</span>
+                    <p class="text-sm font-medium">${message}</p>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.className = toast.className.replace('toast-enter', 'toast-enter-active');
+            }, 10);
+
+            // Animate out and remove
+            setTimeout(() => {
+                toast.className = toast.className.replace('toast-enter-active', 'toast-exit-active');
+                setTimeout(() => {
+                    container.removeChild(toast);
+                }, 500); // Wait for exit animation
+            }, 4000);
+        }
+
+        /** UI Resilience Action Guard (SC001) */
+        async function performAction(buttonId, actionFn) {
+            if (app.isActionRunning) {
+                showToast(app.T.toast.action_in_progress, 'info');
+                return;
+            }
+
+            const button = document.getElementById(buttonId);
+            const originalText = button.innerHTML;
+
+            app.isActionRunning = true;
+            button.disabled = true;
+            button.innerHTML = `⏳ ${app.T.toast.action_in_progress.split(' ')[0]}...`;
+
+            try {
+                await actionFn();
+            } catch (error) {
+                console.error(`Action failed: ${buttonId}`, error);
+                showToast(`${app.T.toast.error}: ${error.message || 'Unknown error'}`, 'error');
+            } finally {
+                app.isActionRunning = false;
+                button.disabled = false;
+                button.innerHTML = originalText;
+                // Re-render to update state-dependent UI elements (like disabled status)
+                app.router.navigate(app.state.currentView, false);
+            }
+        }
+
+        // --- Core Application Logic ---
+
+        /** T006: Deterministic Verb Generation */
+        function generateSprintTask() {
+            const today = new Date().toISOString().split('T')[0];
+            const seed = app.state.userId.length + today.replace(/-/g, '');
+
+            if (app.state.sprintTask && app.state.sprintTask.date === today) {
+                showToast(app.T.dashboard.task_exists, 'info');
+                return;
+            }
+
+            const shuffledVerbs = shuffle([...C1_VERBS], parseInt(seed));
+            const selectedVerbs = shuffledVerbs.slice(0, 6);
+
+            app.state.sprintTask = {
+                date: today,
+                verbs: selectedVerbs,
+                prompt: "Discuss the societal impact of rapid technological advancement, focusing on ethical considerations and governmental regulation. (Must use all 6 verbs and aim for high passive voice ratio.)"
+            };
+            app.state.sprintDraft = "";
+            app.state.sprintResult = null;
+            app.state.translationText = "";
+            app.state.translationResult = null;
+            app.state.biReport = null;
+
+            saveState();
+            app.router.navigate('dashboard', false);
+            showToast(app.T.dashboard.task_generated, 'success');
+        }
+
+        /** T010/T011: Passive Ratio Calculation Heuristic */
+        function calculatePassiveRatio(text) {
+            if (!text || text.trim().length < 10) {
+                return { ratio: 0, count: 0, isMet: false };
+            }
+            // Heuristic: look for (be/is/are/was/were/been/being) + (word) + (ed/en/t)
+            const passiveRegex = /\b(is|are|was|were|be|been|being)\s+\w*?(ed|en|t)\b/gi;
+            const passiveMatches = text.match(passiveRegex) || [];
+
+            // We define 3 passive structures as the minimum required to hit 30% on the meter.
+            const PASSIVE_TARGET_COUNT = 3;
+            const meterValue = Math.min(100, (passiveMatches.length / PASSIVE_TARGET_COUNT) * PASSIVE_RATIO_TARGET);
+
+            return {
+                ratio: meterValue, // The displayed percentage (0-100)
+                count: passiveMatches.length,
+                isMet: meterValue >= PASSIVE_RATIO_TARGET
+            };
+        }
+
+        /** T017: Keyword Extraction (A2 Fix) */
+        function extractKeywords(text) {
+            if (!text) return [];
+            // Normalize text: remove punctuation except internal hyphens
+            const normalizedText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s{2,}/g, " ");
+
+            let keywords = new Set();
+
+            // 1. Capitalized words (excluding sentence start)
+            // This is complex without proper NLP. We approximate by looking for capitalized words not at the very start of the text.
+            const capitalizedWords = normalizedText.match(/\s[A-Z][a-z]+/g) || [];
+            capitalizedWords.forEach(word => keywords.add(word.trim().toLowerCase()));
+
+            // 2. Phrases > 4 words
+            const phraseRegex = /\b(\w+\s+){4,}\w+\b/g;
+            const longPhrases = normalizedText.match(phraseRegex) || [];
+            longPhrases.forEach(phrase => keywords.add(phrase.toLowerCase()));
+
+            return Array.from(keywords);
+        }
+
+        /** T018: Omission Analysis */
+        function analyzeOmissions(originalText, translatedText) {
+            const keywords = extractKeywords(originalText);
+            let foundCount = 0;
+
+            const translatedLower = translatedText.toLowerCase();
+
+            let foundKeywords = [];
+            let omittedKeywords = [];
+
+            keywords.forEach(kw => {
+                if (translatedLower.includes(kw)) {
+                    foundCount++;
+                    foundKeywords.push(kw);
+                } else {
+                    omittedKeywords.push(kw);
+                }
+            });
+
+            const totalKeywords = keywords.length || 1;
+            const omittedCount = totalKeywords - foundCount;
+            const omissionRate = (omittedCount / totalKeywords) * 100; // Percentage
+
+            return {
+                keywords,
+                foundCount,
+                omittedCount,
+                omissionRate: omissionRate,
+                isMet: omissionRate < OMISSION_RATE_TARGET,
+                foundKeywords,
+                omittedKeywords,
+            };
+        }
+
+        /** FR006: Bottleneck Index Calculation */
+        function calculateBI() {
+            const { sprintResult, translationResult } = app.state;
+
+            if (!sprintResult || !translationResult) {
+                throw new Error("Missing sprint or translation data.");
+            }
+
+            const passiveRatio = sprintResult.passiveRatio;
+            const omissionRate = translationResult.omissionRate;
+            const translatedWordCount = translationResult.translatedText.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+            if (translatedWordCount < 50) {
+                throw new Error("Translated text is too short for meaningful analysis (min 50 words).");
+            }
+
+            // Error Weights: Omission (1.5), Passive (0.5), Grammar (0.8), Vocabulary (1.2).
+
+            // 1. Passive Error Score (0.5 weight)
+            // Error is based on how far below 30% the ratio is.
+            const passiveError = Math.max(0, (PASSIVE_RATIO_TARGET - passiveRatio) / PASSIVE_RATIO_TARGET);
+            const passiveWeightedError = passiveError * 0.5;
+
+            // 2. Omission Error Score (1.5 weight)
+            const omissionWeightedError = (omissionRate / 100) * 1.5;
+
+            // 3. Simulated Errors (Based on length/complexity proxy)
+            // Longer text implies more potential for complex errors.
+            const complexityFactor = Math.min(1, translatedWordCount / 200);
+
+            const simulatedGrammarError = 0.05 * complexityFactor;
+            const simulatedVocabError = 0.07 * complexityFactor;
+
+            const grammarWeightedError = simulatedGrammarError * 0.8;
+            const vocabWeightedError = simulatedVocabError * 1.2;
+
+            const totalWeightedError = passiveWeightedError + omissionWeightedError + grammarWeightedError + vocabWeightedError;
+
+            // BI = (Total Weighted Error * Scaling Factor) / (Translated Word Count)
+            // Scaling factor (1000) ensures the BI is a small index value.
+            const BI = (totalWeightedError * 1000) / translatedWordCount;
+
+            // Determine highest error type for recommendation
+            const errorScores = [
+                { type: 'omission', score: omissionWeightedError, weight: 1.5 },
+                { type: 'passive', score: passiveWeightedError, weight: 0.5 },
+                { type: 'grammar', score: grammarWeightedError, weight: 0.8 },
+                { type: 'vocabulary', score: vocabWeightedError, weight: 1.2 },
+            ];
+
+            errorScores.sort((a, b) => b.score - a.score);
+            const recommendationKey = `rec_${errorScores[0].type}`;
+            const recommendation = app.T.report[recommendationKey];
+
+            app.state.biReport = {
+                BI: BI,
+                isMet: BI < BI_TARGET,
+                totalWeightedError: totalWeightedError,
+                passiveWeightedError: passiveWeightedError,
+                omissionWeightedError: omissionWeightedError,
+                grammarWeightedError: grammarWeightedError,
+                vocabWeightedError: vocabWeightedError,
+                translatedWordCount: translatedWordCount,
+                recommendation: recommendation,
+            };
+
+            saveState();
+            showToast(app.T.toast.bi_calculated, 'success');
+        }
+
+        // --- Rendering Functions ---
+
+        /** SC003: Renders the Circular BI Gauge */
+        function renderBIGauge(biValue, target = BI_TARGET) {
+            const size = 128;
+            const radius = 50;
+            const circumference = 2 * Math.PI * radius;
+
+            // Normalize BI value (0 to 1) relative to the target.
+            // If BI is 0.01 and target is 0.02, progress is 50%.
+            // If BI is 0.03, progress is 0%.
+            const normalizedProgress = Math.min(1, Math.max(0, (target - biValue) / target));
+            const strokeDashoffset = circumference * (1 - normalizedProgress);
+
+            const isMet = biValue < target;
+            const color = isMet ? 'text-green-500' : 'text-red-500';
+            const strokeColor = isMet ? '#10B981' : '#EF4444'; // green-500 or red-500
+
+            return `
+                <div class="relative flex items-center justify-center w-32 h-32">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                        <!-- Background Circle -->
+                        <circle cx="60" cy="60" r="${radius}" fill="none" stroke="#E5E7EB" stroke-width="10"></circle>
+                        <!-- Progress Arc -->
+                        <circle cx="60" cy="60" r="${radius}" fill="none" stroke="${strokeColor}" stroke-width="10"
+                            stroke-dasharray="${circumference}"
+                            stroke-dashoffset="${strokeDashoffset}"
+                            stroke-linecap="round"
+                            class="transition-all duration-700 ease-in-out">
+                        </circle>
+                    </svg>
+                    <div class="absolute flex flex-col items-center justify-center">
+                        <span class="text-2xl font-bold ${color}">${biValue.toFixed(3)}</span>
+                        <span class="text-xs text-gray-500">${app.T.report.bi_score}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        /** T007/T008: Renders the Task Flowchart (SVG) */
+        function renderTaskFlowchart(task) {
+            if (!task) {
+                return `<div class="p-10 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    ${app.T.dashboard.placeholder_flow}
+                </div>`;
+            }
+
+            const verbsHtml = task.verbs.map(v => `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${v}</span>`).join(' ');
+
+            return `
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-700">${app.T.dashboard.flowchart_title}</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <p class="text-sm text-gray-600 italic">${task.prompt}</p>
+                    </div>
+
+                    <svg width="100%" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .box { fill: #ffffff; stroke: #4F46E5; stroke-width: 2; }
+                            .text { font: 12px Inter, sans-serif; fill: #1F2937; }
+                            .arrow { stroke: #4F46E5; stroke-width: 2; marker-end: url(#arrowhead); }
+                        </style>
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#4F46E5" />
+                            </marker>
+                        </defs>
+
+                        <!-- Step 1: Prompt -->
+                        <rect class="box" x="50" y="10" width="300" height="50" rx="8"/>
+                        <text class="text font-semibold" x="200" y="40" text-anchor="middle">IELTS Task 2 Prompt</text>
+
+                        <!-- Arrow 1 -->
+                        <line class="arrow" x1="200" y1="60" x2="200" y2="90"/>
+
+                        <!-- Step 2: Requirements -->
+                        <rect class="box" x="50" y="90" width="300" height="70" rx="8"/>
+                        <text class="text font-semibold" x="200" y="110" text-anchor="middle">Mandatory Requirements</text>
+                        <text class="text" x="200" y="130" text-anchor="middle">Use 6 C1 Verbs (See List)</text>
+                        <text class="text" x="200" y="150" text-anchor="middle">Achieve Passive Voice Goal (30%)</text>
+
+                        <!-- Arrow 2 -->
+                        <line class="arrow" x1="200" y1="160" x2="200" y2="190"/>
+
+                        <!-- Step 3: Output -->
+                        <rect class="box" x="100" y="190" width="200" height="50" rx="8" fill="#EEF2FF" stroke="#6366F1"/>
+                        <text class="text font-semibold" x="200" y="220" text-anchor="middle">Draft Submission</text>
+                    </svg>
+                    
+                    <div class="mt-4">
+                        <h4 class="font-semibold text-gray-700 mb-2">${app.T.dashboard.verbs_list}:</h4>
+                        <div class="flex flex-wrap gap-2">${verbsHtml}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboard() {
+            const T = app.T.dashboard;
+            const task = app.state.sprintTask;
+            const passiveCheck = calculatePassiveRatio(app.state.sprintDraft);
+
+            const passiveBarColor = passiveCheck.isMet ? 'bg-green-500' : 'bg-red-500';
+            const submitDisabled = !task || !passiveCheck.isMet;
+            const submitTooltip = submitDisabled ? T.passive_check_fail : T.passive_check_ok;
+
+            const html = `
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">${T.title}</h2>
+                
+                <div class="mb-6">
+                    <button id="generate-task-btn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150 ease-in-out" onclick="app.handlers.handleGenerateTask()">
+                        ${T.generate}
+                    </button>
+                </div>
+
+                <div class="lg:grid lg:grid-cols-3 gap-8">
+                    
+                    <!-- Left Column: Flowchart and Requirements (T007/T008) -->
+                    <div class="lg:col-span-1 card h-fit mb-6 lg:mb-0">
+                        ${renderTaskFlowchart(task)}
+                    </div>
+
+                    <!-- Right Column: Writing Area and Submission (T009) -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="card">
+                            <label for="writing-draft" class="block text-lg font-medium text-gray-700 mb-3">${T.writing_area}</label>
+                            <textarea id="writing-draft" rows="15" class="input-field" 
+                                oninput="app.handlers.handleDraftInput(this.value)"
+                                ${!task ? 'disabled' : ''}>${app.state.sprintDraft}</textarea>
+                        </div>
+
+                        <!-- Passive Meter (T010/T011) -->
+                        <div class="card">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-700">${T.passive_meter} (${passiveCheck.ratio.toFixed(1)}%)</span>
+                                <span class="text-xs text-gray-500">${T.passive_goal}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="passive-meter" class="h-2.5 rounded-full transition-all duration-500 ease-in-out ${passiveBarColor}" 
+                                    style="width: ${passiveCheck.ratio}%">
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs ${passiveCheck.isMet ? 'text-green-600' : 'text-red-600'} font-medium">${submitTooltip}</p>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button id="submit-draft-btn" class="btn-primary" 
+                                onclick="app.handlers.handleSubmitDraft()"
+                                ${submitDisabled ? 'disabled' : ''}>
+                                ${T.submit}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderTranslation() {
+            const T = app.T.translation;
+            const { sprintResult, translationText, translationConcealed, translationResult } = app.state;
+
+            if (!sprintResult) {
+                document.getElementById('main-content').innerHTML = `<div class="p-20 text-center card">
+                    <p class="text-xl text-gray-500">${T.no_draft}</p>
+                    <button class="mt-4 btn-primary" onclick="app.router.navigate('dashboard')">Go to Sprint Dashboard</button>
+                </div>`;
+                return;
+            }
+
+            const originalTextDisplay = translationConcealed
+                ? '█'.repeat(sprintResult.sprintDraft.length / 5).padEnd(500, '█')
+                : sprintResult.sprintDraft;
+
+            const concealBtnText = translationConcealed ? T.unconceal : T.conceal;
+            const concealBtnColor = translationConcealed ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-gray-500 hover:bg-gray-600';
+
+            const analyzeDisabled = translationText.trim().length === 0;
+
+            let analysisHtml = '';
+            if (translationResult) {
+                const omissionColor = translationResult.isMet ? 'text-green-600' : 'text-red-600';
+                const omissionBg = translationResult.isMet ? 'bg-green-50' : 'bg-red-50';
+
+                analysisHtml = `
+                    <div class="card space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-800">${T.analysis_title}</h3>
+                        
+                        <div class="flex justify-between p-3 rounded-lg ${omissionBg} border border-gray-200">
+                            <p class="font-medium text-gray-700">${T.omission_rate}:</p>
+                            <p class="font-bold ${omissionColor}">${translationResult.omissionRate.toFixed(2)}%</p>
+                        </div>
+                        <p class="text-sm ${omissionColor}">${translationResult.isMet ? T.analysis_ok : T.analysis_fail}</p>
+
+                        <div class="grid grid-cols-3 gap-4 text-center border-t pt-4">
+                            <div>
+                                <p class="text-2xl font-bold text-indigo-600">${translationResult.keywords.length}</p>
+                                <p class="text-sm text-gray-500">${T.keywords_total}</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-green-600">${translationResult.foundCount}</p>
+                                <p class="text-sm text-gray-500">${T.keywords_found}</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-red-600">${translationResult.omittedCount}</p>
+                                <p class="text-sm text-gray-500">${T.keywords_omitted}</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t">
+                            <h4 class="font-semibold mb-2 text-gray-700">${T.keywords_omitted} (${translationResult.omittedCount}):</h4>
+                            <p class="text-sm text-red-500 italic">${translationResult.omittedKeywords.join(', ') || 'None'}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">${T.title}</h2>
+                
+                <div class="lg:grid lg:grid-cols-2 gap-8">
+                    
+                    <!-- Left Column: Original Text & STT -->
+                    <div class="space-y-6">
+                        <div class="card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-lg font-medium text-gray-700">${T.original_text}</h3>
+                                <button id="conceal-btn" class="text-white font-medium py-1 px-3 rounded-lg text-sm transition ${concealBtnColor}"
+                                    onclick="app.handlers.handleConcealToggle()">
+                                    ${concealBtnText}
+                                </button>
+                            </div>
+                            <div id="original-draft-display" class="p-4 bg-gray-100 rounded-md h-64 overflow-y-auto text-gray-800 text-sm ${translationConcealed ? 'concealed-text' : ''}">
+                                ${originalTextDisplay}
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 class="text-lg font-medium text-gray-700 mb-3">${T.translation_area}</h3>
+                            <textarea id="translation-input" rows="10" class="input-field" 
+                                oninput="app.handlers.handleTranslationInput(this.value)">${translationText}</textarea>
+                            
+                            <div class="mt-4 flex space-x-3">
+                                <button id="stt-start-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg active:scale-95 transition"
+                                    onclick="app.handlers.handleSTTStart()">
+                                    ${T.start_stt}
+                                </button>
+                                <button id="stt-stop-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg active:scale-95 transition"
+                                    onclick="app.handlers.handleSTTStop()">
+                                    ${T.stop_stt}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Analysis -->
+                    <div class="space-y-6">
+                        <div class="flex justify-end">
+                            <button id="analyze-omissions-btn" class="btn-primary" 
+                                onclick="app.handlers.handleAnalyzeOmissions()"
+                                ${analyzeDisabled ? 'disabled' : ''}>
+                                ${T.analyze}
+                            </button>
+                        </div>
+                        ${analysisHtml}
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        function renderReport() {
+            const T = app.T.report;
+            const { biReport } = app.state;
+
+            if (!biReport) {
+                // Check if we have translation data to show the Calculate BI button
+                const hasTranslationData = app.state.sprintResult && app.state.translationResult;
+                document.getElementById('main-content').innerHTML = `<div class="p-20 text-center card">
+                    <p class="text-xl text-gray-500">${T.no_data}</p>
+                    ${hasTranslationData
+                        ? `<button id="calculate-bi-btn" class="mt-4 btn-primary" onclick="app.handlers.handleCalculateBI()">${T.calculate}</button>`
+                        : `<button class="mt-4 btn-primary" onclick="app.router.navigate('translation')">Go to Translation Module</button>`
+                    }
+                </div>`;
+                return;
+            }
+
+            const biStatusColor = biReport.isMet ? 'text-green-600' : 'text-red-600';
+            const biStatusText = biReport.isMet ? T.bi_ok : T.bi_fail;
+
+            const html = `
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">${T.title}</h2>
+                
+                <div class="lg:grid lg:grid-cols-3 gap-8">
+                    
+                    <!-- Left Column: BI Gauge and Status -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="card flex flex-col items-center">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-4">${T.bi_score}</h3>
+                            ${renderBIGauge(biReport.BI)}
+                            <p class="mt-4 text-sm text-gray-500">${T.bi_target}</p>
+                            <p class="mt-2 text-lg font-semibold ${biStatusColor}">${biStatusText}</p>
+                        </div>
+                        
+                        <!-- Recommendation -->
+                        <div class="card bg-yellow-50 border-yellow-200">
+                            <h3 class="text-lg font-semibold text-yellow-800 mb-2">${T.recommendation}</h3>
+                            <p class="text-sm text-yellow-700">${biReport.recommendation}</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Error Breakdown -->
+                    <div class="lg:col-span-2 card space-y-4">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">${T.weighted_errors}</h3>
+                        
+                        <div class="space-y-3">
+                            ${[
+                    { label: T.omission_error, score: biReport.omissionWeightedError, weight: 1.5 },
+                    { label: T.passive_error, score: biReport.passiveWeightedError, weight: 0.5 },
+                    { label: T.vocab_error, score: biReport.vocabWeightedError, weight: 1.2 },
+                    { label: T.grammar_error, score: biReport.grammarWeightedError, weight: 0.8 },
+                ].map(item => `
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-sm text-gray-600">${item.label}</span>
+                                    <span class="font-mono font-medium text-gray-800">${item.score.toFixed(4)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="pt-4 border-t mt-4">
+                            <div class="flex justify-between font-bold text-lg text-indigo-600">
+                                <span>Total Weighted Error:</span>
+                                <span>${biReport.totalWeightedError.toFixed(4)}</span>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-500 mt-2">
+                                <span>${T.total_words}:</span>
+                                <span>${biReport.translatedWordCount}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+        }
+
+        // --- Router and Initialization ---
+
+        app.router.navigate = (view, save = true) => {
+            app.state.currentView = view;
+            if (save) saveState();
+
+            // Update tabs
+            const tabsContainer = document.getElementById('nav-tabs');
+            tabsContainer.innerHTML = app.T.tabs.map((name, index) => {
+                const viewName = ['dashboard', 'translation', 'report'][index];
+                const isActive = viewName === view;
+                const activeClass = isActive
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300';
+
+                return `
+                    <button onclick="app.router.navigate('${viewName}')"
+                        class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition duration-150 ease-in-out ${activeClass}">
+                        ${name}
+                    </button>
+                `;
+            }).join('');
+
+            // Render view
+            if (view === 'dashboard') renderDashboard();
+            else if (view === 'translation') renderTranslation();
+            else if (view === 'report') renderReport();
+
+            // Update user ID display
+            document.getElementById('user-id-display').textContent = `User ID: ${app.state.userId}`;
+        };
+
+        function setLanguage(lang) {
+            app.state.language = lang;
+            app.T = I18N[lang];
+            saveState();
+            app.router.navigate(app.state.currentView, false); // Re-render current view
+            document.title = app.T.title;
+        }
+
+        // --- Event Handlers ---
+
+        app.handlers = {
+            handleLanguageChange: (event) => {
+                setLanguage(event.target.value);
+            },
+
+            handleGenerateTask: () => performAction('generate-task-btn', generateSprintTask),
+
+            handleDraftInput: (value) => {
+                app.state.sprintDraft = value;
+                // Real-time check update (T010/T011)
+                const passiveCheck = calculatePassiveRatio(value);
+                const meter = document.getElementById('passive-meter');
+                const submitBtn = document.getElementById('submit-draft-btn');
+
+                if (meter) {
+                    meter.style.width = `${passiveCheck.ratio}%`;
+                    meter.className = meter.className.replace(/bg-(green|red)-500/, passiveCheck.isMet ? 'bg-green-500' : 'bg-red-500');
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = !passiveCheck.isMet;
+                }
+                // Note: We don't save state on every keystroke, only on submission.
+            },
+
+            handleSubmitDraft: () => performAction('submit-draft-btn', async () => {
+                const draft = app.state.sprintDraft;
+                if (!draft || draft.trim().length === 0) {
+                    throw new Error("Draft cannot be empty.");
+                }
+                const passiveCheck = calculatePassiveRatio(draft);
+                if (!passiveCheck.isMet) {
+                    throw new Error(app.T.dashboard.passive_check_fail);
+                }
+
+                const draftHash = await sha256(draft);
+
+                app.state.sprintResult = {
+                    sprintDraft: draft,
+                    passiveRatio: passiveCheck.ratio,
+                    isMet: passiveCheck.isMet,
+                    draftHash: draftHash,
+                };
+                app.state.translationConcealed = true; // Reset concealment
+                app.state.translationText = ""; // Clear previous translation
+                app.state.translationResult = null;
+                app.state.biReport = null;
+
+                saveState();
+                showToast(app.T.toast.task_submitted, 'success');
+                app.router.navigate('translation');
+            }),
+
+            handleConcealToggle: () => {
+                app.state.translationConcealed = !app.state.translationConcealed;
+                saveState();
+                app.router.navigate('translation', false);
+                showToast(app.state.translationConcealed ? app.T.toast.concealed : app.T.toast.unconcealed, 'info');
+            },
+
+            handleTranslationInput: (value) => {
+                app.state.translationText = value;
+                // Note: We don't save state on every keystroke.
+            },
+
+            // T015/T016: STT Simulation
+            handleSTTStart: () => performAction('stt-start-btn', async () => {
+                showToast(app.T.toast.stt_started, 'info');
+                // Simulate recording time
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }),
+
+            handleSTTStop: () => performAction('stt-stop-btn', async () => {
+                const translationInput = document.getElementById('translation-input');
+                if (translationInput) {
+                    // Inject simulated translation text
+                    app.state.translationText = app.T.translation.stt_sim_text;
+                    translationInput.value = app.state.translationText;
+                    showToast(app.T.toast.stt_stopped, 'success');
+                }
+            }),
+
+            handleAnalyzeOmissions: () => performAction('analyze-omissions-btn', async () => {
+                const { sprintResult, translationText } = app.state;
+
+                if (!sprintResult) {
+                    throw new Error(app.T.translation.no_draft);
+                }
+
+                const analysis = analyzeOmissions(sprintResult.sprintDraft, translationText);
+
+                // T014: Data Integrity Check (Simulated)
+                const currentDraftHash = await sha256(sprintResult.sprintDraft);
+                if (currentDraftHash !== sprintResult.draftHash) {
+                    // This should ideally never happen if state persistence is working, but checks for tampering.
+                    throw new Error("Data integrity error: Original draft hash mismatch.");
+                }
+
+                app.state.translationResult = {
+                    ...analysis,
+                    translatedText: translationText,
+                };
+
+                saveState();
+                showToast(app.T.toast.translation_analyzed, 'success');
+                app.router.navigate('translation', false); // Re-render analysis section
+            }),
+
+            handleCalculateBI: () => performAction('calculate-bi-btn', async () => {
+                calculateBI();
+                app.router.navigate('report', false);
+            })
+        };
+
+        function init() {
+            loadState();
+
+            // Set up language selector
+            const langSelector = document.getElementById('language-selector');
+            langSelector.value = app.state.language;
+            langSelector.addEventListener('change', app.handlers.handleLanguageChange);
+
+            // Set initial language and title
+            setLanguage(app.state.language);
+
+            // Initial routing
+            app.router.navigate(app.state.currentView, false);
+        }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,64 @@
+============================================================
+IELTS Writing Task 1 RCA Analysis Report
+============================================================
+
+--- 分數統計 ---
+      cc_paragraphing  cc_referencing  cc_sequencing_markers  gra_complex_structures  gra_error_free_density  gra_passive_voice  lr_conciseness  lr_paraphrasing  lr_process_verbs  lr_topic_nouns  overall_band  ta_logic_accuracy  ta_overview_clarity  ta_step_coverage
+mean            0.775          0.8125                   0.85                   0.825                  0.8875              0.775           0.825            0.875            0.8125          0.8375           7.5              0.875                 0.90              0.85
+min             0.700          0.6000                   0.70                   0.700                  0.8000              0.500           0.750            0.850            0.7500          0.8000           6.5              0.800                 0.85              0.70
+max             0.900          0.9000                   0.90                   0.900                  1.0000              0.900           0.900            0.900            0.9000          0.9000           8.5              1.000                 0.95              1.00
+
+--- RCA 瓶頸分析 ---
+                Metric                 Metric_Name  Impact_Weight  Avg_Score  Bottleneck_Index
+      lr_process_verbs           LR: Process Verbs       0.193676     0.8125          0.036314
+        cc_referencing             CC: Referencing       0.083004     0.8125          0.015563
+     ta_logic_accuracy          TA: Logic Accuracy       0.117918     0.8750          0.014740
+     gra_passive_voice  GRA: Passive Voice Control       0.057971     0.7750          0.013043
+        lr_topic_nouns        LR: Topic Vocabulary       0.079381     0.8375          0.012899
+       cc_paragraphing    CC: Logical Paragraphing       0.056324     0.7750          0.012673
+gra_complex_structures       GRA: Sentence Variety       0.068511     0.8250          0.011989
+gra_error_free_density   GRA: Error-Free Sentences       0.096509     0.8875          0.010857
+   ta_overview_clarity        TA: Overview Clarity       0.088603     0.9000          0.008860
+      ta_step_coverage       TA: Key Step Coverage       0.056324     0.8500          0.008449
+ cc_sequencing_markers      CC: Sequencing Markers       0.052372     0.8500          0.007856
+        lr_conciseness LR: Precision & Conciseness       0.036561     0.8250          0.006398
+       lr_paraphrasing      LR: Paraphrasing Power       0.012846     0.8750          0.001606
+
+--- AI 建議報告 ---
+【診斷摘要】
+整體表現穩定，Band 7.5-8.5 區間，但第 4 次驟降至 6.5，顯示流程圖或步驟描述仍可能出現「一次性失誤」。LR: Process Verbs 雖然分數 0.81，但因其 IELTS 權重高達 19 %，成為最大扣分缺口；CC: Referencing 與 TA: Logic Accuracy 次之。
+
+【關鍵瓶頸分析】
+1. Process Verbs 深度不足：過度依賴 “start → then → finally”，缺少「循環、回流、副產物」等進階動詞（recirculate, discharge, condense）。
+2. Referencing 模糊：this / these 指代時，先行詞與圖中階段數字未精準對應，造成閱卷人追�負擔。
+3. Logic Accuracy 波動：第 4 次寫作可能在「並行步驟」或「材料分支」漏掉關鍵箭頭，導致敘述跳躍。
+
+【具體改進建議】
+A. 建立「流程動詞庫」：針對加熱、冷卻、分離、混合四大語義場，各記 5 個高頻動詞＋介副詞搭配（e.g., the mixture is heated *indirectly* via a steam jacket）。  
+B. 強制「雙標」制度：每段首句先給階段編號（S1, S2…），再於細節句使用 “At this stage, …” 明確回指。  
+C. 完稿「逆向校對」：用 30 秒只檢查箭頭→句子，看是否每條線都有主詞＋動詞＋受詞，杜絕遺漏。
+
+【下一步行動計畫】
+1. 本週內完成 5 篇「循環式」流程圖（recycling, water treatment），每篇至少使用 3 個新動詞。  
+2. 將範文上傳至 AI 評分工具，鎖定 Referencing 分數 ≥ 0.9 才提交。  
+3. 兩週後模考，目標把 Band 拉回 8.0 並維持 3 次，確保穩定性。
+
+===ENGLISH_VERSION_START===
+
+[Diagnostic Summary]
+Overall performance hovers around Band 7.5–8.5, yet the drop to 6.5 on attempt 4 signals a “one-off” lapse in process-description logic. LR: Process Verbs, despite a 0.81 score, carries the heaviest IELTS weight (≈19 %) and remains the biggest drag; CC: Referencing and TA: Logic Accuracy follow.
+
+[Key Bottleneck Analysis]
+1. Shallow process-verb range: over-reli your go-to chain “starts → then → finally” lacks advanced verbs for loops, by-products or feedback flows (recirculate, discharge, condense).  
+2. Slippery referencing: demonstratives (this / these) do not always lock back to numbered stages, forcing examiners to re-scan.  
+3. Logic wobble: the 6.5 script probably skipped a parallel branch or return arrow, creating a narrative gap.
+
+[Actionable Advice]
+A. Build a “process-verb bank”: for each semantic field—heating, cooling, separating, mixing—list five verbs plus adverbial collocations (e.g., the mixture is heated *indirectly* via a steam jacket).  
+B. Impose a “double-anchor” rule: open every paragraph with the stage label (S1, S2 …) and echo it with “At this stage, …” in the detail sentence.  
+C. Reverse-proof: spend 30 s scanning arrows → sentences to confirm every line has a subject + verb + object, plugging omissions.
+
+[Next Steps]
+1. Draft five “closed-loop” flow-charts (recycling, water treatment) this week, each deploying ≥ 3 new verbs.  
+2. Upload essays to AI rater; do not submit unless Referencing ≥ 0.9.  
+3. Sit a mock in two weeks; target Band 8.0 sustained over three consecutive tasks to prove stability.

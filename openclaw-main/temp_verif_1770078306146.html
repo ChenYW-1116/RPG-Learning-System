@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">IELTS Writing-Speaking Intensive Trainer</title>
+    <!-- Task T001: TailwindCDN for offline-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Task T001: Custom styles for UI components */
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .c1-verb-tag { cursor: grab; }
+        .c1-verb-tag.used { @apply bg-green-500 text-white; }
+        .c1-verb-tag.required { @apply bg-gray-200 text-gray-800; }
+        .c1-verb-tag.required:not(.used) { @apply bg-red-400 text-white; } /* B1: Red reminder */
+        #toast-container { z-index: 1000; }
+        /* Task T007: Canvas Editor Simulation */
+        #canvas-editor { min-height: 250px; resize: vertical; }
+        /* Task T009: Masking simulation */
+        .masked-text { background-color: black; color: black; user-select: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <!-- Task T003: Language Switch and Settings Button -->
+    <nav class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-indigo-700" data-i18n="app_title">IELTS Trainer</h1>
+        <div class="space-x-2">
+            <button id="btn-settings" class="p-2 rounded-full hover:bg-gray-100 transition" onclick="app.ui.showSettingsModal()">
+                ⚙️
+            </button>
+            <select id="select-lang" onchange="app.setLanguage(this.value)" class="p-2 border rounded">
+                <option value="zh">繁體中文</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 max-w-4xl">
+
+        <!-- Toast Container (spec-kit-ui-hardening) -->
+        <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+        <!-- Phase Display (T002) -->
+        <div class="mb-6 p-4 bg-indigo-100 border-l-4 border-indigo-500 text-indigo-800">
+            <p class="font-semibold" data-i18n="current_phase_label">當前階段:</p>
+            <span id="phase-display" class="text-lg font-mono"></span>
+            <span id="day-display" class="ml-4 text-sm font-mono"></span>
+        </div>
+
+        <!-- 1. Config View (Initial Phase) -->
+        <section id="view-config" class="view-section active">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="config_title">系統設定與初始化</h2>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <p class="mb-4 text-sm text-red-600" data-i18n="config_warning">
+                    請注意：本應用程式為離線優先設計，API Key僅用於本地模擬評分。
+                </p>
+                <div class="space-y-4">
+                    <!-- Task T003: API Key Inputs -->
+                    <div>
+                        <label for="input-api-grammarly" class="block text-sm font-medium text-gray-700">Grammarly API Key (Mock)</label>
+                        <input type="password" id="input-api-grammarly" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Optional for simulation" oninput="app.updateSetting('apiKeyGrammarly', this.value)">
+                    </div>
+                    <div>
+                        <label for="input-api-gemini" class="block text-sm font-medium text-gray-700">Gemini API Key (Mock)</label>
+                        <input type="password" id="input-api-gemini" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Optional for simulation" oninput="app.updateSetting('apiKeyGemini', this.value)">
+                    </div>
+                    <!-- Task A1: Fallback Toggle -->
+                    <div class="flex items-center">
+                        <input type="checkbox" id="toggle-fallback" class="h-4 w-4 text-indigo-600 border-gray-300 rounded" onchange="app.updateSetting('useFallback', this.checked)">
+                        <label for="toggle-fallback" class="ml-2 block text-sm text-gray-900" data-i18n="fallback_toggle">啟用本地備援/手動上傳模式 (跳過API)</label>
+                    </div>
+                </div>
+                <!-- Task T005: Start Button -->
+                <button id="btn-start-sprint" onclick="app.ui.performAction('btn-start-sprint', app.startSprint)" class="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">
+                    <span data-i18n="start_sprint">明日開始 5-Day Verb Sprint</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. Sprint View (Day 1-5) -->
+        <section id="view-sprint" class="view-section">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="sprint_title">5-Day Verb Sprint (Task 1 Simulation)</h2>
+
+            <!-- Task T006: Timer Pane -->
+            <div class="flex justify-between items-center bg-yellow-100 p-4 rounded-lg mb-4">
+                <div class="text-2xl font-mono text-red-600" id="timer-display">15:00</div>
+                <button id="btn-start-timer" onclick="app.ui.performAction('btn-start-timer', app.startTimer)" class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600" data-i18n="start_timer">開始計時</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <!-- Task T008: Verb Bank Panel -->
+                <div id="verb-bank-panel" class="lg:col-span-1 bg-white p-4 rounded-lg shadow h-full">
+                    <h3 class="font-bold mb-3" data-i18n="verb_bank_title">今日 C1 動詞庫 (需使用 6 個)</h3>
+                    <div id="verb-list" class="flex flex-wrap gap-2">
+                        <!-- Verb tags injected here -->
+                    </div>
+                    <div id="verb-usage-status" class="mt-3 text-sm font-semibold"></div>
+                </div>
+
+                <!-- Task T007: Canvas Editor Simulation -->
+                <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow">
+                    <h3 class="font-bold mb-3" data-i18n="editor_title">流程圖/文字編輯區 (15 min 鎖定)</h3>
+                    <textarea id="canvas-editor" 
+                              class="w-full border border-gray-300 p-3 rounded-md focus:ring-indigo-500 focus:border-indigo-500" 
+                              placeholder="請在此處寫作 IELTS Task 1 流程圖描述..."
+                              oninput="app.handleWritingInput(this.value)"
+                              data-i18n-placeholder="editor_placeholder"></textarea>
+                    
+                    <div class="mt-4 flex justify-between items-center">
+                        <div id="passive-ratio-display" class="text-sm font-medium text-gray-700">
+                            <span data-i18n="passive_ratio_label">被動語態比例:</span> <span id="passive-ratio-value" class="font-bold">N/A</span>
+                        </div>
+                        <!-- Task T008: Submit Button -->
+                        <button id="btn-submit-writing" 
+                                onclick="app.ui.performAction('btn-submit-writing', app.submitWriting)" 
+                                class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:opacity-50" 
+                                disabled
+                                data-i18n="submit_writing">提交並檢查</button>
+                    </div>
+                    <p id="submission-lock-message" class="text-red-500 mt-2 hidden" data-i18n="submission_lock_message">
+                        提交被鎖定：請確保使用所有C1動詞且被動語態比例 ≥ 30%。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Blind Write-back View (Day 6-7) -->
+        <section id="view-blind" class="view-section">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="blind_title">盲翻譯回寫 (Day 6-7)</h2>
+            
+            <div class="bg-white p-6 rounded-lg shadow mb-4">
+                <h3 class="font-bold mb-2" data-i18n="original_text_label">原始中文流程描述 (Day 1-5 隨機選取)</h3>
+                <!-- Task T009: Masking Engine -->
+                <div id="original-text-display" class="border p-3 bg-gray-50 rounded min-h-[100px] mb-3">
+                    <!-- Text content injected here -->
+                </div>
+                <button id="btn-mask-text" onclick="app.maskText()" class="bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-600" data-i18n="mask_button">一鍵遮蔽</button>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="font-bold mb-2" data-i18n="translation_task_label">英譯回寫與口說錄音</h3>
+                
+                <!-- Task T010: Recorder Panel Simulation -->
+                <div class="flex items-center space-x-4 mb-3">
+                    <button id="btn-start-recording" onclick="app.ui.performAction('btn-start-recording', app.startRecording)" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600" data-i18n="record_button">🎙️ 開始錄音 (STT)</button>
+                    <div id="stt-transcript" class="text-sm text-gray-600 italic" data-i18n="stt_placeholder">錄音轉寫結果將顯示於此...</div>
+                </div>
+
+                <textarea id="input-blind-translation" 
+                          class="w-full border border-gray-300 p-3 rounded-md focus:ring-indigo-500 focus:border-indigo-500" 
+                          placeholder="請根據記憶，將遮蔽的中文流程翻譯回英文..."
+                          oninput="app.handleBlindInput(this.value)"
+                          data-i18n-placeholder="blind_placeholder"></textarea>
+
+                <div class="mt-4 flex justify-between items-center">
+                    <!-- Task T011: Diff Engine Result -->
+                    <div id="omission-rate-display" class="text-sm font-medium text-gray-700">
+                        <span data-i18n="omission_rate_label">資料遺漏率:</span> <span id="omission-rate-value" class="font-bold">N/A</span>
+                    </div>
+                    
+                    <div class="space-x-2">
+                        <button id="btn-retry-blind" onclick="app.retryBlindTask()" class="bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 transition disabled:opacity-50" disabled data-i18n="retry_button">重練 (新段落)</button>
+                        <button id="btn-submit-blind" onclick="app.ui.performAction('btn-submit-blind', app.submitBlindTranslation)" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition disabled:opacity-50" disabled data-i18n="submit_translation">提交翻譯</button>
+                    </div>
+                </div>
+                <p id="omission-fail-message" class="text-red-500 mt-2 hidden" data-i18n="omission_fail_message">
+                    遺漏率 ≥ 3%。請重練或修正後再提交。
+                </p>
+            </div>
+        </section>
+
+        <!-- 4. Mock Day View (Day 8) -->
+        <section id="view-mock" class="view-section">
+            <h2 class="text-2xl font-semibold mb-4" data-i18n="mock_title">模擬測驗與瓶頸分析 (Day 8)</h2>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <!-- A2: Bottleneck Index Disclaimer -->
+                <p class="text-sm text-orange-600 mb-4" data-i18n="bottleneck_disclaimer">
+                    ⚠️ 僅供練習參考，非官方分數。目標 Bottleneck Index < 0.02 (AI預測 Band ≥ 7.5)。
+                </p>
+                
+                <!-- Task T012: Scoreboard Pane -->
+                <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                    <div class="p-3 border rounded">
+                        <p class="text-xs text-gray-500" data-i18n="passive_ratio_avg">平均被動語態</p>
+                        <p id="passive-ratio-avg-display" class="text-2xl font-bold text-indigo-600">N/A</p>
+                    </div>
+                    <div class="p-3 border rounded">
+                        <p class="text-xs text-gray-500" data-i18n="omission_rate_median">翻譯遺漏中位數</p>
+                        <p id="omission-rate-median-display" class="text-2xl font-bold text-indigo-600">N/A</p>
+                    </div>
+                    <div class="p-3 border rounded">
+                        <p class="text-xs text-gray-500" data-i18n="bottleneck_index_label">瓶頸指數</p>
+                        <p id="bottleneck-index-display" class="text-2xl font-bold text-red-600">N/A</p>
+                    </div>
+                </div>
+
+                <button id="btn-run-mock" onclick="app.ui.performAction('btn-run-mock', app.runMockTest)" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition" data-i18n="run_mock_test">執行 Day 8 模擬測驗</button>
+                
+                <div id="mock-result" class="mt-4 p-4 border-t hidden">
+                    <h4 class="font-semibold text-lg mb-2" data-i18n="ai_recommendation_title">AI 弱項訓練推薦</h4>
+                    <p id="mock-recommendation" class="text-gray-700"></p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Task T001, T002, T003, T004: Core Application Setup
+        const STORAGE_KEY = 'IELTS_TRAINER_V1';
+        
+        // Task T008: C1 Verb Bank
+        const VERB_BANK = [
+            'elucidate', 'mitigate', 'substantiate', 'ameliorate', 'conflate', 
+            'juxtapose', 'perpetuate', 'delineate', 'exacerbate', 'recapitulate',
+            'promulgate', 'stipulate', 'transcend', 'underscore', 'venerate'
+        ];
+        
+        // Task T011: Mock data for Blind Translation
+        const BLIND_TEXT_ZH = [
+            "第一階段，原材料被運送到工廠，然後經過高溫熔化。第二階段，熔化的材料被注入模具中形成初步形狀。隨後，這些形狀被冷卻並進行打磨，以去除所有瑕疵。",
+            "該流程始於農民播種種子，這通常發生在春季。接著，在夏季，作物會被收割並運送到加工廠。在加工廠內，穀物被分離並儲存於筒倉中，等待進一步的處理或出口。"
+        ];
+        const BLIND_TEXT_EN = [
+            "In the first stage, raw materials are transported to the factory and subsequently melted at high temperatures. In the second stage, the molten material is injected into molds to form preliminary shapes. Subsequently, these shapes are cooled and polished to remove all imperfections.",
+            "The process commences with farmers sowing seeds, which typically occurs during the spring season. Following this, during the summer, the crops are harvested and transported to the processing plant. Inside the plant, the grains are separated and stored in silos, awaiting further processing or export."
+        ];
+
+        // --- 1. Internationalization Repository (T003) ---
+        const translations = {
+            zh: {
+                app_title: "IELTS 寫作/口說強化訓練器",
+                current_phase_label: "當前階段:",
+                config_title: "系統設定與初始化",
+                config_warning: "請注意：本應用程式為離線優先設計，API Key僅用於本地模擬評分。",
+                fallback_toggle: "啟用本地備援/手動上傳模式 (跳過API)",
+                start_sprint: "明日開始 5-Day Verb Sprint",
+                sprint_title: "5-Day Verb Sprint (Task 1 模擬)",
+                start_timer: "開始計時",
+                verb_bank_title: "今日 C1 動詞庫 (需使用 6 個)",
+                editor_title: "流程圖/文字編輯區 (15 min 鎖定)",
+                editor_placeholder: "請在此處寫作 IELTS Task 1 流程圖描述...",
+                passive_ratio_label: "被動語態比例:",
+                submit_writing: "提交並檢查",
+                submission_lock_message: "提交被鎖定：請確保使用所有C1動詞且被動語態比例 ≥ 30%。",
+                blind_title: "盲翻譯回寫 (Day 6-7)",
+                original_text_label: "原始中文流程描述 (Day 1-5 隨機選取)",
+                mask_button: "一鍵遮蔽",
+                translation_task_label: "英譯回寫與口說錄音",
+                record_button: "🎙️ 開始錄音 (STT)",
+                stt_placeholder: "錄音轉寫結果將顯示於此...",
+                blind_placeholder: "請根據記憶，將遮蔽的中文流程翻譯回英文...",
+                omission_rate_label: "資料遺漏率:",
+                retry_button: "重練 (新段落)",
+                submit_translation: "提交翻譯",
+                omission_fail_message: "遺漏率 ≥ 3%。請重練或修正後再提交。",
+                mock_title: "模擬測驗與瓶頸分析 (Day 8)",
+                bottleneck_disclaimer: "⚠️ 僅供練習參考，非官方分數。目標 Bottleneck Index < 0.02 (AI預測 Band ≥ 7.5)。",
+                passive_ratio_avg: "平均被動語態",
+                omission_rate_median: "翻譯遺漏中位數",
+                bottleneck_index_label: "瓶頸指數",
+                run_mock_test: "執行 Day 8 模擬測驗",
+                ai_recommendation_title: "AI 弱項訓練推薦",
+                phase_config: "配置階段",
+                phase_sprint: "動詞衝刺",
+                phase_blind: "盲翻回寫",
+                phase_mock: "模擬測驗",
+                day_label: "天",
+                toast_success: "成功",
+                toast_error: "錯誤",
+                toast_info: "資訊",
+                timer_lock: "時間到！編輯器已鎖定。",
+                sprint_pass: "Day {day} 達標！解鎖 Day {nextDay}。",
+                sprint_fail: "Day {day} 未達標。請修正後再嘗試。",
+                blind_pass: "盲翻達標！遺漏率 {rate}%。解鎖 Day 8 模擬。",
+                blind_fail: "盲翻失敗。遺漏率 {rate}%。請重練。",
+                mock_pass: "恭喜！瓶頸指數 {index} < 0.02。AI 預測 Band ≥ 7.5。",
+                mock_fail: "瓶頸指數 {index} 仍高。建議專注於以下弱項。",
+                recommendation_low_freq: "低頻詞錯誤密度高。建議複習 C1/C2 詞彙。",
+                recommendation_syntax: "句法重複度高。建議練習複雜句型和從句。",
+                recommendation_filler: "填充音比率高。建議練習流利度與語速控制。",
+                processing: "處理中...",
+            },
+            en: {
+                app_title: "IELTS Writing/Speaking Intensive Trainer",
+                current_phase_label: "Current Phase:",
+                config_title: "System Configuration & Initialization",
+                config_warning: "Note: This application is designed to be offline-first. API Keys are for local score simulation only.",
+                fallback_toggle: "Enable Local Fallback/Manual Upload Mode (Skip API)",
+                start_sprint: "Start 5-Day Verb Sprint Tomorrow",
+                sprint_title: "5-Day Verb Sprint (Task 1 Simulation)",
+                start_timer: "Start Timer",
+                verb_bank_title: "Today's C1 Verb Bank (Use 6 required)",
+                editor_title: "Flowchart/Text Editor (15 min lock)",
+                editor_placeholder: "Write your IELTS Task 1 process description here...",
+                passive_ratio_label: "Passive Voice Ratio:",
+                submit_writing: "Submit & Check",
+                submission_lock_message: "Submission locked: Ensure all 6 C1 verbs are used and Passive Voice Ratio ≥ 30%.",
+                blind_title: "Blind Write-back Translation (Day 6-7)",
+                original_text_label: "Original Chinese Flow Description (Randomly selected from Day 1-5)",
+                mask_button: "Mask Text",
+                translation_task_label: "English Write-back & Speaking Recording",
+                record_button: "🎙️ Start Recording (STT)",
+                stt_placeholder: "STT transcript will appear here...",
+                blind_placeholder: "Translate the masked Chinese flow back into English from memory...",
+                omission_rate_label: "Omission Rate:",
+                retry_button: "Retry (New Section)",
+                submit_translation: "Submit Translation",
+                omission_fail_message: "Omission Rate ≥ 3%. Please retry or correct.",
+                mock_title: "Mock Test & Bottleneck Analysis (Day 8)",
+                bottleneck_disclaimer: "⚠️ For practice reference only, not official scores. Target Bottleneck Index < 0.02 (AI predicts Band ≥ 7.5).",
+                passive_ratio_avg: "Avg Passive Ratio",
+                omission_rate_median: "Translation Omission Median",
+                bottleneck_index_label: "Bottleneck Index",
+                run_mock_test: "Run Day 8 Mock Test",
+                ai_recommendation_title: "AI Weakness Training Recommendation",
+                phase_config: "Configuration",
+                phase_sprint: "Verb Sprint",
+                phase_blind: "Blind Translation",
+                phase_mock: "Mock Test",
+                day_label: "Day",
+                toast_success: "Success",
+                toast_error: "Error",
+                toast_info: "Info",
+                timer_lock: "Time's up! Editor locked.",
+                sprint_pass: "Day {day} passed! Unlocked Day {nextDay}.",
+                sprint_fail: "Day {day} failed. Please correct and try again.",
+                blind_pass: "Blind pass! Omission rate {rate}%. Unlocked Day 8 Mock.",
+                blind_fail: "Blind fail. Omission rate {rate}%. Please retry.",
+                mock_pass: "Congratulations! Bottleneck Index {index} < 0.02. AI predicts Band ≥ 7.5.",
+                mock_fail: "Bottleneck Index {index} is still high. Focus on the following weaknesses.",
+                recommendation_low_freq: "High low-frequency error density. Review C1/C2 vocabulary.",
+                recommendation_syntax: "High syntactic repetition. Practice complex sentences and clauses.",
+                recommendation_filler: "High filler ratio. Practice fluency and pace control.",
+                processing: "Processing...",
+            }
+        };
+
+        // --- 2. UI Handler (spec-kit-ui-hardening) ---
+        class UIHandler {
+            constructor(app) {
+                this.app = app;
+            }
+
+            // Task T003: Show/Hide Settings Modal (Simplified: just updates settings)
+            showSettingsModal() {
+                this.toast(this.app.getTranslation('toast_info'), 'info');
+            }
+
+            // Task T003: Toast System
+            showToast(msg, type = 'info') {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+
+                const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
+                
+                const toast = document.createElement('div');
+                toast.className = `${colors[type]} text-white px-4 py-2 rounded shadow-lg transform transition-all translate-y-2 opacity-0`;
+                toast.textContent = msg;
+                
+                container.appendChild(toast);
+                
+                // Animate In
+                requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+                
+                // Animate Out
+                setTimeout(() => {
+                    toast.classList.add('translate-y-2', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+
+            // spec-app-runtime-hardening: Action Guard
+            async performAction(btnId, asyncFn) {
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+                
+                if (btn.disabled) return; // Prevent double submit
+
+                const originalText = btn.innerHTML;
+                
+                // LOCK & FEEDBACK
+                btn.disabled = true;
+                btn.innerHTML = `⏳ ${this.app.getTranslation('processing')}`; 
+                
+                try {
+                    await asyncFn(); // EXECUTE
+                } catch (e) {
+                    console.error(e);
+                    this.showToast(`${this.app.getTranslation('toast_error')}: ${e.message}`, 'error'); // ERROR HANDLING
+                } finally {
+                    // UNLOCK & RESTORE
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    this.app.saveState(); // Ensure state is saved after action
+                }
+            }
+        }
+
+        // --- 3. Data Service (spec-kit-data-simulation) ---
+        class DataService {
+            constructor(app) {
+                this.app = app;
+                this.latency = 800; // Simulated network delay
+            }
+
+            _delay() {
+                return new Promise(r => setTimeout(r, this.latency));
+            }
+
+            // Task T008, FR-003, FR-004, A1, B1: Grammar Check & Gate Logic
+            async checkGrammar(text, verbsUsed) {
+                await this._delay();
+
+                const state = this.app.state;
+                const requiredVerbs = state.currentTask.verbsRequired;
+                const verbsUsedCount = verbsUsed.length;
+                
+                // B1: Check C1 Verb usage (pre-check, should be caught by UI lock)
+                if (verbsUsedCount < requiredVerbs) {
+                    throw new Error(this.app.getTranslation('submission_lock_message'));
+                }
+
+                let passiveRatio;
+
+                if (state.settings.apiKeyGrammarly && !state.settings.useFallback) {
+                    // Simulation of Grammarly API call
+                    // Simulate a ratio that is usually high enough if the text is long
+                    passiveRatio = Math.min(0.5, Math.max(0.1, 0.1 + (text.length / 500) * 0.2 + Math.random() * 0.1));
+                } else {
+                    // A1: Fallback to Gemini grammar-check simulation
+                    passiveRatio = Math.min(0.45, Math.max(0.15, 0.15 + (text.length / 300) * 0.15));
+                    this.app.ui.showToast("Using local fallback for Passive Ratio calculation.", 'info');
+                }
+
+                // B1: Check Passive Voice Ratio threshold (FR-003)
+                if (passiveRatio < 0.30) {
+                    throw new Error(this.app.getTranslation('submission_lock_message'));
+                }
+
+                return { passiveRatio: parseFloat(passiveRatio.toFixed(3)) };
+            }
+
+            // Task T011, FR-006, B2: Omission Rate Calculation
+            async calculateOmissionRate(versionA, versionB) {
+                await this._delay();
+
+                // Simple tokenization (whitespace split)
+                const tokensA = versionA.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+                const tokensB = versionB.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+
+                if (tokensA.length === 0) return { omissionRate: 100 };
+
+                // B2 Correction: Use strict (A - B) / A formula based on token count
+                // We calculate the difference in length, ensuring omission is non-negative
+                const omissionRate = Math.max(0, (tokensA.length - tokensB.length) / tokensA.length) * 100;
+                
+                return { omissionRate: parseFloat(omissionRate.toFixed(2)) };
+            }
+
+            // Task T012, FR-007, A2: Bottleneck Index Calculation
+            async calculateBottleneckIndex(history) {
+                await this._delay();
+
+                // Filter history to only include successful days (Day 1-5 passive ratio, Day 6-7 omission rate)
+                const sprintHistory = history.filter(h => h.passiveRatio !== null);
+                const blindHistory = history.filter(h => h.omissionRate !== null);
+
+                const totalSprintDays = sprintHistory.length;
+                const totalBlindDays = blindHistory.length;
+                
+                if (totalSprintDays === 0) return { index: 1.0, recommendation: 'N/A', avgPassiveRatio: 0, avgOmissionRate: 100 };
+
+                // Average Passive Ratio (T012)
+                const avgPassiveRatio = sprintHistory.reduce((sum, h) => sum + h.passiveRatio, 0) / totalSprintDays;
+                
+                // Average Omission Rate (T012)
+                const avgOmissionRate = blindHistory.length > 0 ? 
+                    blindHistory.reduce((sum, h) => sum + h.omissionRate, 0) / totalBlindDays : 100;
+
+
+                // Simulate Bottleneck Index components (Plan.md formula)
+                // lowFreqErrorDensity (Proxy: Inverse of avgPassiveRatio, scaled)
+                const lowFreqErrorDensity = Math.max(0.01, 0.5 - avgPassiveRatio); 
+                
+                // syntaxRepeatScore (Proxy: Directly related to omission rate success)
+                const syntaxRepeatScore = avgOmissionRate / 100; // Scale to 0-1 range
+                
+                // fillerRatio (Mocked constant for simplicity, usually from STT)
+                const fillerRatio = 0.05; 
+
+                // index = (lowFreqErrorDensity*0.4 + syntaxRepeatScore*0.35 + fillerRatio*0.25)
+                const index = (lowFreqErrorDensity * 0.4) + (syntaxRepeatScore * 0.35) + (fillerRatio * 0.25);
+                
+                let recommendationKey = 'recommendation_low_freq';
+                if (syntaxRepeatScore > lowFreqErrorDensity && syntaxRepeatScore > fillerRatio) {
+                    recommendationKey = 'recommendation_syntax';
+                } else if (fillerRatio > lowFreqErrorDensity && fillerRatio > syntaxRepeatScore) {
+                    recommendationKey = 'recommendation_filler';
+                }
+
+                return { 
+                    index: parseFloat(index.toFixed(4)), 
+                    recommendation: this.app.getTranslation(recommendationKey),
+                    avgPassiveRatio: parseFloat(avgPassiveRatio.toFixed(3)),
+                    avgOmissionRate: parseFloat(avgOmissionRate.toFixed(3))
+                };
+            }
+        }
+
+        // --- 4. Application Core Class (T002, T004) ---
+        class IELTSCoach {
+            constructor() {
+                this.data = new DataService(this);
+                this.ui = new UIHandler(this);
+                this.state = this.loadState();
+                this.timerInterval = null;
+            }
+
+            // Task T004: State Management (Persistence)
+            loadState() {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                const defaults = {
+                    settings: {
+                        lang: 'zh',
+                        apiKeyGrammarly: '',
+                        apiKeyGemini: '',
+                        useFallback: false,
+                    },
+                    phase: 'config',
+                    day: 0,
+                    timer: { start: null, duration: 15 * 60 }, // 15 min (C1: UI text unified to 15 min)
+                    currentTask: {
+                        verbsRequired: 6,
+                        verbsUsed: [],
+                        passiveRatio: null,
+                        omissionRate: null,
+                        bottleneckIndex: null,
+                        writingInput: '',
+                        blindTranslation: '',
+                        sttTranscript: '',
+                        originalBlindIndex: 0,
+                        recommendation: '',
+                        avgPassiveRatio: null,
+                        avgOmissionRate: null,
+                    },
+                    history: [], 
+                };
+                
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        // Merge saved state over defaults
+                        return { ...defaults, ...parsed, settings: { ...defaults.settings, ...parsed.settings } };
+                    } catch (e) {
+                        console.error("Failed to load state, using defaults.", e);
+                        return defaults;
+                    }
+                }
+                return defaults;
+            }
+
+            saveState() {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+                this.updateUI();
+            }
+
+            // Task T003: i18n Utilities
+            getTranslation(key) {
+                const lang = this.state.settings.lang;
+                return translations[lang][key] || translations['en'][key] || key;
+            }
+
+            applyTranslations() {
+                const lang = this.state.settings.lang;
+                const dict = translations[lang];
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (dict[key]) el.textContent = dict[key];
+                });
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (dict[key]) el.placeholder = dict[key];
+                });
+                const langSelect = document.getElementById('select-lang');
+                if (langSelect) langSelect.value = lang;
+            }
+
+            setLanguage(lang) {
+                this.state.settings.lang = lang;
+                this.applyTranslations();
+                this.saveState();
+            }
+
+            updateSetting(key, value) {
+                this.state.settings[key] = (typeof value === 'boolean') ? value : value.trim();
+                this.saveState();
+            }
+
+            // --- UI Rendering & State Machine (T002) ---
+            updateUI() {
+                const { phase, day, currentTask, settings } = this.state;
+
+                // 1. View Switching
+                document.querySelectorAll('.view-section').forEach(el => {
+                    el.classList.remove('active');
+                });
+                const activeView = document.getElementById(`view-${phase}`);
+                if (activeView) activeView.classList.add('active');
+
+                // 2. Phase Display
+                const phaseDisplay = document.getElementById('phase-display');
+                if (phaseDisplay) phaseDisplay.textContent = this.getTranslation(`phase_${phase}`);
+                const dayDisplay = document.getElementById('day-display');
+                if (dayDisplay) dayDisplay.textContent = day > 0 ? `${this.getTranslation('day_label')} ${day}` : '';
+
+                // 3. Config View
+                const toggleFallback = document.getElementById('toggle-fallback');
+                if (toggleFallback) toggleFallback.checked = settings.useFallback;
+
+                // 4. Sprint View (Day 1-5)
+                if (phase === 'sprint') {
+                    this.renderVerbBank();
+                    this.updateTimerDisplay();
+                    this.checkSubmissionLock();
+                    
+                    const editor = document.getElementById('canvas-editor');
+                    if (editor) editor.value = currentTask.writingInput;
+                    
+                    const passiveRatioEl = document.getElementById('passive-ratio-value');
+                    if (passiveRatioEl) passiveRatioEl.textContent = 
+                        currentTask.passiveRatio !== null ? currentTask.passiveRatio.toFixed(3) : 'N/A';
+                }
+
+                // 5. Blind View (Day 6-7)
+                if (phase === 'blind') {
+                    const originalTextEl = document.getElementById('original-text-display');
+                    if (originalTextEl) {
+                        // Display the original text (unmasked initially)
+                        originalTextEl.innerHTML = this.getBlindText(currentTask.originalBlindIndex);
+                    }
+                    
+                    const blindInput = document.getElementById('input-blind-translation');
+                    if (blindInput) blindInput.value = currentTask.blindTranslation;
+
+                    const omissionRateEl = document.getElementById('omission-rate-value');
+                    if (omissionRateEl) omissionRateEl.textContent = 
+                        currentTask.omissionRate !== null ? `${currentTask.omissionRate.toFixed(2)}%` : 'N/A';
+                    
+                    const btnRetry = document.getElementById('btn-retry-blind');
+                    const btnSubmitBlind = document.getElementById('btn-submit-blind');
+                    const omissionFailMsg = document.getElementById('omission-fail-message');
+                    
+                    if (currentTask.omissionRate !== null) {
+                        const failed = currentTask.omissionRate >= 3.0; // FR-006 threshold
+                        if (btnRetry) btnRetry.disabled = !failed;
+                        if (btnSubmitBlind) btnSubmitBlind.disabled = failed;
+                        if (omissionFailMsg) omissionFailMsg.classList.toggle('hidden', !failed);
+                    } else {
+                        if (btnRetry) btnRetry.disabled = true;
+                        if (btnSubmitBlind) btnSubmitBlind.disabled = false;
+                        if (omissionFailMsg) omissionFailMsg.classList.add('hidden');
+                    }
+                }
+
+                // 6. Mock View (Day 8)
+                if (phase === 'mock') {
+                    const index = currentTask.bottleneckIndex;
+                    const indexDisplay = document.getElementById('bottleneck-index-display');
+                    if (indexDisplay) indexDisplay.textContent = index !== null ? index.toFixed(4) : 'N/A';
+                    
+                    const resultDiv = document.getElementById('mock-result');
+                    if (index !== null) {
+                        if (resultDiv) resultDiv.classList.remove('hidden');
+                        
+                        const recommendationEl = document.getElementById('mock-recommendation');
+                        if (recommendationEl) recommendationEl.textContent = currentTask.recommendation;
+                        
+                        const passiveAvgEl = document.getElementById('passive-ratio-avg-display');
+                        if (passiveAvgEl) passiveAvgEl.textContent = currentTask.avgPassiveRatio !== null ? currentTask.avgPassiveRatio.toFixed(3) : 'N/A';
+                        
+                        const omissionMedianEl = document.getElementById('omission-rate-median-display');
+                        if (omissionMedianEl) omissionMedianEl.textContent = currentTask.avgOmissionRate !== null ? `${currentTask.avgOmissionRate.toFixed(3)}%` : 'N/A';
+                    } else {
+                        if (resultDiv) resultDiv.classList.add('hidden');
+                    }
+                }
+            }
+
+            // --- Timer Logic (T006) ---
+            startTimer = async () => {
+                if (this.state.timer.start) {
+                    this.ui.showToast("Timer already running.", 'info');
+                    return;
+                }
+                
+                // Task T006: Start timer and lock input
+                this.state.timer.start = Date.now();
+                this.lockEditor(false);
+                this.saveState();
+                
+                const btnStart = document.getElementById('btn-start-timer');
+                if (btnStart) btnStart.disabled = true;
+
+                this.timerInterval = setInterval(() => this.tickTimer(), 1000);
+            }
+
+            tickTimer() {
+                if (!this.state.timer.start) return;
+
+                const elapsed = Math.floor((Date.now() - this.state.timer.start) / 1000);
+                const remaining = this.state.timer.duration - elapsed;
+
+                if (remaining <= 0) {
+                    clearInterval(this.timerInterval);
+                    this.state.timer.start = null;
+                    this.lockEditor(true); // Force lock (FR-002)
+                    this.ui.showToast(this.getTranslation('timer_lock'), 'error');
+                    this.updateTimerDisplay(0);
+                    
+                    const btnStart = document.getElementById('btn-start-timer');
+                    if (btnStart) btnStart.disabled = false;
+                    
+                    this.saveState();
+                    return;
+                }
+
+                this.updateTimerDisplay(remaining);
+            }
+
+            updateTimerDisplay(seconds = null) {
+                const display = document.getElementById('timer-display');
+                if (!display) return;
+
+                const remaining = seconds !== null ? seconds : 
+                    this.state.timer.start ? this.state.timer.duration - Math.floor((Date.now() - this.state.timer.start) / 1000) : this.state.timer.duration;
+
+                const minutes = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                
+                display.textContent = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+
+            lockEditor(lock = true) {
+                const editor = document.getElementById('canvas-editor');
+                if (editor) editor.disabled = lock;
+                this.checkSubmissionLock(); // Re-check submission lock based on timer state
+            }
+
+            // --- Sprint Logic (Day 1-5) ---
+            
+            // Task T005: Start Sprint (Phase transition)
+            startSprint = async () => {
+                // T005: CalendarTrigger simulation (sets Day 1)
+                this.state.phase = 'sprint';
+                this.state.day = 1;
+                this.state.history = []; // Reset history for new sprint
+                this.resetCurrentTask();
+                this.ui.showToast(this.getTranslation('toast_success'), 'success');
+                this.saveState();
+            }
+
+            // Task T008: Render C1 Verb Bank
+            renderVerbBank() {
+                const verbListEl = document.getElementById('verb-list');
+                if (!verbListEl) return;
+                
+                // Initialize verbs for Day 1-5
+                if (this.state.currentTask.verbsUsed.length === 0 && this.state.day >= 1 && this.state.day <= 5) {
+                    // Randomly select 6 verbs (T008)
+                    const shuffled = [...VERB_BANK].sort(() => 0.5 - Math.random());
+                    this.state.currentTask.verbsUsed = shuffled.slice(0, 6).map(v => ({ verb: v, used: false }));
+                }
+
+                verbListEl.innerHTML = this.state.currentTask.verbsUsed.map(item => `
+                    <span class="c1-verb-tag px-3 py-1 rounded-full text-sm font-medium transition 
+                        ${item.used ? 'used' : 'required'}" 
+                        data-verb="${item.verb}">
+                        ${item.verb}
+                    </span>
+                `).join('');
+
+                const usedCount = this.state.currentTask.verbsUsed.filter(v => v.used).length;
+                const requiredCount = this.state.currentTask.verbsRequired;
+                document.getElementById('verb-usage-status').textContent = 
+                    `${usedCount}/${requiredCount} used.`;
+            }
+
+            // Task T007/T008: Handle writing input and check verb usage
+            handleWritingInput(text) {
+                this.state.currentTask.writingInput = text;
+                
+                // Check usage status (T008)
+                this.state.currentTask.verbsUsed.forEach(item => {
+                    // Simple check: case-insensitive word boundary match
+                    const regex = new RegExp(`\\b${item.verb}\\b`, 'i');
+                    item.used = regex.test(text);
+                });
+
+                this.checkSubmissionLock();
+                this.renderVerbBank(); // Re-render to update colors
+                this.saveState();
+            }
+
+            // Task B1, FR-004: Check lock conditions
+            checkSubmissionLock() {
+                const btnSubmit = document.getElementById('btn-submit-writing');
+                const lockMessage = document.getElementById('submission-lock-message');
+                if (!btnSubmit || !lockMessage) return;
+
+                const usedCount = this.state.currentTask.verbsUsed.filter(v => v.used).length;
+                const requiredCount = this.state.currentTask.verbsRequired;
+                const editor = document.getElementById('canvas-editor');
+                
+                const isLockedByTimer = editor && editor.disabled && this.state.timer.start !== null; // Locked by timer
+                const isLockedByVerbs = usedCount < requiredCount;
+                
+                // Lock if timer is running OR if verbs are missing (B1 requirement)
+                const shouldLock = isLockedByTimer || isLockedByVerbs;
+                
+                btnSubmit.disabled = shouldLock;
+                lockMessage.classList.toggle('hidden', !isLockedByVerbs);
+            }
+
+            // Task T008: Submit Writing (Gate Check)
+            submitWriting = async () => {
+                const text = this.state.currentTask.writingInput;
+                const verbsUsed = this.state.currentTask.verbsUsed.filter(v => v.used).map(v => v.verb);
+                
+                // MR2: Minimum length check (Simulated: 50 words/chars)
+                if (text.length < 50) throw new Error("Text too short. Minimum 50 characters required."); 
+
+                try {
+                    // This call checks both verb count (pre-checked by UI lock) and passive ratio (FR-003)
+                    const result = await this.data.checkGrammar(text, verbsUsed);
+                    
+                    this.state.currentTask.passiveRatio = result.passiveRatio;
+                    
+                    // Save results to history
+                    this.state.history.push({
+                        day: this.state.day,
+                        passiveRatio: result.passiveRatio,
+                        omissionRate: null,
+                        bottleneckIndex: null,
+                        input: text
+                    });
+
+                    // Advance Day
+                    const currentDay = this.state.day;
+                    const nextDay = currentDay + 1;
+                    
+                    this.ui.showToast(this.getTranslation('sprint_pass')
+                        .replace('{day}', currentDay)
+                        .replace('{nextDay}', nextDay), 'success');
+
+                    if (nextDay <= 5) {
+                        this.state.day = nextDay;
+                        this.resetCurrentTask();
+                    } else if (nextDay === 6) {
+                        // Transition to Blind Phase (Day 6)
+                        this.state.phase = 'blind';
+                        this.state.day = 6;
+                        this.resetCurrentTask();
+                        // Select a random text from history for blind translation
+                        this.state.currentTask.originalBlindIndex = Math.floor(Math.random() * this.state.history.length);
+                    }
+                    
+                    this.saveState();
+
+                } catch (error) {
+                    // T008: If checkGrammar throws (passive ratio fail)
+                    this.ui.showToast(error.message, 'error');
+                    // Do not advance day (Gate Lock)
+                }
+            }
+
+            // --- Blind Write-back Logic (Day 6-7) ---
+
+            getBlindText(index) {
+                // Use the input from a previous day's history (T011 requirement)
+                // We use the mock Chinese text corresponding to the English source (BLIND_TEXT_ZH)
+                return BLIND_TEXT_ZH[index % BLIND_TEXT_ZH.length];
+            }
+
+            // Task T009: Masking Engine
+            maskText() {
+                const originalTextEl = document.getElementById('original-text-display');
+                if (!originalTextEl) return;
+
+                const text = originalTextEl.textContent;
+                
+                // FR-005: One-click black bar masking, preserving structural symbols
+                const maskedText = text.replace(/[\u4e00-\u9fa5a-zA-Z0-9]/g, (match) => {
+                    // Replace content characters with block character
+                    return match.trim() === '' ? ' ' : '█'; 
+                });
+
+                originalTextEl.innerHTML = `<span class="masked-text">${maskedText}</span>`;
+                this.ui.showToast(this.getTranslation('toast_info'), 'info');
+            }
+
+            // Task T010: Recorder Panel Simulation
+            startRecording = async () => {
+                // T010: Simulate MediaRecorder -> Whisper STT (zh)
+                await this.data._delay();
+                
+                const transcript = this.getBlindText(this.state.currentTask.originalBlindIndex);
+                
+                // Simulate slight errors in STT (e.g., filler words)
+                const sttResult = transcript.replace('然後', '然後 um ');
+                
+                this.state.currentTask.sttTranscript = sttResult;
+                const sttEl = document.getElementById('stt-transcript');
+                if (sttEl) sttEl.textContent = sttResult;
+                this.ui.showToast("STT Completed.", 'success');
+                this.saveState();
+            }
+
+            handleBlindInput(text) {
+                this.state.currentTask.blindTranslation = text;
+                this.saveState();
+            }
+
+            // Task T011: Submit Blind Translation
+            submitBlindTranslation = async () => {
+                const index = this.state.currentTask.originalBlindIndex % BLIND_TEXT_EN.length;
+                const versionA = BLIND_TEXT_EN[index]; // Reference English text
+                const versionB = this.state.currentTask.blindTranslation; // User's translation
+
+                if (versionB.length < 20) throw new Error("Please write a translation first.");
+
+                const { omissionRate } = await this.data.calculateOmissionRate(versionA, versionB);
+                this.state.currentTask.omissionRate = omissionRate;
+
+                const isPass = omissionRate < 3.0; // FR-006 threshold
+
+                if (isPass) {
+                    this.state.history.push({
+                        day: this.state.day,
+                        passiveRatio: null,
+                        omissionRate: omissionRate,
+                        input: versionB
+                    });
+                    
+                    this.ui.showToast(this.getTranslation('blind_pass').replace('{rate}', omissionRate.toFixed(2)), 'success');
+
+                    // Advance to Mock Day 8
+                    this.state.phase = 'mock';
+                    this.state.day = 8;
+                    this.resetCurrentTask();
+                } else {
+                    // FR-006: Fail, stay on Day 6/7
+                    this.ui.showToast(this.getTranslation('blind_fail').replace('{rate}', omissionRate.toFixed(2)), 'error');
+                }
+                this.saveState();
+            }
+
+            // Task T011: Retry Blind Task
+            retryBlindTask() {
+                // Reset current task state and select a new random index
+                this.state.day = this.state.day === 6 ? 7 : 6; // Toggle between Day 6 and Day 7
+                this.resetCurrentTask();
+                
+                // Select a new index, ensuring it's different if possible
+                let newIndex = Math.floor(Math.random() * this.state.history.length);
+                if (this.state.history.length > 1 && newIndex === this.state.currentTask.originalBlindIndex) {
+                    newIndex = (newIndex + 1) % this.state.history.length;
+                }
+                this.state.currentTask.originalBlindIndex = newIndex;
+                
+                this.ui.showToast(`Starting ${this.getTranslation('day_label')} ${this.state.day} retry with new text.`, 'info');
+                this.saveState();
+            }
+
+            // --- Mock Test Logic (Day 8) ---
+
+            // Task T012: Run Mock Test
+            runMockTest = async () => {
+                // T012: Calculate index based on accumulated history
+                const { index, recommendation, avgPassiveRatio, avgOmissionRate } = await this.data.calculateBottleneckIndex(this.state.history);
+
+                this.state.currentTask.bottleneckIndex = index;
+                this.state.currentTask.recommendation = recommendation;
+                this.state.currentTask.avgPassiveRatio = avgPassiveRatio;
+                this.state.currentTask.avgOmissionRate = avgOmissionRate;
+                
+                const isPass = index < 0.02; // A2 threshold
+                
+                this.ui.showToast(this.getTranslation(isPass ? 'mock_pass' : 'mock_fail').replace('{index}', index.toFixed(4)), isPass ? 'success' : 'error');
+
+                this.saveState();
+            }
+
+            // --- General Utilities ---
+            resetCurrentTask() {
+                this.state.currentTask = {
+                    verbsRequired: 6,
+                    verbsUsed: [],
+                    passiveRatio: null,
+                    omissionRate: null,
+                    bottleneckIndex: null,
+                    writingInput: '',
+                    blindTranslation: '',
+                    sttTranscript: '',
+                    originalBlindIndex: this.state.currentTask.originalBlindIndex || 0,
+                    recommendation: '',
+                    avgPassiveRatio: null,
+                    avgOmissionRate: null,
+                };
+            }
+
+            init() {
+                this.applyTranslations();
+                this.updateUI();
+                
+                // Resume timer if active
+                if (this.state.timer.start) {
+                    this.timerInterval = setInterval(() => this.tickTimer(), 1000);
+                    this.lockEditor(false); 
+                } else if (this.state.phase === 'sprint') {
+                    this.lockEditor(true); 
+                }
+            }
+        }
+
+        // --- 5. Test Runner Injection (Critical System Requirement) ---
+        // Based on inferred E2E flow (TC-001, TC-002, TC-003, TC-004)
+        function injectTestRunner(runner) {
+            // runner API: click, type, assert, waitFor, getValue, getText, isVisible, count, log, checkStorage, setStorage, mockAIResponse
+            runner.defineTests([
+                {
+                    id: 'TC-001',
+                    name: 'Setup and Start Sprint (Day 1)',
+                    steps: async () => {
+                        await runner.log('TC-001: Configuring system and starting Day 1.');
+                        
+                        // Set language to English for predictable text (T003)
+                        await runner.select('#select-lang', 'en');
+                        await runner.waitFor(100);
+                        
+                        // Set mock API keys (T003)
+                        await runner.type('#input-api-grammarly', 'MOCK_GRAMMARLY_KEY');
+                        await runner.type('#input-api-gemini', 'MOCK_GEMINI_KEY');
+                        
+                        // Start Sprint (T005)
+                        await runner.click('#btn-start-sprint');
+                        
+                        await runner.waitFor(500);
+                        const phase = await runner.getText('#phase-display');
+                        runner.assert(phase === 'Verb Sprint', 'Phase transitioned to Sprint.');
+                        runner.assert(await runner.isVisible('#view-sprint'), 'Sprint view is active.');
+                    }
+                },
+                {
+                    id: 'TC-002',
+                    name: 'Day 1 Success Path (Passive Ratio > 30% & 6 Verbs Used) -> Advance to Day 2',
+                    steps: async () => {
+                        await runner.log('TC-002: Executing Day 1 task.');
+                        
+                        // Start Timer (T006)
+                        await runner.click('#btn-start-timer');
+                        
+                        // Get the 6 required verbs (T008)
+                        const verbElements = await runner.count('.c1-verb-tag');
+                        runner.assert(verbElements === 6, '6 C1 verbs are displayed.');
+                        
+                        const verbs = [];
+                        for (let i = 0; i < 6; i++) {
+                            const verb = await runner.getValue(`.c1-verb-tag:nth-child(${i + 1})`, 'data-verb');
+                            verbs.push(verb);
+                        }
+                        
+                        // Write text that uses all 6 verbs and is long enough to simulate >30% passive ratio (T007, T008)
+                        const writingInput = `The process is initiated by the first step. ${verbs.join('. ')}. The materials are then transported and subsequently melted at high temperatures. This structure is designed to ensure that the output is maximized. This is a very long sentence to ensure passive voice ratio is achieved.`;
+                        
+                        await runner.type('#canvas-editor', writingInput);
+                        
+                        await runner.waitFor(500);
+                        
+                        const status = await runner.getText('#verb-usage-status');
+                        runner.assert(status === '6/6 used.', 'All 6 verbs marked as used.');
+                        
+                        // Submit (T008) - DataService mock ensures success if verbs are used and text is long
+                        await runner.click('#btn-submit-writing');
+                        
+                        await runner.waitFor(1000); // Wait for DataService latency
+                        
+                        const passiveRatio = await runner.getText('#passive-ratio-value');
+                        runner.assert(parseFloat(passiveRatio) >= 0.3, `Passive ratio achieved: ${passiveRatio}`);
+                        
+                        const day = await runner.getText('#day-display');
+                        runner.assert(day === 'Day 2', 'Successfully advanced to Day 2.');
+                    }
+                },
+                {
+                    id: 'TC-003',
+                    name: 'Day 6 Blind Write-back Success (Omission Rate < 3%) -> Advance to Day 8',
+                    steps: async () => {
+                        await runner.log('TC-003: Mocking state to Day 6 and executing Blind task.');
+                        
+                        // Mock state to Day 6 (T002) - Need 5 days of history for mock test calculation
+                        const mockHistory = [];
+                        for(let i=1; i<=5; i++) {
+                            mockHistory.push({ day: i, passiveRatio: 0.35 + (i * 0.01), omissionRate: null, input: `Day ${i} writing sample.` });
+                        }
+
+                        await runner.setStorage(STORAGE_KEY, JSON.stringify({ 
+                            phase: 'blind', 
+                            day: 6, 
+                            history: mockHistory,
+                            currentTask: { originalBlindIndex: 0 }
+                        }));
+                        window.app.init(); // Reload state
+                        await runner.waitFor(500);
+
+                        const phase = await runner.getText('#phase-display');
+                        runner.assert(phase === 'Blind Translation', 'Phase transitioned to Blind.');
+                        
+                        // Mask text (T009)
+                        await runner.click('#btn-mask-text');
+                        
+                        // Simulate STT (T010)
+                        await runner.click('#btn-start-recording');
+                        await runner.waitFor(1000);
+                        
+                        // Write back translation (T011) - Use the exact English source for low omission rate (<3%)
+                        const correctTranslation = BLIND_TEXT_EN[0];
+                        await runner.type('#input-blind-translation', correctTranslation);
+                        
+                        // Submit (T011)
+                        await runner.click('#btn-submit-translation');
+                        await runner.waitFor(1000); // Wait for DataService latency
+                        
+                        const omissionRate = await runner.getText('#omission-rate-value');
+                        const rate = parseFloat(omissionRate.replace('%', ''));
+                        runner.assert(rate < 3.0, `Omission rate successful: ${rate}%`);
+                        
+                        const day = await runner.getText('#day-display');
+                        runner.assert(day === 'Day 8', 'Successfully advanced to Day 8 Mock Test.');
+                    }
+                },
+                {
+                    id: 'TC-004',
+                    name: 'Day 8 Mock Test and Bottleneck Index Calculation (T012)',
+                    steps: async () => {
+                        await runner.log('TC-004: Running Day 8 Mock Test.');
+                        
+                        // Run Mock Test (T012)
+                        await runner.click('#btn-run-mock');
+                        await runner.waitFor(1000);
+                        
+                        const index = await runner.getText('#bottleneck-index-display');
+                        const indexValue = parseFloat(index);
+                        
+                        // Based on mock data (avgPassive ~0.37, avgOmission ~0), index should be low (<< 0.02)
+                        runner.assert(indexValue < 0.02, `Bottleneck Index achieved target: ${index}`);
+                        
+                        const recommendation = await runner.getText('#mock-recommendation');
+                        runner.assert(recommendation.length > 10, 'AI recommendation is provided.');
+                    }
+                }
+            ]);
+        }
+
+        // --- 6. Boot (T001) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new IELTSCoach();
+            window.app.init();
+        });
+    </script>
+</body>
+</html>

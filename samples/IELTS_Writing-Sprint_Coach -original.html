@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">IELTS Writing Coach</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* PUT ALL YOUR CUSTOM CSS HERE */
+        .timer-font {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+        }
+
+        .dark-mode-transition {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .omission-mark {
+            background-color: #fecaca;
+            /* red-200 */
+            color: #b91c1c;
+            /* red-700 */
+            text-decoration: underline;
+            font-weight: 500;
+            padding: 1px 2px;
+            border-radius: 3px;
+        }
+
+        /* Card style mimicry */
+        .app-card {
+            background-color: #fff;
+            border-radius: 1rem;
+            /* rounded-2xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            /* shadow-lg */
+            border: 1px solid #e5e7eb;
+            /* border-gray-200 */
+            padding: 1.5rem;
+            /* p-6 */
+        }
+
+        .dark .app-card {
+            background-color: #1f2937;
+            /* gray-800 */
+            border-color: #374151;
+            /* gray-700 */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 dark-mode-transition">
+    <!-- PUT YOUR HTML UI COMPONENTS HERE -->
+
+    <div id="app" class="min-h-screen">
+        <!-- Navigation -->
+        <nav id="navbar"
+            class="sticky top-0 z-40 bg-white/90 backdrop-blur-sm shadow-md dark:bg-gray-900/90 dark:border-gray-700 dark-mode-transition border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" data-i18n="nav_title">IELTS
+                            Coach</h1>
+                    </div>
+                    <div class="flex items-center">
+                        <div id="tabs" class="hidden sm:ml-6 sm:flex sm:space-x-4">
+                            <button data-tab="sprint"
+                                class="tab-btn py-2 px-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                data-i18n="tab_sprint">5-Day Sprint</button>
+                            <button data-tab="blind"
+                                class="tab-btn py-2 px-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                data-i18n="tab_blind">Blind Write-back</button>
+                            <button data-tab="tools"
+                                class="tab-btn py-2 px-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                data-i18n="tab_tools">AI Tools</button>
+                            <button data-tab="report"
+                                class="tab-btn py-2 px-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                data-i18n="tab_report">Progress Report</button>
+                        </div>
+                        <button id="settings-btn"
+                            class="ml-4 p-2 rounded-full text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300 transition duration-150">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div id="content-container">
+                <!-- Content injected here -->
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+            role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div
+                    class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full dark-mode-transition">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold leading-6 text-gray-900 dark:text-gray-100 mb-4"
+                            data-i18n="settings_title">Application Settings</h3>
+
+                        <div class="space-y-4">
+                            <!-- Language Selector -->
+                            <div>
+                                <label for="language-select"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    data-i18n="settings_language">Language</label>
+                                <select id="language-select"
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                                    <option value="en">English</option>
+                                    <option value="zh">繁體中文</option>
+                                </select>
+                            </div>
+
+                            <!-- Dark Mode Toggle -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    data-i18n="settings_dark_mode">Dark Mode</span>
+                                <button id="dark-mode-toggle"
+                                    class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 bg-gray-200 dark:bg-indigo-600">
+                                    <span
+                                        class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200 translate-x-0 dark:translate-x-5"></span>
+                                </button>
+                            </div>
+
+                            <!-- API Key Input -->
+                            <div>
+                                <label for="api-key-input"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Gemini API Key
+                                    (Mock)</label>
+                                <input type="password" id="api-key-input"
+                                    class="mt-1 block w-full p-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500"
+                                    placeholder="SK-XXXXXXXXXXXXXX">
+                            </div>
+
+                            <!-- Danger Zone -->
+                            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                                <h4 class="text-md font-semibold text-red-600 mb-2" data-i18n="settings_danger">Danger
+                                    Zone</h4>
+                                <button id="clear-data-btn"
+                                    class="w-full bg-red-100 text-red-700 font-semibold py-2 rounded-lg hover:bg-red-200 transition duration-150"
+                                    data-i18n="settings_clear_data">Clear All Local Data</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-xl">
+                        <button type="button" id="close-settings-btn"
+                            class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm active:scale-95"
+                            data-i18n="settings_close">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2">
+            <!-- Toasts will appear here -->
+        </div>
+    </div>
+
+    <script>
+        // PUT ALL YOUR JAVASCRIPT LOGIC HERE
+        // DATA, STATE, FUNCTIONS, EVENTS - EVERYTHING
+
+        const STORAGE_KEY = 'IELTS_COACH_STATE_V2';
+        const SPRINT_DURATION_SECONDS = 900; // 15 minutes
+
+        // --- I18N Data ---
+        const I18N = {
+            en: {
+                app_title: "IELTS Writing Coach",
+                nav_title: "IELTS Coach",
+                tab_sprint: "5-Day Sprint",
+                tab_blind: "Blind Write-back",
+                tab_tools: "AI Tools",
+                tab_report: "Progress Report",
+                settings_title: "Application Settings",
+                settings_language: "Language",
+                settings_dark_mode: "Dark Mode",
+                settings_danger: "Danger Zone",
+                settings_clear_data: "Clear All Local Data",
+                settings_close: "Close",
+                sprint_header: "IELTS 5-Day Verb Sprint",
+                sprint_task_title: "Daily Task",
+                sprint_topic: "Topic:",
+                sprint_verbs: "Mandatory Verbs:",
+                sprint_status_ready: "Ready",
+                sprint_status_running: "Sprinting",
+                sprint_status_paused: "Paused",
+                sprint_status_finished: "Time Up",
+                sprint_start: "Start Verb Sprint (15:00)",
+                sprint_pause: "Pause",
+                sprint_resume: "Resume",
+                sprint_submit: "Submit Essay for Analysis",
+                sprint_word_count: "Word Count",
+                sprint_passive_mock: "Passive Ratio (Mock)",
+                sprint_feedback_title: "AI Analysis Results",
+                sprint_feedback_score: "Estimated Band Score",
+                sprint_feedback_passive_ratio: "Precise Passive Ratio",
+                sprint_feedback_passive_sentences: "Passive Sentences Identified",
+                sprint_feedback_advanced_verbs: "Advanced Verbs Used",
+                sprint_feedback_reset: "Start New Sprint Tomorrow",
+                blind_header: "Blind Write-back System",
+                blind_source_title: "Original Essay Source",
+                blind_reveal: "Click to reveal and grade",
+                blind_write_title: "Your Blind Rewrite",
+                blind_grade: "Grade My Rewrite",
+                blind_omission_rate: "Omission Rate",
+                blind_diagnosis: "AI Diagnosis",
+                blind_pass: "Excellent (Omission < 2%)",
+                blind_fail: "Needs Improvement",
+                tools_header: "Advanced AI Writing Tools",
+                tool_inspiration_title: "AI Inspiration Generator",
+                tool_inspiration_prompt: "Essay Topic:",
+                tool_inspiration_generate: "Generate Inspiration",
+                tool_analyzer_title: "AI Essay Analyzer",
+                tool_analyzer_prompt: "Paste your essay here:",
+                tool_analyzer_analyze: "Analyze Essay",
+                tool_rewriter_title: "Band 9 Rewriter",
+                tool_rewriter_prompt: "Paste your essay for Band 9 rewrite:",
+                tool_rewriter_rewrite: "Rewrite to Band 9",
+                report_header: "Progress Report & Bottlenecks",
+                report_bottleneck_title: "Bottleneck Index (Mock)",
+                report_bottleneck_score: "Composite Weakness Score",
+                report_bottleneck_advice: "AI Improvement Advice",
+                report_history_title: "Recent Sprint History (Last 10)",
+                report_history_date: "Date",
+                report_history_omission: "Omission Rate",
+                report_history_passive: "Passive Ratio",
+                report_history_score: "Score",
+                toast_copied: "Copied to clipboard!",
+                toast_error: "Error: ",
+                toast_processing: "Processing...",
+                toast_api_error: "API Error. Check key or network.",
+                toast_sprint_submit_fail: "Please use all 6 mandatory verbs before submitting.",
+                toast_sprint_finished: "Time is up! Essay locked.",
+                toast_blind_no_source: "No previous successful sprint found to load.",
+            },
+            zh: {
+                app_title: "雅思寫作衝刺教練",
+                nav_title: "雅思教練",
+                tab_sprint: "5日動詞衝刺",
+                tab_blind: "盲寫回譯",
+                tab_tools: "AI 輔助工具",
+                tab_report: "進度報告",
+                settings_title: "應用程式設定",
+                settings_language: "語言",
+                settings_dark_mode: "深色模式",
+                settings_danger: "危險區域",
+                settings_clear_data: "清除所有本地數據",
+                settings_close: "關閉",
+                sprint_header: "雅思 5 日動詞衝刺系統",
+                sprint_task_title: "每日任務",
+                sprint_topic: "主題：",
+                sprint_verbs: "必用動詞：",
+                sprint_status_ready: "準備中",
+                sprint_status_running: "衝刺中",
+                sprint_status_paused: "已暫停",
+                sprint_status_finished: "時間到",
+                sprint_start: "開始動詞衝刺 (15:00)",
+                sprint_pause: "暫停",
+                sprint_resume: "繼續",
+                sprint_submit: "提交作文進行分析",
+                sprint_word_count: "字數統計",
+                sprint_passive_mock: "被動語態比例 (模擬)",
+                sprint_feedback_title: "AI 分析結果",
+                sprint_feedback_score: "預估雅思分數",
+                sprint_feedback_passive_ratio: "精確被動語態比例",
+                sprint_feedback_passive_sentences: "識別的被動句",
+                sprint_feedback_advanced_verbs: "使用的高級動詞",
+                sprint_feedback_reset: "明日開始新的衝刺",
+                blind_header: "盲寫回譯系統",
+                blind_source_title: "原文來源",
+                blind_reveal: "點擊揭示並評分",
+                blind_write_title: "您的盲寫回譯",
+                blind_grade: "評估我的回寫",
+                blind_omission_rate: "遺漏率",
+                blind_diagnosis: "AI 診斷",
+                blind_pass: "優秀 (遺漏率 < 2%)",
+                blind_fail: "需要改進",
+                tools_header: "高級 AI 寫作工具",
+                tool_inspiration_title: "AI 靈感助手",
+                tool_inspiration_prompt: "作文主題：",
+                tool_inspiration_generate: "生成靈感",
+                tool_analyzer_title: "AI 文章分析器",
+                tool_analyzer_prompt: "貼上您的作文：",
+                tool_analyzer_analyze: "分析作文",
+                tool_rewriter_title: "Band 9 高級改寫器",
+                tool_rewriter_prompt: "貼上您的作文進行 Band 9 改寫：",
+                tool_rewriter_rewrite: "改寫成 Band 9 範文",
+                report_header: "進度報告與瓶頸分析",
+                report_bottleneck_title: "瓶頸指數 (模擬)",
+                report_bottleneck_score: "綜合弱點分數",
+                report_bottleneck_advice: "AI 提升建議",
+                report_history_title: "近期衝刺歷史 (最近 10 次)",
+                report_history_date: "日期",
+                report_history_omission: "遺漏率",
+                report_history_passive: "被動比例",
+                report_history_score: "分數",
+                toast_copied: "已複製到剪貼簿！",
+                toast_error: "錯誤：",
+                toast_processing: "處理中...",
+                toast_api_error: "API 錯誤。請檢查 Key 或網路。",
+                toast_sprint_submit_fail: "提交前請確保使用了所有 6 個必用動詞。",
+                toast_sprint_finished: "時間到！作文已鎖定。",
+                toast_blind_no_source: "找不到上次成功的衝刺作文作為原文。",
+            }
+        };
+
+        // --- Core State and Persistence ---
+        let app = {
+            state: {
+                language: 'zh',
+                darkMode: false,
+                currentTab: 'sprint',
+                apiKey: '',
+                isProcessing: false,
+
+                // US-1 Sprint State
+                sprint: {
+                    timer: SPRINT_DURATION_SECONDS,
+                    status: 'ready', // ready, running, paused, finished
+                    intervalId: null,
+                    taskDate: null,
+                    topic: '',
+                    mandatoryVerbs: [],
+                    essay: '',
+                    wordCount: 0,
+                    passiveRatioMock: '0.0%',
+                    analysisResult: null,
+                },
+
+                // US-2 Blind Write State
+                blind: {
+                    sourceEssay: '',
+                    rewriteEssay: '',
+                    omissionRate: null,
+                    isRevealed: false,
+                    diagnosis: null,
+                },
+
+                // US-4 History
+                history: [], // [{date, words, passiveRatio, score, omissionRate}]
+            },
+
+            // --- Utility Functions ---
+            saveState() {
+                // Create a clean copy of state without volatile properties
+                const stateToSave = JSON.parse(JSON.stringify(app.state));
+                stateToSave.sprint.intervalId = null; // Don't persist interval IDs
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+            },
+
+            loadState() {
+                const storedState = localStorage.getItem(STORAGE_KEY);
+                if (storedState) {
+                    const loadedState = JSON.parse(storedState);
+                    // Merge loaded state, ensuring structure integrity
+                    app.state = {
+                        ...app.state,
+                        ...loadedState,
+                        sprint: { ...app.state.sprint, ...loadedState.sprint },
+                        blind: { ...app.state.blind, ...loadedState.blind },
+                    };
+                    // Ensure history is an array
+                    if (!Array.isArray(app.state.history)) {
+                        app.state.history = [];
+                    }
+                }
+            },
+
+            // --- UI Functions ---
+            applyTranslations() {
+                const lang = app.state.language;
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (I18N[lang] && I18N[lang][key]) {
+                        el.textContent = I18N[lang][key];
+                    }
+                });
+                // Update specific buttons/placeholders
+                document.getElementById('sprint-start-btn').textContent = I18N[lang].sprint_start;
+                document.title = I18N[lang].app_title;
+                app.updateUI(); // Re-render dynamic content like timer
+            },
+
+            toggleDarkMode(isDark) {
+                app.state.darkMode = isDark === undefined ? !app.state.darkMode : isDark;
+                if (app.state.darkMode) {
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('dark-mode-toggle').classList.add('bg-indigo-600');
+                    document.getElementById('dark-mode-toggle').classList.remove('bg-gray-200');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.getElementById('dark-mode-toggle').classList.remove('bg-indigo-600');
+                    document.getElementById('dark-mode-toggle').classList.add('bg-gray-200');
+                }
+                app.saveState();
+            },
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+
+                let bgColor, textColor;
+                if (type === 'error') {
+                    bgColor = 'bg-red-500'; textColor = 'text-white';
+                } else if (type === 'success') {
+                    bgColor = 'bg-green-500'; textColor = 'text-white';
+                } else {
+                    bgColor = 'bg-blue-500'; textColor = 'text-white';
+                }
+
+                toast.className = `p-4 rounded-lg shadow-xl ${bgColor} ${textColor} font-medium transition-all duration-300 transform translate-x-full opacity-0`;
+                toast.textContent = message;
+
+                container.appendChild(toast);
+
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-full', 'opacity-0');
+                    toast.classList.add('translate-x-0', 'opacity-100');
+                }, 10);
+
+                // Animate out and remove
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-0', 'opacity-100');
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            },
+
+            async performAction(action, ...args) {
+                if (app.state.isProcessing) return;
+                app.state.isProcessing = true;
+                app.updateUI(); // Lock buttons globally
+
+                try {
+                    await action(...args);
+                } catch (error) {
+                    console.error("Action failed:", error);
+                    app.showToast(`${I18N[app.state.language].toast_error} ${error.message || 'Unknown error'}`, 'error');
+                } finally {
+                    app.state.isProcessing = false;
+                    app.updateUI(); // Unlock buttons globally
+                }
+            },
+
+            // --- Rendering and Routing ---
+
+            switchTab(tabName) {
+                app.state.currentTab = tabName;
+                app.saveState();
+                app.renderContent();
+            },
+
+            renderContent() {
+                const container = document.getElementById('content-container');
+                const tabs = document.querySelectorAll('.tab-btn');
+
+                tabs.forEach(btn => {
+                    const isActive = btn.dataset.tab === app.state.currentTab;
+                    btn.classList.toggle('border-indigo-600', isActive);
+                    btn.classList.toggle('text-indigo-600', isActive);
+                    btn.classList.toggle('dark:text-indigo-400', isActive);
+                    btn.classList.toggle('border-transparent', !isActive);
+                    btn.classList.toggle('text-gray-500', !isActive);
+                });
+
+                // Render specific tab content
+                if (app.state.currentTab === 'sprint') {
+                    container.innerHTML = app.renderSprintUI();
+                    app.initSprintListeners();
+                    app.generateDailyTask();
+                } else if (app.state.currentTab === 'blind') {
+                    container.innerHTML = app.renderBlindWriteUI();
+                    app.initBlindWriteListeners();
+                    app.loadBlindWriteSource();
+                } else if (app.state.currentTab === 'tools') {
+                    container.innerHTML = app.renderAIToolsUI();
+                    app.initAIToolsListeners();
+                } else if (app.state.currentTab === 'report') {
+                    container.innerHTML = app.renderProgressReportUI();
+                    app.renderHistoryTable();
+                    app.renderRadarChart();
+                }
+                app.updateUI();
+            },
+
+            updateUI() {
+                // Global UI updates (e.g., locking buttons)
+                const processing = app.state.isProcessing;
+                document.querySelectorAll('button').forEach(btn => {
+                    // Skip settings related buttons
+                    if (['settings-btn', 'close-settings-btn', 'dark-mode-toggle'].includes(btn.id)) return;
+
+                    if (processing) {
+                        if (!btn.disabled) { // Only lock if currently enabled
+                            btn.setAttribute('disabled', 'true');
+                            // Use a data attribute to mark that WE disabled it and store original HTML
+                            if (!btn.dataset.lockedByProcess) {
+                                btn.dataset.lockedByProcess = 'true';
+                                btn.dataset.originalHtml = btn.innerHTML;
+                                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> ${I18N[app.state.language].toast_processing}`;
+                            }
+                        }
+                    } else {
+                        // Restore buttons locked by process
+                        if (btn.dataset.lockedByProcess === 'true') {
+                            btn.removeAttribute('disabled');
+                            btn.innerHTML = btn.dataset.originalHtml || btn.textContent;
+                            delete btn.dataset.lockedByProcess;
+                            delete btn.dataset.originalHtml;
+                        }
+                    }
+                });
+
+                // Tab-specific updates
+                if (app.state.currentTab === 'sprint') {
+                    app.updateSprintUI();
+                } else if (app.state.currentTab === 'blind') {
+                    app.updateBlindWriteUI();
+                }
+            },
+        };
+
+        // --- API Wrapper Simulation (T009, T015) ---
+        class GeminiAPIWrapper {
+            constructor(apiKey) {
+                this.apiKey = apiKey;
+                this.retryDelays = [1000, 2000, 4000];
+            }
+
+            async call(prompt, structure = false) {
+                if (!this.apiKey) {
+                    throw new Error("API Key not set. Please go to Settings to configure it.");
+                }
+
+                // Using Gemini 2.5 Flash as requested
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${this.apiKey}`;
+
+                let lastError = null;
+                for (let i = 0; i < this.retryDelays.length; i++) {
+                    try {
+                        app.showToast(`${I18N[app.state.language].toast_processing} (Attempt ${i + 1})`);
+
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ parts: [{ text: prompt }] }],
+                                generationConfig: structure ? { responseMimeType: "application/json" } : {}
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(`HTTP ${response.status}: ${errorData.error?.message || 'Unknown API Error'}`);
+                        }
+
+                        const data = await response.json();
+                        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                        // If structured output is requested, parse the JSON
+                        if (structure) {
+                            // Clean markdown fences if present (though responseMimeType usually handles this)
+                            const cleanJson = text.replace(/```json\n?|\n?```/g, '').trim();
+                            return JSON.parse(cleanJson);
+                        }
+                        return text;
+
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`API call failed, retrying in ${this.retryDelays[i]}ms.`, error);
+                        // Don't wait on the last attempt
+                        if (i < this.retryDelays.length - 1) {
+                            await new Promise(resolve => setTimeout(resolve, this.retryDelays[i]));
+                        }
+                    }
+                }
+                throw new Error(I18N[app.state.language].toast_api_error + (lastError ? lastError.message : ''));
+            }
+        }
+
+        const api = new GeminiAPIWrapper(app.state.apiKey);
+
+        // --- US-1: Sprint System Logic ---
+
+        const MOCK_VERBS = ["articulate", "elucidate", "underscore", "mitigate", "exacerbate", "stipulate", "convey", "denote", "foster", "hinder", "catalyze", "diminish", "transcend", "bolster", "reiterate", "delineate", "substantiate"];
+        const MOCK_TOPICS = [
+            "The role of technology in modern education, focusing on its impact on critical thinking skills.",
+            "The necessity of international cooperation to address climate change vs. national economic interests.",
+            "Should governments impose higher taxes on unhealthy food and beverages to combat obesity?",
+            "The influence of social media on political engagement and democratic processes.",
+            "Analyzing the benefits and drawbacks of remote work on productivity and work-life balance."
+        ];
+
+        function getTodayDateString() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        app.generateDailyTask = function () {
+            const today = getTodayDateString();
+            const s = app.state.sprint;
+
+            if (s.taskDate === today && s.mandatoryVerbs.length > 0) {
+                // Task already generated for today
+                app.updateSprintUI();
+                return;
+            }
+
+            // 1. Select 6 unique verbs, prioritizing unused ones (Mock: simple random selection)
+            const availableVerbs = [...MOCK_VERBS];
+            const selectedVerbs = [];
+            for (let i = 0; i < 6; i++) {
+                const index = Math.floor(Math.random() * availableVerbs.length);
+                selectedVerbs.push({
+                    verb: availableVerbs.splice(index, 1)[0],
+                    used: false
+                });
+            }
+
+            // 2. Select a random topic
+            const topic = MOCK_TOPICS[Math.floor(Math.random() * MOCK_TOPICS.length)];
+
+            // Reset sprint state
+            app.state.sprint = {
+                timer: SPRINT_DURATION_SECONDS,
+                status: 'ready',
+                intervalId: null,
+                taskDate: today,
+                topic: topic,
+                mandatoryVerbs: selectedVerbs,
+                essay: '',
+                wordCount: 0,
+                passiveRatioMock: '0.0%',
+                analysisResult: null,
+            };
+            app.saveState();
+            app.updateSprintUI();
+        };
+
+        app.formatTime = function (seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+        };
+
+        app.startTimer = function () {
+            if (app.state.sprint.status === 'running') return;
+
+            app.state.sprint.status = 'running';
+            app.state.sprint.intervalId = setInterval(app.updateTimer, 1000);
+            app.saveState();
+            app.updateSprintUI();
+        };
+
+        app.pauseTimer = function () {
+            clearInterval(app.state.sprint.intervalId);
+            app.state.sprint.status = 'paused';
+            app.state.sprint.intervalId = null;
+            app.saveState();
+            app.updateSprintUI();
+        };
+
+        app.updateTimer = function () {
+            if (app.state.sprint.timer <= 0) {
+                clearInterval(app.state.sprint.intervalId);
+                app.state.sprint.status = 'finished';
+                app.showToast(I18N[app.state.language].toast_sprint_finished, 'info');
+                app.saveState();
+            } else {
+                app.state.sprint.timer--;
+            }
+            app.updateSprintUI();
+        };
+
+        app.checkVerbUsage = function (essayText) {
+            const s = app.state.sprint;
+            const words = essayText.toLowerCase().match(/\b\w+\b/g) || [];
+            s.wordCount = words.length;
+
+            // Mock Passive Ratio (simple simulation based on length)
+            const passiveMockValue = Math.min(15, words.length / 20).toFixed(1);
+            s.passiveRatioMock = `${passiveMockValue}%`;
+
+            // Check mandatory verbs
+            s.mandatoryVerbs = s.mandatoryVerbs.map(v => {
+                const regex = new RegExp(`\\b${v.verb}\\b`, 'i');
+                return { ...v, used: regex.test(essayText) };
+            });
+
+            s.essay = essayText;
+            app.saveState();
+            app.updateSprintUI();
+        };
+
+        app.handleSprintSubmission = async function () {
+            const s = app.state.sprint;
+            const lang = app.state.language;
+
+            if (s.status !== 'finished' && s.timer > 0) {
+                app.pauseTimer();
+            }
+
+            const allUsed = s.mandatoryVerbs.every(v => v.used);
+            if (!allUsed) {
+                app.showToast(I18N[lang].toast_sprint_submit_fail, 'error');
+                return;
+            }
+
+            await app.performAction(async () => {
+                // 1. Simulate AI Analysis (T009, T015)
+                const prompt = `Analyze Essay: ${s.essay}`;
+                const analysis = await api.call(prompt, true);
+
+                // 2. Update state with real analysis
+                s.analysisResult = analysis;
+
+                // 3. Save to history
+                app.state.history.unshift({
+                    date: getTodayDateString(),
+                    words: s.wordCount,
+                    passiveRatio: analysis.precisePassiveRatio,
+                    score: parseFloat(analysis.score),
+                    omissionRate: null, // Omission rate is calculated in US-2
+                    essay: s.essay,
+                });
+
+                // Keep only the last 10 records
+                app.state.history = app.state.history.slice(0, 10);
+
+                app.saveState();
+                app.updateSprintUI();
+                app.showToast("Analysis complete! Results saved.", 'success');
+            });
+        };
+
+        app.renderSprintUI = function () {
+            const s = app.state.sprint;
+            const lang = app.state.language;
+            const timeFormatted = app.formatTime(s.timer);
+            const statusText = I18N[lang][`sprint_status_${s.status}`];
+            const timerColor = s.timer <= 60 && s.status === 'running' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100';
+            const isLocked = s.status === 'finished' || s.analysisResult !== null;
+
+            let buttonHTML;
+            if (s.status === 'running') {
+                buttonHTML = `<button id="sprint-pause-btn" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 dark-mode-transition" data-i18n="sprint_pause">${I18N[lang].sprint_pause}</button>`;
+            } else if (s.status === 'paused') {
+                buttonHTML = `<button id="sprint-resume-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 dark-mode-transition" data-i18n="sprint_resume">${I18N[lang].sprint_resume}</button>`;
+            } else if (s.status === 'ready') {
+                buttonHTML = `<button id="sprint-start-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 dark-mode-transition" data-i18n="sprint_start">${I18N[lang].sprint_start}</button>`;
+            } else { // finished or analyzed
+                buttonHTML = `<button disabled class="w-full bg-gray-400 text-white font-semibold py-2.5 px-5 rounded-lg" data-i18n="sprint_feedback_reset">${I18N[lang].sprint_feedback_reset}</button>`;
+            }
+
+            // Verb List Rendering
+            const verbListHTML = s.mandatoryVerbs.map(v => `
+                <li class="flex items-center justify-between p-2 rounded-lg ${v.used ? 'bg-green-50 dark:bg-green-900/50' : 'bg-gray-50 dark:bg-gray-700'} transition duration-150">
+                    <span class="font-medium ${v.used ? 'text-green-700 dark:text-green-300 line-through' : 'text-gray-800 dark:text-gray-200'}">${v.verb}</span>
+                    <span class="text-lg">${v.used ? '✅' : '⬜'}</span>
+                </li>
+            `).join('');
+
+            // AI Analysis Results Display
+            let analysisHTML = '';
+            if (s.analysisResult) {
+                const res = s.analysisResult;
+                analysisHTML = `
+                    <div class="app-card mt-6">
+                        <h3 class="text-xl font-bold text-indigo-600 mb-4" data-i18n="sprint_feedback_title">${I18N[lang].sprint_feedback_title}</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                                <p class="text-xs text-blue-600 dark:text-blue-300" data-i18n="sprint_feedback_score">${I18N[lang].sprint_feedback_score}</p>
+                                <p class="text-2xl font-extrabold text-blue-800 dark:text-blue-100">${res.score}</p>
+                            </div>
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                                <p class="text-xs text-blue-600 dark:text-blue-300" data-i18n="sprint_feedback_passive_ratio">${I18N[lang].sprint_feedback_passive_ratio}</p>
+                                <p class="text-2xl font-extrabold text-blue-800 dark:text-blue-100">${res.precisePassiveRatio}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            <div>
+                                <p class="font-semibold text-gray-700 dark:text-gray-300" data-i18n="sprint_feedback_passive_sentences">${I18N[lang].sprint_feedback_passive_sentences} (${res.passiveSentences.length}):</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 italic">${res.passiveSentences.join('; ')}</p>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-700 dark:text-gray-300" data-i18n="sprint_feedback_advanced_verbs">${I18N[lang].sprint_feedback_advanced_verbs} (${res.advancedVerbs.length}):</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">${res.advancedVerbs.map(v => `${v.verb} (${v.meaning})`).join(', ')}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <h2 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100" data-i18n="sprint_header">${I18N[lang].sprint_header}</h2>
+                <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+                    <!-- Left Column: Timer and Task -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="app-card text-center">
+                            <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400" id="timer-status">${statusText}</p>
+                            <div class="my-4">
+                                <span class="timer-font text-7xl font-extrabold ${timerColor}" id="timer-display">${timeFormatted}</span>
+                            </div>
+                            <div class="flex space-x-2 mt-4" id="timer-controls">
+                                ${buttonHTML}
+                            </div>
+                        </div>
+
+                        <div class="app-card">
+                            <h3 class="text-xl font-semibold mb-3 border-b pb-2 border-gray-200 dark:border-gray-700" data-i18n="sprint_task_title">${I18N[lang].sprint_task_title} (${s.taskDate})</h3>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="sprint_topic">${I18N[lang].sprint_topic}</p>
+                            <p class="mt-1 text-lg font-bold text-indigo-700 dark:text-indigo-300">${s.topic}</p>
+                            
+                            <h4 class="mt-4 text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="sprint_verbs">${I18N[lang].sprint_verbs}</h4>
+                            <ul id="verb-list" class="mt-2 space-y-1">
+                                ${verbListHTML}
+                            </ul>
+                        </div>
+                        
+                        <div class="app-card grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400" data-i18n="sprint_word_count">${I18N[lang].sprint_word_count}</p>
+                                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="word-count">${s.wordCount}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400" data-i18n="sprint_passive_mock">${I18N[lang].sprint_passive_mock}</p>
+                                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="passive-ratio-mock">${s.passiveRatioMock}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Writing Editor and Results -->
+                    <div class="lg:col-span-2 mt-8 lg:mt-0">
+                        <div class="app-card">
+                            <textarea id="essay-input" rows="18" placeholder="Start writing your essay here..."
+                                class="w-full p-4 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                                ${isLocked ? 'disabled' : ''}>${s.essay}</textarea>
+                            
+                            <div class="mt-4">
+                                ${s.analysisResult ?
+                    `<button disabled class="w-full bg-green-600 text-white font-semibold py-2.5 rounded-lg opacity-70" data-i18n="sprint_submit">${I18N[lang].sprint_submit} (Analyzed)</button>` :
+                    `<button id="sprint-submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg active:scale-95 disabled:bg-gray-400 dark-mode-transition" ${isLocked ? 'disabled' : ''} data-i18n="sprint_submit">${I18N[lang].sprint_submit}</button>`
+                }
+                            </div>
+                        </div>
+                        ${analysisHTML}
+                    </div>
+                </div>
+            `;
+        };
+
+        app.updateSprintUI = function () {
+            const s = app.state.sprint;
+            const lang = app.state.language;
+
+            const timerDisplay = document.getElementById('timer-display');
+            if (timerDisplay) {
+                timerDisplay.textContent = app.formatTime(s.timer);
+                timerDisplay.className = `timer-font text-7xl font-extrabold ${s.timer <= 60 && s.status === 'running' ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'}`;
+            }
+
+            const statusEl = document.getElementById('timer-status');
+            if (statusEl) {
+                statusEl.textContent = I18N[lang][`sprint_status_${s.status}`];
+            }
+
+            const essayInput = document.getElementById('essay-input');
+            const submitBtn = document.getElementById('sprint-submit-btn');
+            const isLocked = s.status === 'finished' || s.analysisResult !== null;
+
+            if (essayInput) {
+                essayInput.value = s.essay;
+                essayInput.disabled = isLocked;
+            }
+            if (submitBtn) {
+                submitBtn.disabled = isLocked;
+            }
+
+            // Update realtime feedback
+            document.getElementById('word-count').textContent = s.wordCount;
+            document.getElementById('passive-ratio-mock').textContent = s.passiveRatioMock;
+
+            // Update verb list
+            const verbListEl = document.getElementById('verb-list');
+            if (verbListEl) {
+                verbListEl.innerHTML = s.mandatoryVerbs.map(v => `
+                    <li class="flex items-center justify-between p-2 rounded-lg ${v.used ? 'bg-green-50 dark:bg-green-900/50' : 'bg-gray-50 dark:bg-gray-700'} transition duration-150">
+                        <span class="font-medium ${v.used ? 'text-green-700 dark:text-green-300 line-through' : 'text-gray-800 dark:text-gray-200'}">${v.verb}</span>
+                        <span class="text-lg">${v.used ? '✅' : '⬜'}</span>
+                    </li>
+                `).join('');
+            }
+
+            app.updateUI();
+        };
+
+        app.initSprintListeners = function () {
+            // Using Event Delegation for robustness against re-renders
+            const container = document.getElementById('content-container');
+
+            // Remove previous listener if generic (optional for this simple structure, but good practice)
+            // Here we assume safe re-binding or reliance on idempotency
+
+            // Input listener (needs to be bound to element directly or delegated with 'input' event bubbling)
+            const inputEl = document.getElementById('essay-input');
+            if (inputEl) {
+                inputEl.addEventListener('input', (e) => app.checkVerbUsage(e.target.value));
+            }
+
+            // Click delegation for buttons
+            container.onclick = (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+
+                if (btn.id === 'sprint-start-btn') app.startTimer();
+                if (btn.id === 'sprint-pause-btn') app.pauseTimer();
+                if (btn.id === 'sprint-resume-btn') app.startTimer();
+                if (btn.id === 'sprint-submit-btn') app.performAction(app.handleSprintSubmission);
+            };
+        };
+
+        // --- US-2: Blind Write-back System Logic ---
+
+        app.loadBlindWriteSource = function () {
+            const lastSuccessfulSprint = app.state.history.find(h => h.essay && h.score);
+            if (lastSuccessfulSprint) {
+                app.state.blind.sourceEssay = lastSuccessfulSprint.essay;
+            } else {
+                app.state.blind.sourceEssay = I18N[app.state.language].toast_blind_no_source;
+            }
+            // Reset UI state
+            app.state.blind.isRevealed = false;
+            app.state.blind.omissionRate = null;
+            app.state.blind.rewriteEssay = '';
+            app.state.blind.diagnosis = null;
+            app.saveState();
+            app.updateBlindWriteUI();
+        };
+
+        app.calculateOmissionPercentage = function (originalText, userText) {
+            const originalWords = originalText.toLowerCase().match(/\b\w+\b/g) || [];
+            const userWords = userText.toLowerCase().match(/\b\w+\b/g) || [];
+
+            if (originalWords.length === 0) return { percentage: 0, markedHtml: userText };
+
+            let omissionCount = 0;
+            let markedHtml = '';
+            let userIndex = 0;
+
+            // Simplified word-level comparison (not a full Levenshtein, just marking words missing or mismatched)
+            for (let i = 0; i < originalWords.length; i++) {
+                const originalWord = originalWords[i];
+                let found = false;
+
+                // Look ahead a few words in the user text to allow for minor reordering/insertions
+                for (let j = userIndex; j < Math.min(userWords.length, userIndex + 5); j++) {
+                    if (userWords[j] === originalWord) {
+                        // Match found, skip the matched words in user text
+                        userIndex = j + 1;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    omissionCount++;
+                    // Find the word in the original text (case-sensitive for display)
+                    const regex = new RegExp(`\\b${originalWord}\\b`, 'i');
+                    const match = originalText.match(regex);
+                    if (match) {
+                        markedHtml += `<span class="omission-mark">${match[0]}</span> `;
+                    } else {
+                        markedHtml += `<span class="omission-mark">${originalWord}</span> `;
+                    }
+                } else {
+                    // Simple, non-marked word (very crude reconstruction)
+                    markedHtml += originalWord + ' ';
+                }
+            }
+
+            const percentage = (omissionCount / originalWords.length) * 100;
+            return { percentage: percentage, markedHtml: markedHtml.trim() };
+        };
+
+        app.gradeBlindWrite = async function () {
+            const b = app.state.blind;
+            if (!b.sourceEssay || b.sourceEssay === I18N[app.state.language].toast_blind_no_source) {
+                app.showToast(I18N[app.state.language].toast_blind_no_source, 'error');
+                return;
+            }
+
+            if (!b.isRevealed) {
+                b.isRevealed = true;
+                app.updateBlindWriteUI();
+                return;
+            }
+
+            await app.performAction(async () => {
+                const result = app.calculateOmissionPercentage(b.sourceEssay, b.rewriteEssay);
+                b.omissionRate = result.percentage.toFixed(2);
+
+                // Simulate AI Diagnosis
+                const prompt = `Blind Write Diagnosis: Original: ${b.sourceEssay.substring(0, 100)}... | Rewrite: ${b.rewriteEssay.substring(0, 100)}...`;
+                b.diagnosis = await api.call(prompt);
+
+                // Update history with omission rate
+                if (app.state.history.length > 0) {
+                    app.state.history[0].omissionRate = parseFloat(b.omissionRate);
+                }
+
+                app.saveState();
+                app.updateBlindWriteUI();
+                app.showToast("Grading complete!", 'success');
+            });
+        };
+
+        app.renderBlindWriteUI = function () {
+            const b = app.state.blind;
+            const lang = app.state.language;
+
+            let sourceContent;
+            if (b.isRevealed) {
+                const omissionResult = b.omissionRate !== null ? app.calculateOmissionPercentage(b.sourceEssay, b.rewriteEssay) : { markedHtml: b.sourceEssay };
+                sourceContent = `<div class="whitespace-pre-wrap text-gray-800 dark:text-gray-200">${omissionResult.markedHtml}</div>`;
+            } else {
+                sourceContent = `
+                    <div class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-95 rounded-xl transition duration-500">
+                        <button id="reveal-btn" class="text-white text-lg font-semibold bg-indigo-600 hover:bg-indigo-700 py-3 px-6 rounded-lg shadow-xl active:scale-95" data-i18n="blind_reveal">${I18N[lang].blind_reveal}</button>
+                    </div>
+                    <div class="text-gray-800 dark:text-gray-200 opacity-5 whitespace-pre-wrap">${b.sourceEssay}</div>
+                `;
+            }
+
+            let resultHTML = '';
+            if (b.omissionRate !== null) {
+                const isPass = parseFloat(b.omissionRate) < 2.0;
+                const statusClass = isPass ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300';
+
+                resultHTML = `
+                    <div class="app-card mt-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-xl font-bold" data-i18n="blind_omission_rate">${I18N[lang].blind_omission_rate}</h4>
+                            <span class="text-3xl font-extrabold ${isPass ? 'text-green-600' : 'text-red-600'}">${b.omissionRate}%</span>
+                        </div>
+                        <div class="p-3 rounded-lg ${statusClass} text-center font-semibold">
+                            ${isPass ? I18N[lang].blind_pass : I18N[lang].blind_fail}
+                        </div>
+                        <h4 class="mt-4 font-bold text-gray-700 dark:text-gray-300" data-i18n="blind_diagnosis">${I18N[lang].blind_diagnosis} (Mock AI)</h4>
+                        <p class="mt-1 text-sm italic text-gray-600 dark:text-gray-400">${b.diagnosis || '... awaiting diagnosis ...'}</p>
+                    </div>
+                `;
+            }
+
+            return `
+                <h2 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100" data-i18n="blind_header">${I18N[lang].blind_header}</h2>
+                <div class="lg:grid lg:grid-cols-2 lg:gap-8">
+                    <!-- Left Column: Source Essay -->
+                    <div class="lg:col-span-1">
+                        <div class="app-card min-h-[400px]">
+                            <h3 class="text-xl font-semibold mb-3 border-b pb-2 border-gray-200 dark:border-gray-700" data-i18n="blind_source_title">${I18N[lang].blind_source_title}</h3>
+                            <div class="relative min-h-[300px] p-2 overflow-auto text-sm">
+                                ${sourceContent}
+                            </div>
+                        </div>
+                        ${resultHTML}
+                    </div>
+
+                    <!-- Right Column: Rewrite Input -->
+                    <div class="lg:col-span-1 mt-8 lg:mt-0">
+                        <div class="app-card">
+                            <h3 class="text-xl font-semibold mb-3 border-b pb-2 border-gray-200 dark:border-gray-700" data-i18n="blind_write_title">${I18N[lang].blind_write_title}</h3>
+                            <textarea id="rewrite-input" rows="18" placeholder="Write the essay from memory here..."
+                                class="w-full p-4 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 resize-none">${b.rewriteEssay}</textarea>
+                            
+                            <div class="mt-4">
+                                <button id="grade-rewrite-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg active:scale-95 dark-mode-transition" data-i18n="blind_grade">${I18N[lang].blind_grade}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        app.updateBlindWriteUI = function () {
+            const b = app.state.blind;
+            const rewriteInput = document.getElementById('rewrite-input');
+            if (rewriteInput) {
+                rewriteInput.value = b.rewriteEssay;
+            }
+            // Re-render the whole content to handle reveal/omission marking logic
+            if (app.state.currentTab === 'blind') {
+                document.getElementById('content-container').innerHTML = app.renderBlindWriteUI();
+                app.initBlindWriteListeners();
+            }
+            app.updateUI();
+        };
+
+        app.initBlindWriteListeners = function () {
+            document.getElementById('rewrite-input')?.addEventListener('input', (e) => {
+                app.state.blind.rewriteEssay = e.target.value;
+                app.saveState();
+            });
+            document.getElementById('grade-rewrite-btn')?.addEventListener('click', () => app.performAction(app.gradeBlindWrite));
+            document.getElementById('reveal-btn')?.addEventListener('click', () => {
+                app.state.blind.isRevealed = true;
+                app.updateBlindWriteUI();
+            });
+        };
+
+        // --- US-3: AI Tools Logic ---
+
+        app.handleAITool = async function (toolType) {
+            const inputId = `${toolType}-input`;
+            const outputId = `${toolType}-output`;
+            const inputEl = document.getElementById(inputId);
+            const outputEl = document.getElementById(outputId);
+            const input = inputEl ? inputEl.value.trim() : '';
+
+            if (!input) {
+                app.showToast("Input cannot be empty.", 'error');
+                return;
+            }
+
+            let prompt = '';
+            let isStructured = false;
+
+            switch (toolType) {
+                case 'inspiration':
+                    prompt = `Inspiration Generator: Topic: ${input}`;
+                    isStructured = true;
+                    break;
+                case 'analyzer':
+                    prompt = `Analyze Essay: ${input}`;
+                    isStructured = true;
+                    break;
+                case 'rewriter':
+                    prompt = `Band 9 Rewriter: Rewrite this essay: ${input}`;
+                    isStructured = false;
+                    break;
+            }
+
+            await app.performAction(async () => {
+                const result = await api.call(prompt, isStructured);
+
+                let outputHtml = '';
+                if (isStructured) {
+                    if (toolType === 'inspiration') {
+                        outputHtml = `
+                            <h4 class="font-semibold text-indigo-600">Positive Arguments:</h4>
+                            <ul class="list-disc list-inside ml-4">${result.positive.map(p => `<li>${p}</li>`).join('')}</ul>
+                            <h4 class="font-semibold text-indigo-600 mt-3">Negative Arguments:</h4>
+                            <ul class="list-disc list-inside ml-4">${result.negative.map(n => `<li>${n}</li>`).join('')}</ul>
+                            <h4 class="font-semibold text-indigo-600 mt-3">Academic Vocabulary:</h4>
+                            <p>${result.vocabulary.join(', ')}</p>
+                        `;
+                    } else if (toolType === 'analyzer') {
+                        outputHtml = `
+                            <p class="text-2xl font-bold text-blue-600">Score: ${result.score}</p>
+                            <p>Passive Ratio: ${result.precisePassiveRatio}</p>
+                            <h4 class="font-semibold mt-3">Passive Sentences:</h4>
+                            <ul class="list-disc list-inside ml-4">${result.passiveSentences.map(s => `<li>${s}</li>`).join('')}</ul>
+                            <h4 class="font-semibold mt-3">Advanced Verbs:</h4>
+                            <ul class="list-disc list-inside ml-4">${result.advancedVerbs.map(v => `<li>${v.verb} (${v.meaning})</li>`).join('')}</ul>
+                        `;
+                    }
+                } else {
+                    outputHtml = `<pre class="whitespace-pre-wrap text-sm">${result}</pre>`;
+                }
+
+                outputEl.innerHTML = outputHtml;
+                app.showToast("AI task completed.", 'success');
+            });
+        };
+
+        app.renderAIToolsUI = function () {
+            const lang = app.state.language;
+
+            const toolCard = (id, titleKey, promptKey, btnKey, isTextarea = true, isGradient = false) => `
+                <div class="app-card ${isGradient ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800' : ''}">
+                    <h3 class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-4" data-i18n="${titleKey}">${I18N[lang][titleKey]}</h3>
+                    
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" data-i18n="${promptKey}">${I18N[lang][promptKey]}</label>
+                    ${isTextarea ?
+                    `<textarea id="${id}-input" rows="5" class="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>` :
+                    `<input type="text" id="${id}-input" class="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500">`
+                }
+                    
+                    <button data-tool-id="${id}" class="tool-run-btn w-full mt-3 font-semibold py-2 rounded-lg transition duration-150 
+                        ${id === 'inspiration' ? 'bg-blue-600 hover:bg-blue-700 text-white' :
+                    id === 'analyzer' ? 'bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100' :
+                        'bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100'}"
+                        data-i18n="${btnKey}">${I18N[lang][btnKey]}</button>
+                    
+                    <div id="${id}-output" class="mt-6 p-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg min-h-[100px] bg-white dark:bg-gray-700/50 text-gray-800 dark:text-gray-200">
+                        <!-- AI Output -->
+                    </div>
+                </div>
+            `;
+
+            return `
+                <h2 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100" data-i18n="tools_header">${I18N[lang].tools_header}</h2>
+                <div class="grid lg:grid-cols-3 gap-8">
+                    ${toolCard('inspiration', 'tool_inspiration_title', 'tool_inspiration_prompt', 'tool_inspiration_generate', false, true)}
+                    ${toolCard('analyzer', 'tool_analyzer_title', 'tool_analyzer_prompt', 'tool_analyzer_analyze')}
+                    ${toolCard('rewriter', 'tool_rewriter_title', 'tool_rewriter_prompt', 'tool_rewriter_rewrite')}
+                </div>
+            `;
+        };
+
+        app.initAIToolsListeners = function () {
+            document.querySelectorAll('.tool-run-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const toolId = e.currentTarget.dataset.toolId;
+                    app.handleAITool(toolId);
+                });
+            });
+        };
+
+        // --- US-4: Progress Report Logic ---
+
+        app.calculateBottleneckIndex = function () {
+            const history = app.state.history.filter(h => h.omissionRate !== null && h.passiveRatio);
+            if (history.length === 0) return { score: 0, advice: [] };
+
+            let totalWeakness = 0;
+            let passiveScores = [];
+            let omissionScores = [];
+
+            history.forEach(h => {
+                const passiveNum = parseFloat(h.passiveRatio); // e.g., 8.5
+                const omissionNum = h.omissionRate; // e.g., 5.2
+
+                // Passive weakness: Target 10%. Lower is worse. Max weakness at 0%.
+                const passiveWeakness = Math.max(0, 10 - passiveNum) * 0.5;
+
+                // Omission weakness: Target 2%. Higher is worse. 
+                const omissionWeakness = Math.max(0, omissionNum - 2) * 1.5;
+
+                totalWeakness += passiveWeakness + omissionWeakness;
+                passiveScores.push(passiveNum);
+                omissionScores.push(omissionNum);
+            });
+
+            const avgPassive = passiveScores.reduce((a, b) => a + b, 0) / passiveScores.length;
+            const avgOmission = omissionScores.reduce((a, b) => a + b, 0) / omissionScores.length;
+
+            const bottleneckScore = (totalWeakness / history.length).toFixed(1);
+
+            let advice = [];
+            if (avgPassive < 7) {
+                advice.push("Increase structural complexity by using more varied sentence structures and subordinate clauses.");
+            }
+            if (avgOmission > 3) {
+                advice.push("Focus on vocabulary retention. Use the Blind Write-back system daily.");
+            }
+            if (parseFloat(bottleneckScore) > 5) {
+                advice.push("Your current method shows high volatility. Try focusing on one weakness area per week.");
+            }
+
+            return { score: bottleneckScore, advice: advice.length > 0 ? advice : ["Maintain current momentum. Focus on increasing average word count."], passive: avgPassive, omission: avgOmission };
+        };
+
+        app.renderHistoryTable = function () {
+            const lang = app.state.language;
+            const history = app.state.history.slice(0, 10); // Enforce max 10 entries visually
+            const tableBody = document.getElementById('history-table-body');
+
+            if (!tableBody) return;
+
+            if (history.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-gray-500 dark:text-gray-400">No history records yet.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = history.map(h => {
+                const omissionDisplay = h.omissionRate !== null ? `${h.omissionRate}%` : 'N/A';
+                const omissionClass = h.omissionRate !== null && h.omissionRate > 2 ? 'text-red-600 font-semibold' : 'text-green-600';
+
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition duration-100">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">${h.date}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${h.score || 'N/A'}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm ${omissionClass}">${omissionDisplay}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${h.passiveRatio || 'N/A'}</td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        app.renderRadarChart = function () {
+            const chartContainer = document.getElementById('radar-chart-container');
+            if (!chartContainer) return;
+
+            const history = app.state.history.filter(h => h.score);
+            if (history.length === 0) {
+                chartContainer.innerHTML = `<div class="flex items-center justify-center h-full text-gray-500 italic">Complete a sprint to see insights</div>`;
+                return;
+            }
+
+            const { passive, omission } = app.calculateBottleneckIndex();
+            const avgScore = history.reduce((sum, h) => sum + parseFloat(h.score || 0), 0) / history.length;
+            const avgWords = history.reduce((sum, h) => sum + (h.words || 0), 0) / history.length;
+
+            // Normalize values for a 0-10 scale radar chart
+            // Passive: Mock Target 10% (Ideally we want control), mapping weakness to score. 
+            // Using simplified mapping: higher passive score in bottleneck index means BAD, so we invert.
+            // Let's use the bottleneck "scores" essentially:
+            // "Structure" (Passive): 10 means perfect control (approx 10% ratio). 
+            // "Vocabulary" (Omission): 10 means 0 omission.
+            // "Task Response" (Score): 6.0 maps to 6, 9.0 maps to 10.
+            // "Cohesion" (Words): >250 words maps to 10.
+
+            const S = Math.min(10, Math.max(0, 10 - Math.abs(10 - passive))); // Simply: proximity to 10%
+            const V = Math.min(10, Math.max(0, 10 - (omission || 0)));
+            const T = Math.min(10, Math.max(0, (avgScore - 4) * 2)); // 5.0->2, 9.0->10
+            const C = Math.min(10, avgWords / 25); // 250 words -> 10
+
+            const size = 300;
+            const center = size / 2;
+            const radius = size / 2 - 20;
+
+            // Convert polar coordinates (angle, value) to Cartesian (x, y)
+            const angleToPoint = (angle, value) => {
+                const a = angle * (Math.PI / 180);
+                const r = (value / 10) * radius;
+                return {
+                    x: center + r * Math.cos(a),
+                    y: center + r * Math.sin(a)
+                };
+            };
+
+            // Points for 4 axes (0 deg = right, 90 deg = top)
+            // T=45, S=135, V=225, C=315 (Starting from top-right, counter-clockwise)
+            const points = [
+                angleToPoint(45, T), // Task Response (T)
+                angleToPoint(135, S), // Structure (S)
+                angleToPoint(225, V), // Vocabulary (V)
+                angleToPoint(315, C)  // Cohesion (C)
+            ];
+
+            const pointString = points.map(p => `${p.x},${p.y}`).join(' ');
+
+            const svg = `
+                <svg viewBox="0 0 ${size} ${size}" class="w-full h-full">
+                    <!-- Grid Lines -->
+                    <g stroke="#e5e7eb" stroke-width="1" fill="none" class="dark:stroke-gray-700">
+                        <circle cx="${center}" cy="${center}" r="${radius * 0.25}" />
+                        <circle cx="${center}" cy="${center}" r="${radius * 0.5}" />
+                        <circle cx="${center}" cy="${center}" r="${radius * 0.75}" />
+                        <circle cx="${center}" cy="${center}" r="${radius}" />
+                        <line x1="${center}" y1="${center}" x2="${angleToPoint(45, 10).x}" y2="${angleToPoint(45, 10).y}" />
+                        <line x1="${center}" y1="${center}" x2="${angleToPoint(135, 10).x}" y2="${angleToPoint(135, 10).y}" />
+                        <line x1="${center}" y1="${center}" x2="${angleToPoint(225, 10).x}" y2="${angleToPoint(225, 10).y}" />
+                        <line x1="${center}" y1="${center}" x2="${angleToPoint(315, 10).x}" y2="${angleToPoint(315, 10).y}" />
+                    </g>
+
+                    <!-- Data Polygon -->
+                    <polygon points="${pointString}" fill="#4f46e5" fill-opacity="0.6" stroke="#4f46e5" stroke-width="2" />
+                    
+                    <!-- Labels -->
+                    <text x="${angleToPoint(45, 10).x + 5}" y="${angleToPoint(45, 10).y}" font-size="12" fill="#1f2937" class="dark:fill-gray-100">Task Response</text>
+                    <text x="${angleToPoint(135, 10).x - 5}" y="${angleToPoint(135, 10).y}" text-anchor="end" font-size="12" fill="#1f2937" class="dark:fill-gray-100">Structure</text>
+                    <text x="${angleToPoint(225, 10).x - 5}" y="${angleToPoint(225, 10).y + 15}" text-anchor="end" font-size="12" fill="#1f2937" class="dark:fill-gray-100">Vocabulary</text>
+                    <text x="${angleToPoint(315, 10).x + 5}" y="${angleToPoint(315, 10).y + 15}" font-size="12" fill="#1f2937" class="dark:fill-gray-100">Cohesion</text>
+                </svg>
+            `;
+            chartContainer.innerHTML = svg;
+        };
+
+        app.renderProgressReportUI = function () {
+            const lang = app.state.language;
+            const { score, advice } = app.calculateBottleneckIndex();
+
+            const adviceHTML = advice.map(a => `
+                <li class="flex items-start">
+                    <svg class="flex-shrink-0 w-5 h-5 text-indigo-500 mt-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    <p class="ml-3 text-sm text-gray-700 dark:text-gray-300">${a}</p>
+                </li>
+            `).join('');
+
+            return `
+                <h2 class="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100" data-i18n="report_header">${I18N[lang].report_header}</h2>
+                <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+                    <!-- Left/Center Column: Chart and Bottleneck -->
+                    <div class="lg:col-span-2 space-y-8">
+                        <div class="app-card">
+                            <h3 class="text-xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">IELTS Skill Radar</h3>
+                            <div id="radar-chart-container" class="w-full h-[300px] flex items-center justify-center">
+                                <!-- SVG Radar Chart will be injected here -->
+                            </div>
+                        </div>
+
+                        <div class="app-card">
+                            <h3 class="text-xl font-semibold text-red-600 dark:text-red-400 mb-4 border-b pb-2 border-gray-200 dark:border-gray-700" data-i18n="report_bottleneck_title">${I18N[lang].report_bottleneck_title}</h3>
+                            <div class="flex items-baseline mb-4">
+                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mr-2" data-i18n="report_bottleneck_score">${I18N[lang].report_bottleneck_score}:</p>
+                                <span class="text-4xl font-extrabold text-red-700 dark:text-red-300">${score}</span>
+                            </div>
+                            
+                            <h4 class="font-bold text-gray-700 dark:text-gray-300 mt-4 mb-2" data-i18n="report_bottleneck_advice">${I18N[lang].report_bottleneck_advice} (Mock AI):</h4>
+                            <ul class="space-y-3">
+                                ${adviceHTML}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: History Table -->
+                    <div class="lg:col-span-1 mt-8 lg:mt-0">
+                        <div class="app-card">
+                            <h3 class="text-xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-700" data-i18n="report_history_title">${I18N[lang].report_history_title}</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                    <thead class="bg-gray-50 dark:bg-gray-800">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="report_history_date">${I18N[lang].report_history_date}</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="report_history_score">${I18N[lang].report_history_score}</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="report_history_omission">${I18N[lang].report_history_omission}</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="report_history_passive">${I18N[lang].report_history_passive}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="history-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                        <!-- History rows injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+
+        // --- Initialization and Event Setup ---
+
+        function init() {
+            app.loadState();
+
+            // Apply dark mode immediately
+            app.toggleDarkMode(app.state.darkMode);
+
+            // Initialize API Key input
+            document.getElementById('api-key-input').value = app.state.apiKey;
+            document.getElementById('language-select').value = app.state.language;
+
+            // Setup Navigation Tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => app.switchTab(e.target.dataset.tab));
+            });
+
+            // Setup Settings Modal
+            const settingsModal = document.getElementById('settings-modal');
+            document.getElementById('settings-btn').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+            document.getElementById('close-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
+            // Close on click outside (UX improvement)
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal || e.target.classList.contains('bg-opacity-75')) {
+                    settingsModal.classList.add('hidden');
+                }
+            });
+
+            // Settings Listeners
+            document.getElementById('dark-mode-toggle').addEventListener('click', () => app.toggleDarkMode());
+            document.getElementById('language-select').addEventListener('change', (e) => {
+                app.state.language = e.target.value;
+                app.saveState();
+                app.applyTranslations();
+                app.renderContent(); // Rerender content after language change
+            });
+            document.getElementById('api-key-input').addEventListener('input', (e) => {
+                app.state.apiKey = e.target.value;
+                api.apiKey = e.target.value;
+                app.saveState();
+            });
+            document.getElementById('clear-data-btn').addEventListener('click', () => {
+                if (confirm(I18N[app.state.language].settings_clear_data + '? Are you sure?')) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    window.location.reload();
+                }
+            });
+
+            // Initial render
+            app.applyTranslations();
+            app.renderContent();
+
+            // Resume timer if running
+            if (app.state.sprint.status === 'running' && app.state.sprint.timer > 0) {
+                app.startTimer();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+
+        // Standardized Test Hook
+        window.injectTestRunner = function (runner) {
+            // Allow external tools to access the app instance
+            runner.app = app;
+            console.log("🧪 Test Runner Hook Injected");
+        };
+    </script>
+</body>
+
+</html>

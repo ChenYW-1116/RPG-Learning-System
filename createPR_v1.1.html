@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Pull Request 快速產生器 (v1.1)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        /* 使用 Inter 字體 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1A202C, #2D3748);
+            /* 深藍灰色漸變背景 */
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            transition: background-color 0.3s;
+        }
+
+        /* 深色模式專用樣式 */
+        .dark .bg-card {
+            background-color: #2D3748;
+            /* 卡片背景 */
+            border: 1px solid #4A5568;
+        }
+
+        .dark .text-primary {
+            color: #CBD5E0;
+        }
+
+        .dark input,
+        .dark textarea {
+            background-color: #4A5568;
+            border-color: #6B7280;
+            color: #E2E8F0;
+        }
+
+        .dark input:focus,
+        .dark textarea:focus {
+            border-color: #63B3ED;
+            box-shadow: 0 0 0 1px #63B3ED;
+        }
+
+        .dark .input-label {
+            color: #A0AEC0;
+        }
+
+        /* 主要按鈕漸變 */
+        .btn-primary {
+            background: linear-gradient(90deg, #667EEA, #6B46C1);
+            /* 藍紫漸變 */
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #5A67D8, #553C9A);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #4A5568;
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Gemini AI 按鈕 */
+        .btn-ai {
+            background-color: #38A169;
+            /* 綠色 */
+            transition: background-color 0.2s;
+        }
+
+        .btn-ai:hover {
+            background-color: #2F855A;
+        }
+
+        /* Log 輸出區塊 */
+        #logContainer {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #1A202C;
+            border: 1px solid #4A5568;
+            font-family: monospace;
+            padding: 1rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* 拖放區域樣式 */
+        .drop-zone {
+            border: 2px dashed #6B7280;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #63B3ED;
+            background-color: #3A4452;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 4rem 1rem;
+            }
+        }
+    </style>
+    <!-- Dev-Scribe RPG Engine -->
+    <script src="DevScribeRPG.js"></script>
+</head>
+
+<body class="text-primary">
+    <div id="app" class="max-w-3xl mx-auto space-y-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-white text-center" data-i18n="pageTitle">
+                🏰 冒險者公會 - GitHub PR 自動化工具 (v1.1)
+            </h1>
+            <div class="text-center">
+                <a href="rpg-hub.html"
+                    class="inline-flex items-center mt-4 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600 rounded-full text-indigo-400 hover:text-indigo-300 text-sm transition"
+                    data-i18n="backLink">
+                    ← 返回 Quest Empire
+                </a>
+            </div>
+        </div>
+
+        <!-- 語言切換按鈕 (固定位置，避免蓋到字) -->
+        <div class="fixed bottom-6 right-6 z-50">
+            <button id="langToggleBtn" type="button" onclick="toggleLanguage()"
+                class="bg-slate-700/80 hover:bg-slate-600 backdrop-blur-md text-gray-300 text-sm py-2 px-4 rounded-full border border-slate-600 shadow-2xl transition flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+                <span id="langBtnText">EN</span>
+            </button>
+        </div>
+
+        <!-- RPG Status Card -->
+        <div id="rpg-status-card" class="mb-6"></div>
+
+        <!-- Ritual Gate Warning -->
+        <div id="ritual-gate-warning"
+            class="hidden bg-red-900/50 border border-red-600 text-red-300 p-4 rounded-xl mb-6">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🔒</span>
+                <div>
+                    <div class="font-semibold" data-i18n="ritualIncomplete">校準儀式未完成</div>
+                    <p class="text-sm" data-i18n="ritualHint">在提交任務之前，請先完成「升級儀式祭壇」的校準流程。</p>
+                </div>
+                <a href="proof-writing-dashboard_v1.2.1.html"
+                    class="ml-auto px-3 py-2 bg-red-600 hover:bg-red-500 rounded-lg text-white text-sm font-medium transition-colors"
+                    data-i18n="goToRitualAltar">
+                    前往儀式祭壇 →
+                </a>
+            </div>
+        </div>
+
+        <!-- 認證與倉庫 -->
+        <div class="bg-card p-6 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-xl font-semibold border-b border-gray-600 pb-2" data-i18n="authAndRepo">認證與目標倉庫</h2>
+            <p class="text-sm text-yellow-400 p-2 rounded-lg bg-yellow-900/50" data-i18n="securityWarning">
+                ⚠️ **安全警告：** 請勿分享您的個人存取權杖 (PAT)。本工具只在瀏覽器本地使用您的權杖進行 API 呼叫。
+            </p>
+            <div class="space-y-4 md:flex md:space-y-0 md:space-x-4">
+                <div class="flex-1">
+                    <label for="token" class="input-label block mb-1" data-i18n="githubToken">GitHub PAT 權杖 (必需)</label>
+                    <input type="password" id="token" value="" data-i18n-placeholder="placeholderToken"
+                        placeholder="ghp_..." class="w-full p-2 rounded-lg border focus:outline-none">
+                </div>
+                <div class="flex-1">
+                    <label for="repoFullName" class="input-label block mb-1" data-i18n="repoName">倉庫名稱
+                        (Owner/Repo)</label>
+                    <input type="text" id="repoFullName" value="charliejimi/IELTSWritingTask1"
+                        data-i18n-placeholder="placeholderRepo" placeholder="e.g. owner/repository-name"
+                        class="w-full p-2 rounded-lg border focus:outline-none">
+                </div>
+            </div>
+        </div>
+
+        <!-- 分支資訊 -->
+        <div class="bg-card p-6 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-xl font-semibold border-b border-gray-600 pb-2" data-i18n="branchSettings">分支設定</h2>
+            <div class="space-y-4 md:flex md:space-y-0 md:space-x-4">
+                <div class="flex-1">
+                    <label for="baseBranch" class="input-label block mb-1" data-i18n="baseBranch">目標分支 (Base
+                        Branch)</label>
+                    <input type="text" id="baseBranch" value="master" data-i18n-placeholder="placeholderBaseBranch"
+                        placeholder="e.g. main" class="w-full p-2 rounded-lg border focus:outline-none">
+                </div>
+                <div class="flex-1">
+                    <label for="newBranch" class="input-label block mb-1" data-i18n="sourceBranch">來源分支 (Source
+                        Branch)</label>
+                    <input type="text" id="newBranch" value="modifications"
+                        data-i18n-placeholder="placeholderSourceBranch" placeholder="e.g. feat/add-new-feature"
+                        class="w-full p-2 rounded-lg border focus:outline-none">
+                </div>
+            </div>
+            <div class="flex items-center pt-2">
+                <input type="checkbox" id="deleteBranch" checked
+                    class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 mr-2">
+                <label for="deleteBranch" class="input-label" data-i18n="deleteBranchAfterMerge">成功合併後刪除來源分支
+                    (可選)</label>
+            </div>
+        </div>
+
+        <!-- 檔案變更 (動態區塊) -->
+        <div class="bg-card p-6 rounded-xl shadow-lg space-y-4">
+            <div class="flex justify-between items-center border-b border-gray-600 pb-2">
+                <h2 class="text-xl font-semibold" data-i18n="fileChanges">檔案變更 (Commit)</h2>
+                <button onclick="addFileBlock()"
+                    class="text-sm font-medium px-3 py-1 bg-indigo-500 hover:bg-indigo-600 rounded-lg transition"
+                    data-i18n="addAnotherFile">+ 新增另一個檔案</button>
+            </div>
+            <div id="filesContainer" class="space-y-6">
+                <!-- 預設檔案區塊將由 JS 載入 -->
+            </div>
+        </div>
+
+        <!-- Pull Request 資訊 -->
+        <div class="bg-card p-6 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-xl font-semibold border-b border-gray-600 pb-2" data-i18n="prInfo">Pull Request 資訊</h2>
+
+            <div class="flex justify-between items-end">
+                <div class="flex-1 pr-4">
+                    <label for="prTitle" class="input-label block mb-1" data-i18n="prTitle">PR 標題</label>
+                    <input type="text" id="prTitle" data-i18n-placeholder="placeholderPrTitle"
+                        placeholder="e.g. Fix: 修正登入邏輯" class="w-full p-2 rounded-lg border focus:outline-none">
+                </div>
+                <button id="btnGenerateTitle" onclick="generatePRTitle()"
+                    class="btn-ai text-white text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap"
+                    data-i18n="generatePRTitle">
+                    ✨ 幫我產生 PR 標題
+                </button>
+            </div>
+
+            <div class="flex justify-between items-end">
+                <div class="flex-1 pr-4">
+                    <label for="prBody" class="input-label block mb-1" data-i18n="prDesc">PR 描述 (支援 Markdown)</label>
+                    <textarea id="prBody" rows="5" data-i18n-placeholder="placeholderPrDesc" placeholder="詳細描述變更內容..."
+                        class="w-full p-2 rounded-lg border focus:outline-none"></textarea>
+                </div>
+                <button id="btnGenerateDesc" onclick="generatePRDescription()"
+                    class="btn-ai text-white text-sm font-medium px-4 py-2 rounded-lg whitespace-nowrap"
+                    data-i18n="generatePRDesc">
+                    ✨ 幫我產生 PR 描述
+                </button>
+            </div>
+
+            <div>
+                <label for="issueNumber" class="input-label block mb-1" data-i18n="linkedIssue">連動 Issue 號碼 (可選)</label>
+                <input type="text" id="issueNumber" data-i18n-placeholder="placeholderIssue"
+                    placeholder="e.g. 123 (將自動加入 Closes #123)" class="w-full p-2 rounded-lg border focus:outline-none">
+            </div>
+
+            <div class="pt-4">
+                <button id="mainActionButton" onclick="createPullRequest()"
+                    class="btn-primary text-white w-full py-3 rounded-lg text-lg font-semibold flex items-center justify-center">
+                    <svg class="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M7 21v-4a2 2 0 1 1 4 0v4" />
+                        <path d="M17 21v-8a2 2 0 1 1 4 0v8" />
+                        <path
+                            d="M7 3h2v2H7zM15 3h2v2h-2zM4 14V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8M10 17v-4a2 2 0 1 1 4 0v4" />
+                    </svg>
+                    <span data-i18n="mainActionBtn">建立、自動合併並清理 Pull Request (7 步驟)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 日誌與結果輸出 -->
+        <div class="bg-card p-6 rounded-xl shadow-lg space-y-4">
+            <h2 class="text-xl font-semibold border-b border-gray-600 pb-2" data-i18n="logAndResults">日誌與執行結果</h2>
+            <div id="logContainer" class="rounded-lg">
+                <!-- Log messages here -->
+            </div>
+            <div id="resultBox" class="p-4 rounded-lg hidden">
+                <!-- Final result/link here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Internationalization (i18n) System ---
+        const i18n = {
+            currentLang: 'zh',
+            translations: {
+                zh: {
+                    // Page Title
+                    pageTitle: '🏰 冒險者公會 - GitHub PR 自動化工具 (v1.1)',
+
+                    // Ritual Gate
+                    ritualIncomplete: '校準儀式未完成',
+                    ritualHint: '在提交任務之前，請先完成「升級儀式祭壇」的校準流程。',
+                    goToRitualAltar: '前往儀式祭壇 →',
+
+                    // Auth & Repository
+                    authAndRepo: '認證與目標倉庫',
+                    securityWarning: '⚠️ **安全警告：** 請勿分享您的個人存取權杖 (PAT)。本工具只在瀏覽器本地使用您的權杖進行 API 呼叫。',
+                    githubToken: 'GitHub PAT 權杖 (必需)',
+                    repoName: '倉庫名稱 (Owner/Repo)',
+
+                    // Branch Settings
+                    branchSettings: '分支設定',
+                    baseBranch: '目標分支 (Base Branch)',
+                    sourceBranch: '來源分支 (Source Branch)',
+                    deleteBranchAfterMerge: '成功合併後刪除來源分支 (可選)',
+
+                    // File Changes
+                    fileChanges: '檔案變更 (Commit)',
+                    addAnotherFile: '+ 新增另一個檔案',
+                    fileBlockTitle: '檔案 #{index} 變更',
+                    deleteBlock: '刪除',
+                    dropZoneHint: '將檔案拖放到此處，自動填入路徑與內容',
+                    filePath: '檔案路徑 (e.g. src/file.js)',
+                    commitMessage: '提交訊息 (Commit Message)',
+                    fileContent: '檔案內容 (UTF-8)',
+
+                    // PR Info
+                    prInfo: 'Pull Request 資訊',
+                    prTitle: 'PR 標題',
+                    prDesc: 'PR 描述 (支援 Markdown)',
+                    generatePRTitle: '✨ 幫我產生 PR 標題',
+                    generatePRDesc: '✨ 幫我產生 PR 描述',
+                    linkedIssue: '連動 Issue 號碼 (可選)',
+                    mainActionBtn: '建立、自動合併並清理 Pull Request (7 步驟)',
+
+                    // Log
+                    logAndResults: '日誌與執行結果',
+
+                    // Log Messages
+                    logInfo: '[INFO]',
+                    logSuccess: '[SUCCESS]',
+                    logError: '[ERROR]',
+                    logWarn: '[WARN]',
+
+                    // Error Messages
+                    errorMissingFields: '錯誤：PAT 權杖、倉庫名稱、來源分支、目標分支和 PR 標題都是必需的。請檢查所有欄位。',
+                    errorNoFiles: '錯誤：至少需要一個檔案變更。',
+                    errorFileMissing: '錯誤：檔案 #{index} 的路徑、內容和提交訊息都是必需的。',
+
+                    // Action Messages
+                    callingGeminiTitle: '正在呼叫 Gemini AI 產生 PR 標題...',
+                    callingGeminiDesc: '正在呼叫 Gemini AI 產生 PR 描述...',
+                    titleGenerated: 'PR 標題已成功生成並填入。',
+                    descGenerated: 'PR 描述已成功生成並填入。',
+                    needCommitFirst: '請先輸入至少一個檔案的「提交訊息 (Commit Message)」',
+                    generateTitleFailed: '產生 PR 標題失敗: {error}',
+                    generateDescFailed: '產生 PR 描述失敗: {error}',
+                    fileReadSuccess: '檔案 {name} (大小: {size} bytes) 內容已讀取並填入。',
+                    fileReadFailed: '讀取檔案 {name} 失敗: {error}',
+
+                    // Step Messages
+                    step1: '[1/7] 正在取得基礎分支 ({branch}) 的最新 SHA...',
+                    step1Success: '基礎 SHA 取得成功: {sha}',
+                    step2: '[2/7] 正在嘗試建立新分支 ({branch})...',
+                    step2Exists: '分支 refs/heads/{branch} 已存在。跳過建立步驟，繼續使用現有分支。',
+                    step2Success: '新分支 refs/heads/{branch} 建立成功。',
+                    step3: '[3/7] 正在提交 {count} 個檔案變更...',
+                    step3Processing: '   > 處理檔案: {path}',
+                    step3FileExists: '   > 檔案已存在 (SHA: {sha})，將執行 **更新** 操作。',
+                    step3FileNew: '   > 檔案不存在，將執行 **新增** 操作。',
+                    step3FileSuccess: '   > 檔案 {path} 提交成功。',
+                    step4: '[4/7] 正在建立 Pull Request...',
+                    step4IssueLink: '   > 已自動加入連動 Issue 關鍵字: {link}',
+                    step4Success: 'PR 建立成功！編號 #{number}，連結: {url}',
+                    step5: '[5/7] 正在輪詢 PR 狀態，等待可合併... (最多 10 次)',
+                    step5Mergeable: 'PR 已準備好合併 (Mergeable: true)。',
+                    step5NotMergeable: 'PR 顯示不可合併 (Mergeable: false)，可能需要手動修復衝突或等待 CI。中止自動合併。',
+                    step5Computing: 'PR 狀態仍在計算中... (第 {attempt}/{max} 次嘗試)',
+                    step5MaxPolls: '達到最大輪詢次數，PR 仍未顯示為可合併。中止自動合併，請手動檢查 PR。',
+                    step6: '[6/7] 正在執行自動 **Squash 合併**...',
+                    step6Success: 'PR 合併成功！Commit SHA: {sha}',
+                    step7: '[7/7] 正在嘗試刪除來源分支 ({branch})...',
+                    step7Success: '來源分支 {branch} 刪除成功。',
+                    step7Protected: '刪除分支失敗 (422 Unprocessable Entity)，可能是分支已被鎖定或保護。',
+                    step7NotFound: '來源分支 {branch} 已經不存在。',
+                    step7Failed: '刪除來源分支失敗。狀態: {status} {statusText}',
+                    step7Skip: '[7/7] 略過刪除來源分支步驟 (依設定)。',
+
+                    // Final Messages
+                    flowComplete: '🎉 PR 自動化流程已成功完成！',
+                    allChangesMerged: '所有變更已合併到 {branch}。',
+                    viewPR: '點此查看 Pull Request #{number}',
+                    rpgXpEarned: '🎮 RPG: 獲得 +{xp} XP！({combo}x 連擊)',
+                    flowFailed: '🚨 流程失敗：',
+                    checkPR: '請檢查權杖、倉庫名稱、分支名稱或 PR #{number} 的狀態。',
+
+                    // API Retry
+                    apiCallFailed: 'API 呼叫失敗 ({status} {statusText})，將在 {delay} 秒後重試...',
+                    networkError: '網路錯誤: {error}，將在 {delay} 秒後重試...',
+                    geminiRetry: 'Gemini API 呼叫失敗，將在 {delay} 秒後重試...',
+                    geminiNetworkError: 'Gemini API 網路錯誤: {error}，將在 {delay} 秒後重試...',
+
+                    // Placeholders
+                    placeholderToken: 'ghp_...',
+                    placeholderRepo: '例如：owner/repository-name',
+                    placeholderBaseBranch: '例如：main',
+                    placeholderSourceBranch: '例如：feat/add-new-feature',
+                    placeholderPrTitle: '例如：Fix: 修正登入邏輯',
+                    placeholderPrDesc: '詳細描述變更內容...',
+                    placeholderIssue: '例如：123 (將自動加入 Closes #123)',
+                    placeholderFilePath: '檔案在倉庫中的完整路徑',
+                    placeholderCommitMsg: '例如：feat: 增加新的設定檔',
+                    placeholderFileContent: '檔案的完整內容（支援 UTF-8 編碼）',
+
+                    // Default Values for first file block
+                    defaultCommitMsg: 'docs: 更新說明文件',
+                    defaultFileContent: '## GitHub PR 自動產生器\n\n這份文件由自動化工具生成。',
+
+                    // RPG Ranks (DevScribeRPG) - 與主畫面一致
+                    rpgRank1: '新手挑戰者',
+                    rpgRank2: '見習冒險家',
+                    rpgRank3: '探索者',
+                    rpgRank4: '挑戰達人',
+                    rpgRank5: '精英戰士',
+                    rpgRank6: '專家引導者',
+                    rpgRank7: '大師創造者',
+                    rpgRank8: '宗師煉金師',
+                    rpgRank9: '傳奇締造者',
+                    rpgRank10: '帝國領袖',
+                    rpgXpNeeded: '還需 {xp} XP 升級',
+                    backLink: '← 返回 Quest Empire'
+                },
+                en: {
+                    // Page Title
+                    pageTitle: '🏰 Adventurer Guild - GitHub PR Automation Tool (v1.1)',
+
+                    // Ritual Gate
+                    ritualIncomplete: 'Calibration Ritual Incomplete',
+                    ritualHint: 'Please complete the "Upgrade Ritual Altar" calibration process before submitting tasks.',
+                    goToRitualAltar: 'Go to Ritual Altar →',
+
+                    // Auth & Repository
+                    authAndRepo: 'Authentication & Target Repository',
+                    securityWarning: '⚠️ **Security Warning:** Do not share your Personal Access Token (PAT). This tool only uses your token locally in the browser for API calls.',
+                    githubToken: 'GitHub PAT Token (Required)',
+                    repoName: 'Repository Name (Owner/Repo)',
+
+                    // Branch Settings
+                    branchSettings: 'Branch Settings',
+                    baseBranch: 'Target Branch (Base Branch)',
+                    sourceBranch: 'Source Branch',
+                    deleteBranchAfterMerge: 'Delete source branch after merge (Optional)',
+
+                    // File Changes
+                    fileChanges: 'File Changes (Commit)',
+                    addAnotherFile: '+ Add Another File',
+                    fileBlockTitle: 'File #{index} Changes',
+                    deleteBlock: 'Delete',
+                    dropZoneHint: 'Drop file here to auto-fill path and content',
+                    filePath: 'File Path (e.g. src/file.js)',
+                    commitMessage: 'Commit Message',
+                    fileContent: 'File Content (UTF-8)',
+
+                    // PR Info
+                    prInfo: 'Pull Request Information',
+                    prTitle: 'PR Title',
+                    prDesc: 'PR Description (Markdown supported)',
+                    generatePRTitle: '✨ Generate PR Title',
+                    generatePRDesc: '✨ Generate PR Description',
+                    linkedIssue: 'Linked Issue Number (Optional)',
+                    mainActionBtn: 'Create, Auto-Merge & Cleanup Pull Request (7 Steps)',
+
+                    // Log
+                    logAndResults: 'Logs & Execution Results',
+
+                    // Log Messages
+                    logInfo: '[INFO]',
+                    logSuccess: '[SUCCESS]',
+                    logError: '[ERROR]',
+                    logWarn: '[WARN]',
+
+                    // Error Messages
+                    errorMissingFields: 'Error: PAT Token, Repository Name, Source Branch, Base Branch and PR Title are all required. Please check all fields.',
+                    errorNoFiles: 'Error: At least one file change is required.',
+                    errorFileMissing: 'Error: File #{index} path, content and commit message are all required.',
+
+                    // Action Messages
+                    callingGeminiTitle: 'Calling Gemini AI to generate PR title...',
+                    callingGeminiDesc: 'Calling Gemini AI to generate PR description...',
+                    titleGenerated: 'PR title generated and filled successfully.',
+                    descGenerated: 'PR description generated and filled successfully.',
+                    needCommitFirst: 'Please enter at least one "Commit Message" first',
+                    generateTitleFailed: 'Failed to generate PR title: {error}',
+                    generateDescFailed: 'Failed to generate PR description: {error}',
+                    fileReadSuccess: 'File {name} (size: {size} bytes) content read and filled.',
+                    fileReadFailed: 'Failed to read file {name}: {error}',
+
+                    // Step Messages
+                    step1: '[1/7] Getting latest SHA from base branch ({branch})...',
+                    step1Success: 'Base SHA retrieved: {sha}',
+                    step2: '[2/7] Attempting to create new branch ({branch})...',
+                    step2Exists: 'Branch refs/heads/{branch} already exists. Skipping creation, using existing branch.',
+                    step2Success: 'New branch refs/heads/{branch} created successfully.',
+                    step3: '[3/7] Committing {count} file changes...',
+                    step3Processing: '   > Processing file: {path}',
+                    step3FileExists: '   > File exists (SHA: {sha}), will perform **update** operation.',
+                    step3FileNew: '   > File does not exist, will perform **create** operation.',
+                    step3FileSuccess: '   > File {path} committed successfully.',
+                    step4: '[4/7] Creating Pull Request...',
+                    step4IssueLink: '   > Auto-added issue link keyword: {link}',
+                    step4Success: 'PR created! Number #{number}, Link: {url}',
+                    step5: '[5/7] Polling PR status, waiting for mergeable... (max 10 times)',
+                    step5Mergeable: 'PR is ready to merge (Mergeable: true).',
+                    step5NotMergeable: 'PR shows not mergeable (Mergeable: false), may need manual conflict resolution or wait for CI. Aborting auto-merge.',
+                    step5Computing: 'PR status still computing... (attempt {attempt}/{max})',
+                    step5MaxPolls: 'Max polling reached, PR still not mergeable. Aborting auto-merge, please check PR manually.',
+                    step6: '[6/7] Performing auto **Squash Merge**...',
+                    step6Success: 'PR merged successfully! Commit SHA: {sha}',
+                    step7: '[7/7] Attempting to delete source branch ({branch})...',
+                    step7Success: 'Source branch {branch} deleted.',
+                    step7Protected: 'Delete branch failed (422 Unprocessable Entity), branch may be locked or protected.',
+                    step7NotFound: 'Source branch {branch} no longer exists.',
+                    step7Failed: 'Failed to delete source branch. Status: {status} {statusText}',
+                    step7Skip: '[7/7] Skipping source branch deletion (per settings).',
+
+                    // Final Messages
+                    flowComplete: '🎉 PR automation flow completed successfully!',
+                    allChangesMerged: 'All changes merged to {branch}.',
+                    viewPR: 'Click to view Pull Request #{number}',
+                    rpgXpEarned: '🎮 RPG: Earned +{xp} XP! ({combo}x combo)',
+                    flowFailed: '🚨 Flow Failed:',
+                    checkPR: 'Please check token, repository name, branch name or PR #{number} status.',
+
+                    // API Retry
+                    apiCallFailed: 'API call failed ({status} {statusText}), retrying in {delay} seconds...',
+                    networkError: 'Network error: {error}, retrying in {delay} seconds...',
+                    geminiRetry: 'Gemini API call failed, retrying in {delay} seconds...',
+                    geminiNetworkError: 'Gemini API network error: {error}, retrying in {delay} seconds...',
+                    fileReadSuccess: 'File {name} (Size: {size} bytes) read and filled.',
+                    fileReadFailed: 'Failed to read file {name}: {error}',
+
+                    // Placeholders
+                    placeholderToken: 'ghp_...',
+                    placeholderRepo: 'e.g., owner/repository-name',
+                    placeholderBaseBranch: 'e.g., main',
+                    placeholderSourceBranch: 'e.g., feat/add-new-feature',
+                    placeholderPrTitle: 'e.g., Fix: Update login logic',
+                    placeholderPrDesc: 'Describe your changes in detail...',
+                    placeholderIssue: 'e.g., 123 (will add Closes #123)',
+                    placeholderFilePath: 'Full path in repository',
+                    placeholderCommitMsg: 'e.g., feat: add new config file',
+                    placeholderFileContent: 'Complete file content (UTF-8 encoded)',
+
+                    // Default Values for first file block
+                    defaultCommitMsg: 'docs: update documentation',
+                    defaultFileContent: '## GitHub PR Generator\n\nThis document was generated by the automation tool.',
+
+                    // RPG Ranks (DevScribeRPG) - Consistent with main screen
+                    rpgRank1: 'Novice Challenger',
+                    rpgRank2: 'Apprentice Adventurer',
+                    rpgRank3: 'Explorer',
+                    rpgRank4: 'Challenge Master',
+                    rpgRank5: 'Elite Warrior',
+                    rpgRank6: 'Expert Guide',
+                    rpgRank7: 'Master Creator',
+                    rpgRank8: 'Grandmaster Alchemist',
+                    rpgRank9: 'Legendary Founder',
+                    rpgRank10: 'Empire Leader',
+                    rpgXpNeeded: 'Need {xp} XP to level up',
+                    backLink: '← Back to Quest Empire'
+                }
+            },
+
+            t: function (key, params = {}) {
+                let text = this.translations[this.currentLang][key] || key;
+                // Replace placeholders like {name} with actual values
+                for (const [k, v] of Object.entries(params)) {
+                    text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+                }
+                return text;
+            },
+
+            setLanguage: function (lang) {
+                this.currentLang = lang;
+                // 與主畫面使用相同的 localStorage key 以便語言設定在不同頁面間共享
+                localStorage.setItem('github_manager_lang', lang);
+                this.applyTranslations();
+            },
+
+            loadSavedLanguage: function () {
+                // 與主畫面使用相同的 localStorage key 以便語言設定在不同頁面間共享
+                const savedLang = localStorage.getItem('github_manager_lang');
+                if (savedLang && this.translations[savedLang]) {
+                    this.currentLang = savedLang;
+                }
+            },
+
+            applyTranslations: function () {
+                try {
+                    console.log('[i18n] Applying translations for:', this.currentLang);
+
+                    // 1. Update all elements with data-i18n attribute
+                    document.querySelectorAll('[data-i18n]').forEach(el => {
+                        const key = el.getAttribute('data-i18n');
+                        if (!key) return;
+
+                        // Parse params if they exist (for dynamic logs/results)
+                        let params = {};
+                        if (el.dataset.i18nParams) {
+                            try { params = JSON.parse(el.dataset.i18nParams); } catch (e) { }
+                        }
+
+                        const translation = this.t(key, params);
+
+                        if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && (el.type === 'text' || el.type === 'password' || el.type === 'search' || el.tagName === 'TEXTAREA')) {
+                            // If it has data-i18n, it might be the placeholder we want to translate
+                            // or the value? Standard i18n usually maps data-i18n to textContent.
+                            // But for inputs, we often want placeholder.
+                            // To be safe, we check if it has data-i18n-placeholder for placeholder.
+                            // If it only has data-i18n, we treat it as innerHTML unless it's an input.
+                            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                                // Prefer data-i18n-placeholder if exists, otherwise use data-i18n for placeholder if it's an input
+                                el.placeholder = translation;
+                            } else {
+                                el.innerHTML = translation;
+                            }
+                        } else if (el.classList.contains('log-entry')) {
+                            // Specialized update for log entries
+                            const classes = Array.from(el.classList);
+                            const level = ['info', 'success', 'error', 'warn'].find(l => classes.includes(l)) || 'info';
+                            const levelTagKey = 'log' + level.charAt(0).toUpperCase() + level.slice(1);
+                            const levelTag = this.t(levelTagKey);
+                            el.innerHTML = `<span class="font-bold mr-2">${levelTag}</span> ${translation}`;
+                        } else {
+                            el.innerHTML = translation;
+                        }
+                    });
+
+                    // 2. Update all elements with data-i18n-placeholder attribute
+                    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                        const key = el.getAttribute('data-i18n-placeholder');
+                        el.placeholder = this.t(key);
+                    });
+
+                    // 2.5. Update all elements with data-i18n-value attribute (only if value is still a default)
+                    document.querySelectorAll('[data-i18n-value]').forEach(el => {
+                        const key = el.getAttribute('data-i18n-value');
+                        // Get all possible default values from both languages
+                        const zhValue = this.translations.zh[key];
+                        const enValue = this.translations.en[key];
+                        const currentValue = el.value;
+
+                        // Only update if the current value matches a known default value
+                        // (meaning user hasn't manually changed it)
+                        if (currentValue === zhValue || currentValue === enValue || currentValue === '') {
+                            el.value = this.t(key);
+                        }
+                    });
+
+                    // 3. Update page title
+                    const titleBase = this.t('pageTitle').replace(/^[🏰\s]+/, '');
+                    document.title = titleBase;
+
+                    // 4. Update language toggle button
+                    const langBtn = document.getElementById('langToggleBtn');
+                    if (langBtn) {
+                        const btnText = document.getElementById('langBtnText');
+                        if (btnText) {
+                            btnText.innerText = this.currentLang === 'zh' ? 'EN' : '中文';
+                        }
+                    }
+
+                    // 5. Update RPG Status Card
+                    if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
+                        try {
+                            document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                        } catch (e) {
+                            console.warn('[i18n] Failed to update RPG status card:', e);
+                        }
+                    }
+
+                    console.log('[i18n] Translations applied successfully');
+                } catch (error) {
+                    console.error('[i18n] Error in applyTranslations:', error);
+                }
+            }
+        };
+        // Expose i18n for external scripts
+        window.i18n = i18n;
+
+        function toggleLanguage() {
+            console.log('[i18n] Toggle language clicked. Current:', i18n.currentLang);
+            const newLang = i18n.currentLang === 'zh' ? 'en' : 'zh';
+            console.log('[i18n] Switching to:', newLang);
+            i18n.setLanguage(newLang);
+        }
+
+        const API_BASE = 'https://api.github.com';
+        const GEMINI_MODEL = 'gemini-2.5-flash-preview-09-2025';
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=`; // API Key is read from environment
+
+        let fileBlockCounter = 0;
+        let isProcessing = false;
+
+        /**
+         * 寫入日誌訊息到日誌容器
+         * @param {string} messageOrKey - 要記錄的訊息或翻譯 Key
+         * @param {string} level - 訊息級別 ('info', 'success', 'error', 'warn')
+         * @param {object} params - 翻譯參數
+         */
+        function logMessage(messageOrKey, level = 'info', params = {}) {
+            const logContainer = document.getElementById('logContainer');
+            const colorMap = {
+                info: 'text-gray-400',
+                success: 'text-green-400',
+                error: 'text-red-400',
+                warn: 'text-yellow-400',
+            };
+
+            const logEntry = document.createElement('div');
+            logEntry.className = colorMap[level];
+
+            // 嘗試翻譯
+            const translated = i18n.translations[i18n.currentLang][messageOrKey]
+                ? i18n.t(messageOrKey, params)
+                : messageOrKey;
+
+            const levelTagKey = 'log' + level.charAt(0).toUpperCase() + level.slice(1);
+            const levelTag = i18n.t(levelTagKey);
+
+            // 儲存中繼資料以便即時切換
+            logEntry.dataset.i18n = messageOrKey;
+            if (Object.keys(params).length > 0) logEntry.dataset.i18nParams = JSON.stringify(params);
+
+            logEntry.innerHTML = `<span class="font-bold mr-2">${levelTag}</span> ${translated}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight; // 保持滾動到底部
+        }
+
+        /**
+         * 顯示最終結果訊息
+         * @param {string} messageOrKey - 最終結果 HTML/Text 或翻譯 Key
+         * @param {boolean} isSuccess - 是否成功
+         * @param {object} params - 翻譯參數
+         */
+        function showResult(messageOrKey, isSuccess, params = {}) {
+            const resultBox = document.getElementById('resultBox');
+            resultBox.className = `p-4 rounded-lg mt-4 ${isSuccess ? 'bg-green-900/50 border border-green-700' : 'bg-red-900/50 border border-red-700'}`;
+
+            const translated = i18n.translations[i18n.currentLang][messageOrKey]
+                ? i18n.t(messageOrKey, params)
+                : messageOrKey;
+
+            resultBox.dataset.i18n = messageOrKey;
+            if (Object.keys(params).length > 0) resultBox.dataset.i18nParams = JSON.stringify(params);
+
+            resultBox.innerHTML = translated;
+            resultBox.style.display = 'block';
+        }
+
+        /**
+         * 檢查輸入的必要欄位是否填寫
+         * @returns {boolean}
+         */
+        function validateInputs() {
+            const token = document.getElementById('token').value.trim();
+            const repoFullName = document.getElementById('repoFullName').value.trim();
+            const newBranch = document.getElementById('newBranch').value.trim();
+            const prTitle = document.getElementById('prTitle').value.trim();
+            const baseBranch = document.getElementById('baseBranch').value.trim();
+
+            if (!token || !repoFullName || !newBranch || !prTitle || !baseBranch) {
+                showResult('errorMissingFields', false);
+                return false;
+            }
+
+            const fileBlocks = document.querySelectorAll('.file-block');
+            if (fileBlocks.length === 0) {
+                showResult('errorNoFiles', false);
+                return false;
+            }
+
+            for (const block of fileBlocks) {
+                const path = block.querySelector('.file-path').value.trim();
+                const content = block.querySelector('.file-content').value;
+                const commitMessage = block.querySelector('.commit-message').value.trim();
+                if (!path || !content || !commitMessage) {
+                    showResult('errorFileMissing', false, { index: block.dataset.index });
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * 帶有指數退避和重試機制的 GitHub API 呼叫器 (最多 5 次)
+         * @param {string} url - API URL
+         * @param {string} method - HTTP 方法 (GET, POST, PUT, DELETE)
+         * @param {string} token - GitHub PAT
+         * @param {object} payload - JSON payload
+         * @param {number} maxRetries - 最大重試次數
+         * @returns {Promise<Response>}
+         */
+        async function callApiWithRetry(url, method, token, payload = null, maxRetries = 5) {
+            const headers = {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+            };
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: headers,
+                        body: payload ? JSON.stringify(payload) : null,
+                    });
+
+                    // 成功或 404/409 (非 5xx 錯誤) 直接返回
+                    if (response.ok || response.status === 404 || response.status === 409) {
+                        return response;
+                    }
+
+                    // 處理 403 Rate Limit 或 5xx 伺服器錯誤，嘗試重試
+                    if (response.status === 403 || response.status >= 500) {
+                        // 指數退避延遲
+                        const delay = Math.pow(2, i) * 1000;
+                        logMessage('apiCallFailed', 'warn', { status: response.status, statusText: response.statusText, delay: delay / 1000 });
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue; // 進入下一個重試循環
+                    }
+
+                    // 其他非重試錯誤 (如 400 Bad Request, 401 Bad Credentials)
+                    return response;
+
+                } catch (error) {
+                    // 網路錯誤
+                    const delay = Math.pow(2, i) * 1000;
+                    logMessage('networkError', 'error', { error: error.message, delay: delay / 1000 });
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+
+            throw new Error(`API 呼叫 ${url} 失敗，已達到最大重試次數 ${maxRetries}。`);
+        }
+
+        /**
+         * 呼叫 Gemini API 進行 PR 標題或描述生成
+         * @param {string} systemPrompt - 系統提示詞
+         * @param {string} userQuery - 使用者輸入的內容 (來自 Commit Messages)
+         * @returns {Promise<string>} - 返回生成的文本
+         */
+        async function callGeminiApi(systemPrompt, userQuery) {
+            const btnTitle = document.getElementById('btnGenerateTitle');
+            const btnDesc = document.getElementById('btnGenerateDesc');
+
+            // 由於 API Key 是在 Canvas 環境中提供的，這裡留空
+            const apiKey = "AIzaSyAG5d8eUpB3QcE5kTXt-2w0VJbOklMh__c";
+            const apiUrl = `${GEMINI_API_URL}${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            let resultText = '';
+            const maxRetries = 3;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    // 禁用按鈕
+                    btnTitle.disabled = true;
+                    btnDesc.disabled = true;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.candidates && result.candidates.length > 0) {
+                        resultText = result.candidates[0].content?.parts?.[0]?.text || '';
+                        if (resultText) return resultText;
+                    }
+
+                    // 處理錯誤或無效響應，進行重試
+                    const delay = Math.pow(2, i) * 1000;
+                    logMessage('geminiRetry', 'warn', { delay: delay / 1000 });
+                    await new Promise(resolve => setTimeout(resolve, delay));
+
+                } catch (error) {
+                    const delay = Math.pow(2, i) * 1000;
+                    logMessage('geminiNetworkError', 'error', { error: error.message, delay: delay / 1000 });
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } finally {
+                    // 在最後一次嘗試後或成功後重新啟用按鈕
+                    if (i === maxRetries - 1 || resultText) {
+                        btnTitle.disabled = false;
+                        btnDesc.disabled = false;
+                    }
+                }
+            }
+
+            throw new Error('無法從 Gemini 取得有效的標題/描述。請手動輸入。');
+        }
+
+        /**
+         * 產生 PR 標題
+         */
+        async function generatePRTitle() {
+            const commitMessages = Array.from(document.querySelectorAll('.commit-message'))
+                .map(el => el.value.trim())
+                .filter(msg => msg.length > 0);
+
+            if (commitMessages.length === 0) {
+                logMessage('needCommitFirst', 'warn');
+                return;
+            }
+
+            const prompt = `基於以下提交訊息，生成一個簡潔、單行、不超過 72 個字元的 GitHub Pull Request 標題。只輸出標題本身，不要包含任何前綴或解釋。\n\n提交訊息:\n${commitMessages.join('\n')}`;
+            const systemPrompt = "你是一位專業的 GitHub 開發者。請根據提交訊息，以最簡潔且符合規範的風格生成一個 PR 標題。";
+
+            try {
+                logMessage('callingGeminiTitle');
+                const title = await callGeminiApi(systemPrompt, prompt);
+                document.getElementById('prTitle').value = title.trim();
+                logMessage('titleGenerated', 'success');
+            } catch (error) {
+                logMessage('generateTitleFailed', 'error', { error: error.message });
+            }
+        }
+
+        /**
+         * 產生 PR 描述
+         */
+        async function generatePRDescription() {
+            const commitMessages = Array.from(document.querySelectorAll('.commit-message'))
+                .map(el => el.value.trim())
+                .filter(msg => msg.length > 0);
+
+            if (commitMessages.length === 0) {
+                logMessage('needCommitFirst', 'warn');
+                return;
+            }
+
+            const prompt = `基於以下提交訊息，生成一個結構化的 GitHub Pull Request 描述。使用 Markdown 格式，包含以下兩個頂級標題：\n1. **變更摘要** (Summary of Changes): 簡要說明這次 PR 的目的和主要變更。\n2. **詳細變更** (Detailed Changes): 以 Markdown 清單列出所有提交訊息的要點。\n\n提交訊息:\n${commitMessages.join('\n')}`;
+            const systemPrompt = "你是一位專業的 GitHub 開發者。請根據提交訊息，生成結構化且易於閱讀的 Markdown 格式 PR 描述。";
+
+            try {
+                logMessage('callingGeminiDesc');
+                const description = await callGeminiApi(systemPrompt, prompt);
+                document.getElementById('prBody').value = description.trim();
+                logMessage('descGenerated', 'success');
+            } catch (error) {
+                logMessage('generateDescFailed', 'error', { error: error.message });
+            }
+        }
+
+        /**
+         * 處理拖放檔案上傳
+         * @param {DragEvent} e - 拖放事件物件
+         * @param {HTMLElement} block - 檔案區塊的容器元素
+         */
+        function handleFileDrop(e, block) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+
+            const filePathInput = block.querySelector('.file-path');
+            const fileContentTextarea = block.querySelector('.file-content');
+
+            // 1. 自動填入檔案名稱作為路徑
+            filePathInput.value = file.name;
+
+            // 2. 讀取檔案內容
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                fileContentTextarea.value = e.target.result;
+                logMessage('fileReadSuccess', 'info', { name: file.name, size: file.size });
+            };
+            reader.onerror = function (error) {
+                logMessage('fileReadFailed', 'error', { name: file.name, error: error });
+            };
+            reader.readAsText(file);
+        }
+
+        /**
+         * 動態新增檔案變更區塊
+         * @param {string} defaultPath - 預設檔案路徑
+         * @param {string} defaultContent - 預設檔案內容
+         * @param {string} defaultCommit - 預設提交訊息
+         */
+        function addFileBlock(defaultPath = '', defaultContent = '', defaultCommit = '') {
+            fileBlockCounter++;
+            const index = fileBlockCounter;
+            const container = document.getElementById('filesContainer');
+
+            const block = document.createElement('div');
+            block.className = 'file-block bg-gray-700/50 p-4 rounded-lg space-y-3';
+            block.dataset.index = index;
+
+            block.innerHTML = `
+                <div class="flex justify-between items-center border-b border-gray-500 pb-2">
+                    <h3 class="text-lg font-medium" data-i18n="fileBlockTitle" data-i18n-params='{"index": ${index}}'>${i18n.t('fileBlockTitle', { index: index })}</h3>
+                    <button onclick="removeFileBlock(this)" class="text-red-400 hover:text-red-500 text-sm font-medium" data-i18n="deleteBlock">${i18n.t('deleteBlock')}</button>
+                </div>
+
+                <div class="drop-zone rounded-lg" 
+                    ondragover="event.preventDefault(); this.classList.add('drag-over');"
+                    ondragleave="this.classList.remove('drag-over');"
+                    ondrop="handleFileDrop(event, this.closest('.file-block'));"
+                    data-i18n="dropZoneHint">
+                    ${i18n.t('dropZoneHint')}
+                </div>
+
+                <div>
+                    <label class="input-label block mb-1 text-sm" data-i18n="filePath">${i18n.t('filePath')}</label>
+                    <input type="text" value="${defaultPath}" class="file-path w-full p-2 rounded-lg border focus:outline-none" data-i18n-placeholder="placeholderFilePath" placeholder="${i18n.t('placeholderFilePath')}">
+                </div>
+                
+                <div>
+                    <label class="input-label block mb-1 text-sm" data-i18n="commitMessage">${i18n.t('commitMessage')}</label>
+                    <input type="text" value="${defaultCommit}" class="commit-message w-full p-2 rounded-lg border focus:outline-none" data-i18n-placeholder="placeholderCommitMsg" placeholder="${i18n.t('placeholderCommitMsg')}">
+                </div>
+
+                <div>
+                    <label class="input-label block mb-1 text-sm" data-i18n="fileContent">${i18n.t('fileContent')}</label>
+                    <textarea rows="6" class="file-content w-full p-2 rounded-lg border focus:outline-none" data-i18n-placeholder="placeholderFileContent" placeholder="${i18n.t('placeholderFileContent')}">${defaultContent}</textarea>
+                </div>
+            `;
+            container.appendChild(block);
+
+            // 只有在第一次載入時，如果沒有設定預設值，給予一些建議
+            if (fileBlockCounter === 1 && !defaultPath) {
+                const filePathInput = block.querySelector('.file-path');
+                const commitMsgInput = block.querySelector('.commit-message');
+                const fileContentTextarea = block.querySelector('.file-content');
+
+                filePathInput.value = 'docs/README.md';
+
+                // 為預設值設定 data-i18n-value 屬性，以便語言切換時自動更新
+                commitMsgInput.value = i18n.t('defaultCommitMsg');
+                commitMsgInput.setAttribute('data-i18n-value', 'defaultCommitMsg');
+
+                fileContentTextarea.value = i18n.t('defaultFileContent');
+                fileContentTextarea.setAttribute('data-i18n-value', 'defaultFileContent');
+            }
+
+            // 確保新增的區塊套用正確的翻譯（包含 placeholder）
+            i18n.applyTranslations();
+        }
+
+        /**
+         * 刪除檔案區塊
+         * @param {HTMLElement} button - 觸發刪除的按鈕元素
+         */
+        function removeFileBlock(button) {
+            const block = button.closest('.file-block');
+            block.remove();
+        }
+
+        /**
+         * 主執行函數：建立 PR 並自動合併
+         */
+        async function createPullRequest() {
+            if (isProcessing) return;
+            if (!validateInputs()) return;
+
+            // 🎮 RPG: Check Ritual Gate
+            if (typeof DevScribeRPG !== 'undefined' && !DevScribeRPG.requireRitualForSubmission()) {
+                return; // Blocked by ritual gate
+            }
+
+            isProcessing = true;
+            document.getElementById('mainActionButton').disabled = true;
+            document.getElementById('logContainer').innerHTML = '';
+            document.getElementById('resultBox').style.display = 'none';
+
+            const token = document.getElementById('token').value.trim();
+            const repoFullName = document.getElementById('repoFullName').value.trim();
+            const baseBranch = document.getElementById('baseBranch').value.trim();
+            const newBranch = document.getElementById('newBranch').value.trim();
+            const prTitle = document.getElementById('prTitle').value.trim();
+            let prBody = document.getElementById('prBody').value;
+            const issueNumber = document.getElementById('issueNumber').value.trim();
+            const deleteBranchAfterMerge = document.getElementById('deleteBranch').checked;
+
+            const [owner, repo] = repoFullName.split('/');
+
+            // 收集檔案變更資訊
+            const fileChanges = Array.from(document.querySelectorAll('.file-block')).map(block => ({
+                path: block.querySelector('.file-path').value.trim(),
+                content: block.querySelector('.file-content').value,
+                commitMessage: block.querySelector('.commit-message').value.trim(),
+            }));
+
+            let baseBranchSHA = null;
+            let prNumber = null;
+
+            try {
+                // =========================================================================
+                // Step 1/7: 取得基礎 SHA
+                // =========================================================================
+                logMessage('step1', 'info', { branch: baseBranch });
+                const refUrl = `${API_BASE}/repos/${owner}/${repo}/git/ref/heads/${baseBranch}`;
+                let response = await callApiWithRetry(refUrl, 'GET', token);
+
+                if (!response.ok) {
+                    throw new Error(`無法取得基礎分支 SHA。狀態: ${response.status} ${response.statusText}`);
+                }
+                const baseRefData = await response.json();
+                baseBranchSHA = baseRefData.object.sha;
+                logMessage('step1Success', 'info', { sha: baseBranchSHA });
+
+                // =========================================================================
+                // Step 2/7: 建立新分支
+                // =========================================================================
+                logMessage('step2', 'info', { branch: newBranch });
+                const newRefUrl = `${API_BASE}/repos/${owner}/${repo}/git/refs`;
+                const newRefPayload = {
+                    ref: `refs/heads/${newBranch}`,
+                    sha: baseBranchSHA
+                };
+                response = await callApiWithRetry(newRefUrl, 'POST', token, newRefPayload);
+
+                if (response.status === 422) { // 422 Unprocessable Entity - 可能是分支已存在
+                    logMessage('step2Exists', 'warn', { branch: newBranch });
+                } else if (!response.ok) {
+                    throw new Error(`建立分支失敗。狀態: ${response.status} ${response.statusText}`);
+                } else {
+                    logMessage('step2Success', 'success', { branch: newBranch });
+                }
+
+                // =========================================================================
+                // Step 3/7: 提交檔案變更
+                // =========================================================================
+                logMessage('step3', 'info', { count: fileChanges.length });
+
+                for (const change of fileChanges) {
+                    logMessage('step3Processing', 'info', { path: change.path });
+                    const contentUrl = `${API_BASE}/repos/${owner}/${repo}/contents/${change.path}`;
+
+                    // 1. 嘗試取得現有檔案 SHA (用於更新)
+                    let existingSHA = null;
+                    const getFileResponse = await callApiWithRetry(`${contentUrl}?ref=${newBranch}`, 'GET', token);
+
+                    if (getFileResponse.ok) {
+                        const fileData = await getFileResponse.json();
+                        existingSHA = fileData.sha;
+                        logMessage('step3FileExists', 'info', { sha: existingSHA });
+                    } else if (getFileResponse.status === 404) {
+                        logMessage('step3FileNew', 'info');
+                    } else {
+                        throw new Error(`嘗試取得檔案 ${change.path} 資訊失敗。狀態: ${getFileResponse.status}`);
+                    }
+
+                    // 2. 提交 PUT 請求
+                    const putPayload = {
+                        message: change.commitMessage,
+                        content: btoa(unescape(encodeURIComponent(change.content))), // 確保 UTF-8 正確編碼
+                        branch: newBranch,
+                        sha: existingSHA // 僅在更新時提供 SHA
+                    };
+
+                    const putResponse = await callApiWithRetry(contentUrl, 'PUT', token, putPayload);
+                    if (!putResponse.ok) {
+                        const errorData = await putResponse.json();
+                        throw new Error(`提交檔案 ${change.path} 失敗: ${errorData.message || '未知錯誤'}`);
+                    }
+                    logMessage('step3FileSuccess', 'success', { path: change.path });
+                }
+
+                // =========================================================================
+                // Step 4/7: 建立 PR
+                // =========================================================================
+                logMessage('step4', 'info');
+
+                // 處理 Issue 號碼連動
+                if (issueNumber) {
+                    const issueLink = `Closes #${issueNumber}\n\n`;
+                    prBody = issueLink + prBody;
+                    logMessage('step4IssueLink', 'info', { link: issueNumber });
+                }
+
+                const prUrl = `${API_BASE}/repos/${owner}/${repo}/pulls`;
+                const prPayload = {
+                    title: prTitle,
+                    body: prBody,
+                    head: newBranch,
+                    base: baseBranch
+                };
+
+                response = await callApiWithRetry(prUrl, 'POST', token, prPayload);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`建立 PR 失敗: ${errorData.message || '未知錯誤'}`);
+                }
+                const prData = await response.json();
+                prNumber = prData.number;
+                logMessage('step4Success', 'success', { number: prNumber, url: prData.html_url });
+
+                // =========================================================================
+                // Step 5/7: 等待 PR 狀態變為可合併 (Mergeable)
+                // =========================================================================
+                logMessage('step5', 'info');
+                let prStatusUrl = `${API_BASE}/repos/${owner}/${repo}/pulls/${prNumber}`;
+
+                const MAX_POLLS = 10;
+                let mergeable = false;
+
+                for (let i = 0; i < MAX_POLLS; i++) {
+                    // 使用時間戳執行 Cache-Busting
+                    const cacheBustingUrl = `${prStatusUrl}?_=${new Date().getTime()}`;
+                    response = await callApiWithRetry(cacheBustingUrl, 'GET', token);
+
+                    if (!response.ok) {
+                        throw new Error(`輪詢 PR 狀態失敗。狀態: ${response.status}`);
+                    }
+
+                    const statusData = await response.json();
+
+                    if (statusData.mergeable === true) {
+                        mergeable = true;
+                        logMessage('step5Mergeable', 'success');
+                        break;
+                    } else if (statusData.mergeable === false) {
+                        logMessage('step5NotMergeable', 'warn');
+                        break;
+                    } else { // mergeable === null, 狀態仍在計算中
+                        logMessage('step5Computing', 'info', { attempt: i + 1, max: MAX_POLLS });
+                        if (i < MAX_POLLS - 1) {
+                            await new Promise(resolve => setTimeout(resolve, 2000)); // 間隔 2 秒
+                        }
+                    }
+                }
+
+                if (!mergeable) {
+                    logMessage('step5MaxPolls', 'warn');
+                    return; // 結束執行
+                }
+
+                // =========================================================================
+                // Step 6/7: 自動合併 PR
+                // =========================================================================
+                logMessage('step6', 'info');
+                const mergeUrl = `${API_BASE}/repos/${owner}/${repo}/pulls/${prNumber}/merge`;
+                const mergePayload = {
+                    commit_title: prTitle, // 使用 PR 標題作為 Squash Commit 標題
+                    commit_message: prBody,
+                    merge_method: 'squash'
+                };
+
+                response = await callApiWithRetry(mergeUrl, 'PUT', token, mergePayload);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`自動合併 PR 失敗: ${errorData.message || '未知錯誤'}`);
+                }
+
+                const mergeData = await response.json();
+                logMessage('step6Success', 'success', { sha: mergeData.sha });
+
+                // =========================================================================
+                // Step 7/7: 刪除來源分支 (可選)
+                // =========================================================================
+                if (deleteBranchAfterMerge) {
+                    logMessage('step7', 'info', { branch: newBranch });
+                    const deleteRefUrl = `${API_BASE}/repos/${owner}/${repo}/git/refs/heads/${newBranch}`;
+                    response = await callApiWithRetry(deleteRefUrl, 'DELETE', token);
+
+                    if (response.ok) {
+                        logMessage('step7Success', 'success', { branch: newBranch });
+                    } else if (response.status === 422) {
+                        logMessage('step7Protected', 'warn');
+                    } else if (response.status === 404) {
+                        logMessage('step7NotFound', 'warn', { branch: newBranch });
+                    } else {
+                        logMessage('step7Failed', 'error', { status: response.status, statusText: response.statusText });
+                    }
+                } else {
+                    logMessage('step7Skip', 'info');
+                }
+
+                // 最終成功訊息 (使用 data-i18n 屬性以便隨時切換語言)
+                const finalSuccessHTML = `
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-6 h-6 text-green-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v5c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2h11"/></svg>
+                        <span class="text-lg font-bold" data-i18n="flowComplete"></span>
+                    </div>
+                    <p class="mt-2" data-i18n="allChangesMerged" data-i18n-params='{"branch":"${baseBranch}"}'></p>
+                    <a href="${prData.html_url}" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-medium underline" data-i18n="viewPR" data-i18n-params='{"number":"${prNumber}"}'></a>
+                `;
+                showResult(finalSuccessHTML, true);
+                i18n.applyTranslations(); // 立即套用翻譯以填充剛剛插入的 data-i18n 元素
+
+                // 🎮 RPG: Award XP for successful PR submission
+                if (typeof DevScribeRPG !== 'undefined') {
+                    const result = DevScribeRPG.recordModuleAction('guild', 'pr_merged');
+                    if (result) {
+                        DevScribeRPG.showXPNotification(result);
+                        // Reset ritual status after successful submission
+                        DevScribeRPG.setRitualCompleted(false);
+                        logMessage('rpgXpEarned', 'success', { xp: result.earnedXP, combo: result.currentCombo });
+                    }
+                }
+
+            } catch (error) {
+                logMessage('flowFailed', 'error', { error: error.message });
+                showResult('flowFailed', false, { error: error.message, number: prNumber || '???' });
+                const errorBox = document.getElementById('resultBox');
+                errorBox.innerHTML += `<div class="mt-2 text-sm opacity-80" data-i18n="checkPR" data-i18n-params='{"number":"${prNumber || '???'}"}'></div>`;
+                i18n.applyTranslations(); // 立即套用翻譯
+            } finally {
+                isProcessing = false;
+                document.getElementById('mainActionButton').disabled = false;
+            }
+        }
+
+        // 載入時自動新增一個檔案區塊
+        window.onload = function () {
+            // Initialize i18n
+            i18n.loadSavedLanguage();
+            i18n.applyTranslations();
+
+            addFileBlock();
+
+            // 🎮 RPG: Initialize UI
+            if (typeof DevScribeRPG !== 'undefined') {
+                // Show status card
+                document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+
+                // Check ritual gate
+                const warning = document.getElementById('ritual-gate-warning');
+                if (!DevScribeRPG.isRitualCompleted()) {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
+            }
+        };
+
+    </script>
+</body>
+
+</html>

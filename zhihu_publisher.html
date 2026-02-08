@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zhihu Publisher - Quest Empire</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0F0F1A 0%, #1A1A2E 50%, #0F0F1A 100%);
+            min-height: 100vh;
+            color: #E2E8F0;
+            padding: 20px;
+        }
+
+        /* RPG Hub Styles */
+        .title-glow {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(90deg, #6366F1, #8B5CF6, #EC4899);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleShimmer 3s linear infinite;
+        }
+
+        @keyframes titleShimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 200% 50%;
+            }
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #EC4899, #F43F5E);
+            color: white;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.8);
+            color: #94A3B8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            color: white;
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .input-field {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #E2E8F0;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        /* EasyMDE Dark Mode */
+        .editor-toolbar {
+            background: rgba(30, 41, 59, 0.9) !important;
+            border-color: rgba(99, 102, 241, 0.3) !important;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .editor-toolbar i {
+            color: #E2E8F0 !important;
+        }
+
+        .editor-toolbar button:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .CodeMirror {
+            background: rgba(15, 23, 42, 0.8) !important;
+            border-color: rgba(99, 102, 241, 0.3) !important;
+            color: #E2E8F0 !important;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .CodeMirror-cursor {
+            border-left: 1px solid #E2E8F0 !important;
+        }
+
+        .editor-preview {
+            background: #1E293B !important;
+            color: #E2E8F0 !important;
+        }
+
+        .CodeMirror-fullscreen,
+        .editor-toolbar.fullscreen {
+            background: #0F172A !important;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1E293B;
+            border: 1px solid #6366F1;
+            border-radius: 16px;
+            width: 95%;
+            max-width: 650px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .step-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .step-num {
+            background: #6366F1;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+            font-family: 'Orbitron';
+        }
+
+        /* Spinner */
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(99, 102, 241, 0.4);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.3);
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover {
+            border-color: #8B5CF6;
+            background: rgba(99, 102, 241, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Nav & Language -->
+
+
+    <div class="fixed bottom-6 right-6 z-50">
+        <button onclick="toggleLanguage()"
+            class="bg-indigo-600/90 hover:bg-indigo-500 text-white px-4 py-2 rounded-full shadow-lg border border-indigo-400 backdrop-blur transition flex items-center gap-2 font-Orbitron">
+            <i class="fas fa-globe"></i> <span id="langBtnText">EN</span>
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto pt-6 pb-24">
+        <!-- Top Navigation -->
+        <div class="flex items-center mb-6">
+            <button onclick="window.location.href='rpg-hub.html'"
+                class="bg-slate-800/80 hover:bg-slate-700 text-gray-300 px-4 py-2 rounded-full border border-slate-600 backdrop-blur transition flex items-center gap-2 text-sm">
+                <i class="fas fa-chevron-left"></i> <span data-i18n="backToHub">回主選單</span>
+            </button>
+        </div>
+
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="title-glow text-4xl md:text-5xl font-black mb-4 tracking-wider">ZHIHU PUBLISHER</h1>
+            <p class="text-indigo-200/60" data-i18n="subtitle">智能 AI 潤飾 • 自動Markdown格式化 • 一鍵導出</p>
+        </header>
+
+        <!-- Player Status Card (Synced) -->
+        <div class="mb-10">
+            <section class="glass-card p-6">
+                <div class="flex flex-col md:flex-row items-center gap-6">
+                    <!-- User Info -->
+                    <div class="text-center min-w-[100px]">
+                        <div id="rank-icon" class="text-5xl mb-2">🌱</div>
+                        <div id="rank-title" class="text-base font-bold text-indigo-400">新手挑戰者</div>
+                        <div class="text-xs text-gray-500">Lv.<span id="player-level">1</span></div>
+                    </div>
+
+                    <!-- XP & Tokens -->
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-end mb-2">
+                            <div>
+                                <span class="text-xs text-gray-400" data-i18n="totalXP">總經驗值</span>
+                                <div class="text-xl font-bold text-yellow-400 font-Orbitron"><span
+                                        id="total-xp">0</span> XP</div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-gray-400" data-i18n="tokens">💰 代幣</span>
+                                <div class="text-xl font-bold text-amber-400 font-Orbitron"><span
+                                        id="total-tokens">0</span></div>
+                            </div>
+                        </div>
+                        <!-- XP Bar -->
+                        <div class="bg-slate-900/80 p-0.5 rounded-full border border-slate-700 h-3">
+                            <div id="xp-bar"
+                                class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                                style="width: 0%"></div>
+                        </div>
+                        <!-- XP Text -->
+                        <div class="flex justify-between mt-1 text-[10px] text-gray-500">
+                            <span><span id="xp-current">0</span> / <span id="xp-total">150</span></span>
+                            <span id="xp-needed-container">還需 <span id="xp-needed" class="text-indigo-400">150</span> XP
+                                升級</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 gap-2 w-full md:w-auto">
+                        <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700 text-center min-w-[70px]">
+                            <div class="text-lg font-bold text-green-400 font-Orbitron" id="stat-victories">0</div>
+                            <div class="text-[10px] text-gray-400" data-i18n="victories">勝利場次</div>
+                        </div>
+                        <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700 text-center min-w-[70px]">
+                            <div class="text-lg font-bold text-red-400 font-Orbitron" id="stat-defeats">0</div>
+                            <div class="text-[10px] text-gray-400" data-i18n="defeats">失敗場次</div>
+                        </div>
+                        <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700 text-center min-w-[70px]">
+                            <div class="text-lg font-bold text-purple-400 font-Orbitron" id="plugins-count">0</div>
+                            <div class="text-[10px] text-gray-400" data-i18n="unlockedTools">已解鎖工具</div>
+                        </div>
+                        <div class="bg-slate-800/50 p-2 rounded-lg border border-slate-700 text-center min-w-[70px]">
+                            <div class="text-lg font-bold text-orange-400 font-Orbitron" id="streak-days">0</div>
+                            <div class="text-[10px] text-gray-400" data-i18n="streakDays">連續天數</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- API Key -->
+        <div class="glass-card flex items-center gap-4">
+            <div class="flex-1">
+                <label class="block text-xs font-bold text-indigo-400 mb-2 tracking-wider">GEMINI PRO API KEY</label>
+                <input type="password" id="apiKey" class="input-field font-mono" placeholder="請輸入 API Key 以啟用 AI 功能..."
+                    style="height: 42px;">
+            </div>
+            <div class="text-xs text-gray-500 hidden md:block">
+                <i class="fas fa-shield-alt text-green-400"></i> <span data-i18n="keySafe">Key 僅保存在本地</span>
+            </div>
+        </div>
+
+        <!-- Main Editor -->
+        <div class="glass-card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-pen-nib text-indigo-400"></i> <span data-i18n="editorTitle">內容編輯</span>
+                </h2>
+                <span
+                    class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded border border-indigo-500/30">Markdown
+                    Ready</span>
+            </div>
+
+            <input type="text" id="articleTitle" class="input-field mb-4 text-lg font-bold" placeholder="文章標題...">
+
+            <div class="relative">
+                <textarea id="articleContent"></textarea>
+                <button onclick="polishArticle()" id="aiBtn"
+                    class="absolute bottom-6 right-6 btn btn-ai z-30 shadow-2xl">
+                    <i class="fas fa-magic"></i> <span data-i18n="aiPolishBtn">AI 潤飾並格式化</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="glass-card">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fas fa-images text-pink-400"></i> <span data-i18n="imgTitle">圖片附件</span>
+            </h2>
+            <div id="dropZone" class="drop-zone">
+                <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400 mb-3"></i>
+                <p class="text-gray-300 font-medium" data-i18n="dropText">拖放圖片到這裡，或點擊選擇</p>
+                <p class="text-gray-500 text-xs mt-1">PNG, JPG, GIF</p>
+                <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+            </div>
+            <div id="previewArea" class="flex flex-wrap gap-4 mt-6"></div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="glass-card sticky bottom-4 z-40 border-indigo-500/50 shadow-[0_0_50px_rgba(99,102,241,0.2)]">
+            <button onclick="exportAndOpen()" id="exportBtn" class="btn btn-primary w-full text-lg py-3">
+                <span data-i18n="exportBtn">🚀 導出檔案並開啟知乎</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"
+        class="fixed top-24 right-6 z-50 transition-all duration-300 opacity-0 translate-x-10 pointer-events-none">
+    </div>
+
+    <!-- Guide Modal -->
+    <div id="guideModal" class="modal">
+        <div class="modal-content overflow-hidden">
+            <div class="bg-indigo-600/20 border-b border-indigo-500/30 p-6 text-center">
+                <h3 class="text-2xl font-bold text-white font-Orbitron" data-i18n="modalTitle">導出成功</h3>
+                <p class="text-indigo-200 text-sm mt-1" data-i18n="modalDesc">請依照下方指示導入文章</p>
+            </div>
+
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <!-- Step 1 -->
+                <div class="step-card items-start">
+                    <div class="step-num">1</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold mb-2 text-indigo-300" data-i18n="step1Title">點擊「導入」</h4>
+                        <div class="bg-white rounded p-1 inline-block opacity-90 border border-gray-300 shadow-md">
+                            <div
+                                class="flex items-center gap-2 text-gray-700 px-3 py-1 bg-gray-50 border border-gray-200 rounded">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="text-gray-600"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                                    <polyline points="10 17 15 12 10 7"></polyline>
+                                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                                </svg>
+                                <span class="text-sm font-bold">导入</span>
+                                <i class="fas fa-caret-down text-xs text-gray-400 opacity-70"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2" data-i18n="step1Desc">在編輯器頂部工具列找到此按鈕</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card items-start">
+                    <div class="step-num">2</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold mb-2 text-indigo-300" data-i18n="step2Title">選擇「導入文檔」</h4>
+                        <div
+                            class="bg-white rounded p-1 inline-block min-w-[180px] opacity-90 border border-gray-300 shadow-md">
+                            <div
+                                class="flex items-center justify-between gap-3 px-3 py-2 bg-blue-50/30 text-gray-700 border border-gray-100 rounded hover:bg-blue-50 cursor-default">
+                                <div class="flex items-center gap-2">
+                                    <i class="far fa-file-alt text-gray-500"></i>
+                                    <span class="text-sm font-medium">导入文档</span>
+                                </div>
+                                <span
+                                    class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">MD/Doc</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2" data-i18n="step2Desc">選擇剛導出的 .md 檔案</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card items-start">
+                    <div class="step-num">3</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold mb-2 text-indigo-300" data-i18n="step3Title">確認發佈 (右下角)</h4>
+                        <div class="flex justify-start">
+                            <button
+                                class="bg-[#056DE8] text-white px-6 py-1.5 rounded-[3px] font-bold shadow-md text-sm cursor-default">
+                                发布
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2 text-left" data-i18n="step3Desc">按鈕位於頁面最右下角</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-indigo-500/30 flex justify-end gap-3 bg-black/20">
+                <button onclick="document.getElementById('guideModal').classList.remove('show')"
+                    class="btn btn-secondary text-sm" data-i18n="closeBtn">關閉</button>
+                <button onclick="window.open('https://zhuanlan.zhihu.com/write')" class="btn btn-primary text-sm">
+                    <i class="fas fa-external-link-alt"></i> <span data-i18n="openZhihu">前往知乎</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="DevScribeRPG.js"></script>
+    <script>
+        // i18n Data
+        const translations = {
+            zh: {
+                backToHub: "回主選單",
+                subtitle: "智能 AI 潤飾 • 自動Markdown格式化 • 一鍵導出",
+                keySafe: "Key 僅保存在本地",
+                editorTitle: "內容編輯",
+                aiPolishBtn: "AI 潤飾並格式化",
+                imgTitle: "圖片附件",
+                dropText: "拖放圖片到這裡，或點擊選擇",
+                exportBtn: "🚀 導出檔案並開啟知乎",
+                modalTitle: "導出成功",
+                modalDesc: "請依照下方指示導入文章",
+                step1Title: "點擊「導入」",
+                step1Desc: "在編輯器頂部工具列找到此按鈕",
+                step2Title: "選擇「導入文檔」",
+                step2Desc: "選擇剛導出的 .md 檔案",
+                step3Title: "確認發布 (右下角)",
+                step3Desc: "按鈕位於頁面最右下角",
+                closeBtn: "關閉",
+                openZhihu: "前往知乎",
+                // User Status Card
+                totalXP: "總經驗值",
+                tokens: "💰 代幣",
+                victories: "勝利場次",
+                defeats: "失敗場次",
+                unlockedTools: "已解鎖工具",
+                streakDays: "連續天數",
+                xpNeeded: "還需 {xp} XP 升級",
+                // Ranks
+                rpgRank1: '新手挑戰者',
+                rpgRank2: '見習冒險家',
+                rpgRank3: '探索者',
+                rpgRank4: '挑戰達人',
+                rpgRank5: '精英戰士',
+                rpgRank6: '專家引導者',
+                rpgRank7: '大師創造者',
+                rpgRank8: '宗師煉金師',
+                rpgRank9: '傳奇締造者',
+                rpgRank10: '帝國領袖',
+                // Toasts
+                toastNoKey: "請先輸入 Gemini API Key",
+                toastNoContent: "請先輸入文章內容",
+                toastNoTitle: "請填寫標題和內容",
+                toastPolishSuccess: "✨ 潤飾完成！",
+                toastExportSuccess: "🎉 導出成功！"
+            },
+            en: {
+                backToHub: "Back to Hub",
+                subtitle: "AI Polish • Auto Markdown • One-Click Export",
+                keySafe: "Key stored locally",
+                editorTitle: "Content Editor",
+                aiPolishBtn: "AI Polish & Format",
+                imgTitle: "Attachments",
+                dropText: "Drag & drop images here",
+                exportBtn: "🚀 Export & Open Zhihu",
+                modalTitle: "Export Success",
+                modalDesc: "Follow these steps to import:",
+                step1Title: "Click 'Import'",
+                step1Desc: "Find this button in the top toolbar",
+                step2Title: "Select 'Import Document'",
+                step2Desc: "Select the .md file just created",
+                step3Title: "Publish (Bottom Right)",
+                step3Desc: "Button is at the bottom right corner",
+                closeBtn: "Close",
+                openZhihu: "Open Zhihu",
+                // User Status Card
+                totalXP: "Total XP",
+                tokens: "💰 Tokens",
+                victories: "Victories",
+                defeats: "Defeats",
+                unlockedTools: "Tools Unlocked",
+                streakDays: "Streak Days",
+                xpNeeded: "{xp} XP needed",
+                // Ranks
+                rpgRank1: 'Novice Challenger',
+                rpgRank2: 'Apprentice Adventurer',
+                rpgRank3: 'Explorer',
+                rpgRank4: 'Challenge Master',
+                rpgRank5: 'Elite Warrior',
+                rpgRank6: 'Expert Guide',
+                rpgRank7: 'Master Creator',
+                rpgRank8: 'Alchemy Grandmaster',
+                rpgRank9: 'Legendary Founder',
+                rpgRank10: 'Empire Leader',
+                // Toasts
+                toastNoKey: "Please enter Gemini API Key first",
+                toastNoContent: "Please enter article content first",
+                toastNoTitle: "Please provide both title and content",
+                toastPolishSuccess: "✨ Polish Complete!",
+                toastExportSuccess: "🎉 Export Success!"
+            }
+        };
+
+        let currentLang = 'zh';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            document.getElementById('langBtnText').textContent = currentLang === 'zh' ? 'EN' : '中';
+            updateTexts();
+        }
+
+        function updateTexts() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.textContent = translations[currentLang][key];
+                }
+            });
+            // Update Inputs
+            if (currentLang === 'en') {
+                document.getElementById('articleTitle').placeholder = "Article Title...";
+                document.getElementById('apiKey').placeholder = "Enter Gemini API Key...";
+            } else {
+                document.getElementById('articleTitle').placeholder = "文章標題...";
+                document.getElementById('apiKey').placeholder = "請輸入 API Key 以啟用 AI 功能...";
+            }
+
+            // Update EasyMDE Placeholder
+            if (easyMDE && easyMDE.codemirror) {
+                const ph = currentLang === 'en' ? "Type content here... (Markdown supported)" : "請在此輸入內容... (支援 Markdown 語法或快捷鍵)";
+                easyMDE.codemirror.setOption("placeholder", ph);
+            }
+
+            // Sync User Stats with Language
+            updateUserStatsUI();
+        }
+
+        function updateUserStatsUI() {
+            if (typeof DevScribeRPG === 'undefined') return;
+
+            const state = DevScribeRPG.getState();
+            const rank = DevScribeRPG.calculateLevel(state.totalXP);
+            const progress = DevScribeRPG.getProgressToNextLevel(state.totalXP);
+
+            // Update Basic Stats
+            document.getElementById('rank-title').textContent = translations[currentLang]['rpgRank' + rank.level] || rank.title;
+            document.getElementById('player-level').textContent = rank.level;
+            document.getElementById('total-xp').textContent = state.totalXP;
+            document.getElementById('total-tokens').textContent = state.tokens;
+            document.getElementById('xp-current').textContent = progress.currentInLevel;
+            document.getElementById('xp-total').textContent = progress.totalInLevel;
+
+            // Highlighted XP needed
+            const xpNeededTmpl = translations[currentLang].xpNeeded;
+            if (document.getElementById('xp-needed-container')) {
+                document.getElementById('xp-needed-container').innerHTML = xpNeededTmpl.replace('{xp}', `<span class="text-indigo-400 font-bold">${progress.xpNeeded}</span>`);
+            }
+
+            // Counters
+            document.getElementById('stat-victories').textContent = state.totalChallengesCompleted || 0;
+            document.getElementById('stat-defeats').textContent = state.totalChallengesAbandoned || 0;
+            document.getElementById('plugins-count').textContent = state.unlockedTools.length || 0;
+            document.getElementById('streak-days').textContent = state.currentStreak || 0;
+
+            // Visuals
+            document.getElementById('rank-icon').textContent = rank.icon;
+            document.getElementById('xp-bar').style.width = progress.progress + '%';
+        }
+
+        // Init EasyMDE
+        const easyMDE = new EasyMDE({
+            element: document.getElementById('articleContent'),
+            placeholder: "請在此輸入內容... (支援 Markdown 語法或快捷鍵)",
+            status: false,
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "table", "|", "preview", "side-by-side", "fullscreen"],
+            spellChecker: false,
+            minHeight: "350px",
+            maxHeight: "500px"
+        });
+
+        // App Logic
+        const apiKeyInput = document.getElementById('apiKey');
+        apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+        apiKeyInput.addEventListener('input', (e) => localStorage.setItem('gemini_api_key', e.target.value));
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewArea = document.getElementById('previewArea');
+        let selectedFiles = [];
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    selectedFiles.push(file);
+                    addPreview(file);
+                }
+            });
+        }
+
+        function addPreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'relative w-20 h-20 rounded-lg overflow-hidden border border-gray-600 group shadow-lg';
+                div.innerHTML = `
+                    <img src="${e.target.result}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onclick="removeFile('${file.name}', this)">
+                        <i class="fas fa-trash text-red-500"></i>
+                    </div>
+                `;
+                previewArea.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeFile(fileName, el) {
+            selectedFiles = selectedFiles.filter(f => f.name !== fileName);
+            el.parentElement.remove();
+        }
+
+        function showToast(type, msg) {
+            const toast = document.getElementById('toast');
+            toast.className = `fixed top-24 right-6 z-50 px-6 py-3 rounded-lg shadow-xl text-white font-bold transition-all duration-300 translate-x-0 opacity-100 border ${type === 'error' ? 'bg-red-900/90 border-red-500' : 'bg-green-900/90 border-green-500'}`;
+            toast.innerHTML = type === 'error' ? `<i class="fas fa-exclamation-circle"></i> ${msg}` : `<i class="fas fa-check"></i> ${msg}`;
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-10'); }, 3000);
+        }
+
+        async function polishArticle() {
+            const content = easyMDE.value();
+            const apiKey = apiKeyInput.value.trim();
+            const btn = document.getElementById('aiBtn');
+
+            if (!apiKey) return showToast('error', translations[currentLang].toastNoKey);
+            if (!content) return showToast('error', translations[currentLang].toastNoContent);
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Processing...';
+
+            try {
+                const res = await fetch('http://localhost:5000/polish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey, content })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    easyMDE.value(data.content);
+                    showToast('success', translations[currentLang].toastPolishSuccess);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (e) {
+                showToast('error', '潤飾失敗: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-magic"></i> <span data-i18n="aiPolishBtn">' + translations[currentLang].aiPolishBtn + '</span>';
+            }
+        }
+
+        async function exportAndOpen() {
+            const title = document.getElementById('articleTitle').value.trim();
+            const content = easyMDE.value();
+            const btn = document.getElementById('exportBtn');
+            const apiKey = apiKeyInput.value.trim();
+
+            console.log("[DEBUG] Exporting article:", title);
+
+            if (!title || !content) return showToast('error', translations[currentLang].toastNoTitle);
+
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner"></div> Exporting...';
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('content', content);
+            formData.append('apiKey', apiKey);
+            selectedFiles.forEach(file => formData.append('images', file));
+
+            try {
+                const res = await fetch('http://localhost:5000/export', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                console.log("[DEBUG] Server response:", data);
+
+                if (data.success) {
+                    // Open Zhihu in new tab
+                    window.open('https://zhuanlan.zhihu.com/write', '_blank');
+
+                    // Show success modal
+                    const modal = document.getElementById('guideModal');
+                    if (modal) {
+                        modal.classList.add('show');
+                    }
+                    showToast('success', translations[currentLang].toastExportSuccess);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (e) {
+                console.error("[ERROR] Export failed:", e);
+                showToast('error', '導出失敗: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // Initial language update
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTexts();
+        });
+    </script>
+</body>
+
+</html>

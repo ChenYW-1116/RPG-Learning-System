@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">IELTS Sprint Coach</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* PUT ALL YOUR CUSTOM CSS HERE */
+        
+        /* Custom Scrollbar for Textareas */
+        textarea::-webkit-scrollbar {
+            width: 6px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1; /* Gray-300 */
+            border-radius: 3px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f1f5f9; /* Gray-100 */
+        }
+
+        /* Blind Write Diff Styling */
+        .omitted {
+            background-color: #fecaca; /* Red-200 */
+            color: #b91c1c; /* Red-700 */
+            padding: 1px 3px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        .retained {
+            background-color: #d1fae5; /* Green-100 */
+            color: #065f46; /* Green-700 */
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        .blind-source-hidden {
+            height: 0 !important;
+            opacity: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+            transition: all 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navigation Bar -->
+    <nav class="sticky top-0 z-10 bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-indigo-600" data-i18n="app_title">IELTS Sprint Coach</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="nav-links" class="hidden sm:ml-6 sm:flex sm:space-x-4">
+                        <!-- Navigation links rendered by JS -->
+                    </div>
+                    <button id="settings-btn" class="p-2 rounded-full text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition duration-150 ease-in-out" title="Settings">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.333.837 2.35 2.35a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.837 3.333-2.35 2.35a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.333-.837-2.35-2.35a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.837-3.333 2.35-2.35a1.724 1.724 0 002.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                    <button id="lang-toggle" class="text-sm font-medium text-gray-500 hover:text-indigo-600 transition duration-150 ease-in-out">
+                        EN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div id="app-content">
+            <!-- Dynamic content rendering here -->
+        </div>
+    </main>
+
+    <!-- Settings Modal (Hidden by default) -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" aria-hidden="true"></div>
+
+            <!-- Modal content -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" data-i18n="settings_title">
+                        系統設定
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="api-key" class="block text-sm font-medium text-gray-700" data-i18n="settings_api_key">API 密鑰 (模擬)</label>
+                            <input type="text" id="api-key" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="sk-xxxxxxxxx">
+                        </div>
+                        <div>
+                            <label for="start-date" class="block text-sm font-medium text-gray-700" data-i18n="settings_sprint_start">衝刺起始日期</label>
+                            <input type="date" id="start-date" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="test-type" class="block text-sm font-medium text-gray-700" data-i18n="settings_test_type">測驗類型</label>
+                            <select id="test-type" class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="academic" data-i18n="test_type_academic">學術 A</option>
+                                <option value="general" data-i18n="test_type_general">培訓 GT</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="save-settings-btn" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm active:scale-95 transition">
+                        <span data-i18n="settings_save">儲存設定</span>
+                    </button>
+                    <button type="button" id="close-settings-btn" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm active:scale-95 transition">
+                        <span data-i18n="settings_cancel">取消</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-3 z-50">
+        <!-- Toasts will be injected here -->
+    </div>
+
+    <script>
+        // PUT ALL YOUR JAVASCRIPT LOGIC HERE
+        // DATA, STATE, FUNCTIONS, EVENTS - EVERYTHING
+        const STORAGE_KEY = 'IELTS_SPRINT_COACH_V1';
+        const TASK_DURATION_SECONDS = 900; // 15 minutes
+        const MIN_WORD_COUNT = 150;
+        const MIN_NEW_VERBS = 6;
+        const MAX_PASSIVE_RATIO = 0.30;
+        const MAX_OMISSION_RATE = 0.030;
+        const BI_TARGET = 0.02;
+
+        const I18N = {
+            en: {
+                app_title: "IELTS Sprint Coach",
+                nav_dashboard: "Dashboard",
+                nav_daily_task: "Daily Task Sprint",
+                nav_blind_write: "Blind Retranslation",
+                nav_mock_test: "Mock Test (Coming Soon)",
+                settings_title: "System Settings",
+                settings_api_key: "API Key (Mock)",
+                settings_sprint_start: "Sprint Start Date",
+                settings_test_type: "Test Type",
+                test_type_academic: "Academic A",
+                test_type_general: "General GT",
+                settings_save: "Save Settings",
+                settings_cancel: "Cancel",
+                sprint_day: "Sprint Day",
+                task_prompt: "Writing Prompt",
+                task_editor_placeholder: "Start writing your essay here...",
+                timer_start: "Start Timer (15:00)",
+                timer_running: "Time Remaining",
+                timer_submit: "Submit & Analyze",
+                status_word_count: "Word Count",
+                status_passive_ratio: "Passive Ratio",
+                status_new_verbs: "New Verbs Hit",
+                status_pass: "PASS",
+                status_fail: "FAIL",
+                feedback_title: "Analysis Feedback",
+                feedback_word_count_fail: "Word count must be at least 150 words.",
+                feedback_verb_fail: "Insufficient new verbs. Need {required} but found {found}.",
+                feedback_verb_list: "Missing Verb List:",
+                blind_source_title: "Source Text (Original)",
+                blind_retranslation_title: "Retranslation (Blind Write)",
+                blind_retranslation_placeholder: "Write your translation here...",
+                blind_start: "Hide Source & Start Blind Write",
+                blind_submit: "Submit & Analyze Omission",
+                blind_omission_rate: "Omission Rate",
+                blind_diff_title: "Difference Analysis",
+                blind_diff_retained: "Retained Key Token",
+                blind_diff_omitted: "Omitted Key Token",
+                dashboard_bi: "Bottleneck Index (BI)",
+                dashboard_score: "Predicted Score",
+                dashboard_micro_tasks: "Personalized Micro-Tasks",
+                dashboard_history: "Recent Sprint History (Last 8 Days)",
+                history_day: "Day",
+                history_status: "Status",
+                history_passive: "Passive %",
+                history_omission: "Omission %",
+                history_verbs: "Verbs",
+                history_bi: "BI",
+                toast_success: "Success",
+                toast_error: "Error",
+                toast_info: "Information",
+                toast_settings_saved: "Settings saved successfully.",
+                toast_task_submitted: "Task submitted. Analyzing results...",
+                toast_task_timeout: "Time's up! Draft submitted automatically.",
+                toast_blind_submitted: "Blind write submitted. Calculating omission rate...",
+                bi_low: "Excellent! BI is low. Maintain consistency.",
+                bi_medium: "Good progress, but review passive voice use.",
+                bi_high: "Critical: Focus on key information retention in blind translation.",
+            },
+            zh: {
+                app_title: "雅思寫作衝刺教練",
+                nav_dashboard: "儀表板",
+                nav_daily_task: "每日任務衝刺",
+                nav_blind_write: "盲寫回譯追蹤",
+                nav_mock_test: "模擬測驗 (即將推出)",
+                settings_title: "系統設定",
+                settings_api_key: "API 密鑰 (模擬)",
+                settings_sprint_start: "衝刺起始日期",
+                settings_test_type: "測驗類型",
+                test_type_academic: "學術 A",
+                test_type_general: "培訓 GT",
+                settings_save: "儲存設定",
+                settings_cancel: "取消",
+                sprint_day: "衝刺日",
+                task_prompt: "寫作提示",
+                task_editor_placeholder: "請在此開始您的寫作...",
+                timer_start: "開始計時 (15:00)",
+                timer_running: "剩餘時間",
+                timer_submit: "提交並分析",
+                status_word_count: "字數統計",
+                status_passive_ratio: "被動比率",
+                status_new_verbs: "新動詞命中",
+                status_pass: "通過",
+                status_fail: "失敗",
+                feedback_title: "分析回饋",
+                feedback_word_count_fail: "字數必須至少達到 150 字。",
+                feedback_verb_fail: "新動詞數量不足。要求 {required} 個，實際找到 {found} 個。",
+                feedback_verb_list: "缺失動詞列表：",
+                blind_source_title: "原文 (原始文本)",
+                blind_retranslation_title: "回譯 (盲寫文本)",
+                blind_retranslation_placeholder: "請在此寫下您的回譯內容...",
+                blind_start: "隱藏原文並開始盲寫",
+                blind_submit: "提交並分析遺漏率",
+                blind_omission_rate: "遺漏率",
+                blind_diff_title: "差異分析",
+                blind_diff_retained: "保留的關鍵詞元",
+                blind_diff_omitted: "遺漏的關鍵詞元",
+                dashboard_bi: "瓶頸指數 (BI)",
+                dashboard_score: "預測分數",
+                dashboard_micro_tasks: "個人化微任務",
+                dashboard_history: "近期衝刺歷史 (最近 8 天)",
+                history_day: "日期",
+                history_status: "狀態",
+                history_passive: "被動 %",
+                history_omission: "遺漏 %",
+                history_verbs: "動詞數",
+                history_bi: "BI 值",
+                toast_success: "成功",
+                toast_error: "錯誤",
+                toast_info: "資訊",
+                toast_settings_saved: "設定已成功儲存。",
+                toast_task_submitted: "任務已提交。正在分析結果...",
+                toast_task_timeout: "時間到！草稿已自動提交。",
+                toast_blind_submitted: "盲寫已提交。正在計算遺漏率...",
+                bi_low: "太棒了！BI 值很低。請保持一致性。",
+                bi_medium: "進展良好，但請審查被動語態的使用。",
+                bi_high: "關鍵警告：專注於盲寫回譯中關鍵資訊的保留率。",
+            }
+        };
+
+        const MOCK_TASKS = [
+            { day: 1, prompt: "The best way to solve the world's environmental problems is to increase the cost of fuel. Do you agree or disagree? (Task 2)" },
+            { day: 2, prompt: "Some people think that the government should provide free education for all levels. To what extent do you agree or disagree? (Task 2)" },
+            { day: 3, prompt: "Write a letter to a friend inviting them to a party. (General Training Task 1)" },
+            { day: 4, prompt: "Many people prefer to live in the city than in the countryside. What are the reasons for this, and what problems might this cause? (Task 2)" },
+            { day: 5, prompt: "Write a letter to a local newspaper complaining about the closure of a public library. (General Training Task 1)" },
+            { day: 6, prompt: "The use of mobile phones should be banned in all public spaces. Discuss the advantages and disadvantages and give your own opinion. (Task 2)" },
+            { day: 7, prompt: "Some people believe that children should be taught practical skills like cooking and finance in school. Do you agree that these subjects are more important than traditional academic subjects? (Task 2)" },
+            { day: 8, prompt: "Write a report summarizing the data shown in the provided bar chart (Mock chart data not required for implementation, just prompt text). (Academic Task 1)" },
+        ];
+
+        const MOCK_HISTORY_DATA = [
+            { day: 1, passive_ratio: 0.35, omission_rate: 0.045, new_verbs: 5, status: 'Fail' },
+            { day: 2, passive_ratio: 0.28, omission_rate: 0.021, new_verbs: 7, status: 'Pass' },
+            { day: 3, passive_ratio: 0.22, omission_rate: 0.015, new_verbs: 8, status: 'Pass' },
+            { day: 4, passive_ratio: 0.31, omission_rate: 0.035, new_verbs: 6, status: 'Fail' },
+            { day: 5, passive_ratio: 0.25, omission_rate: 0.018, new_verbs: 7, status: 'Pass' },
+            { day: 6, passive_ratio: 0.19, omission_rate: 0.029, new_verbs: 9, status: 'Pass' },
+            { day: 7, passive_ratio: 0.27, omission_rate: 0.010, new_verbs: 6, status: 'Pass' },
+            { day: 8, passive_ratio: 0.20, omission_rate: 0.025, new_verbs: 8, status: 'Pass' },
+        ];
+
+        // --- Utility Functions ---
+
+        /**
+         * Calculates the current sprint day based on the start date.
+         */
+        function calculateSprintDay(startDateString) {
+            if (!startDateString) return 0;
+            const start = new Date(startDateString);
+            const now = new Date();
+            start.setHours(0, 0, 0, 0);
+            now.setHours(0, 0, 0, 0);
+
+            const diffTime = now - start;
+            if (diffTime < 0) return 0; // Future date
+
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays + 1;
+        }
+
+        /**
+         * Custom Tokenizer (B1 Fix) for Omission Rate:
+         * Preserves key tokens: capitalized proper nouns, numbers, percentages, units, and punctuation attached to them.
+         */
+        function tokenizeKeyTokens(text) {
+            // 1. Normalize and clean up common symbols
+            text = text.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"');
+            
+            // 2. Regex to capture key tokens:
+            // R1: Numbers, percentages, currencies (e.g., 100, 5.5%, $200, 10km)
+            // R2: Capitalized words (potential proper nouns, e.g., John Smith)
+            const tokenRegex = /(\b[A-Z][a-z]+(\s[A-Z][a-z]+)*\b)|(\b\d[\d,\.]*(\s*(%|km|m|kg|USD|GBP|EUR))?\b)/g;
+            
+            const matches = text.match(tokenRegex) || [];
+            
+            // Filter out common, short, non-key capitalized words (like 'The', 'A', 'I')
+            return matches.filter(token => token.length > 1 || !['A', 'I'].includes(token));
+        }
+
+        /**
+         * Calculates Bottleneck Index (BI) based on last 7 days of data (FR005).
+         * BI = w1 * PassiveGap + w2 * AvgOmission + w3 * ResponsePenalty
+         * w1=0.4, w2=0.3, w3=0.3. Passive Target: 0.25
+         */
+        function calculateBI(history) {
+            const recentData = history.slice(-7).filter(d => d.passive_ratio !== undefined);
+            if (recentData.length === 0) return 0.00;
+
+            // 1. Passive Voice Gap (w1 = 0.4)
+            const avgPassiveRatio = recentData.reduce((sum, d) => sum + d.passive_ratio, 0) / recentData.length;
+            const passiveGap = Math.max(0, avgPassiveRatio - 0.25); 
+
+            // 2. Average Omission Rate (w2 = 0.3)
+            const relevantOmissionData = recentData.filter(d => d.omission_rate !== undefined && d.omission_rate !== 0.00);
+            const avgOmissionRate = relevantOmissionData.length > 0
+                ? relevantOmissionData.reduce((sum, d) => sum + d.omission_rate, 0) / relevantOmissionData.length
+                : 0;
+
+            // 3. Task Response Penalty (w3 = 0.3)
+            const failCount = recentData.filter(d => d.status === 'Fail').length;
+            const responsePenalty = failCount / recentData.length;
+
+            // BI Calculation
+            const bi = (0.4 * passiveGap) + (0.3 * avgOmissionRate) + (0.3 * responsePenalty);
+            return parseFloat(bi.toFixed(4));
+        }
+
+        /**
+         * Simulates GBDT model for score prediction (T013).
+         */
+        function predictScore(bi) {
+            if (bi < 0.01) return 7.5;
+            if (bi < 0.02) return 7.0;
+            if (bi < 0.04) return 6.5;
+            if (bi < 0.06) return 6.0;
+            return 5.5;
+        }
+
+        // --- Services ---
+
+        class DataService {
+            constructor() {
+                this.defaultState = {
+                    lang: 'zh',
+                    currentView: 'dashboard',
+                    settings: {
+                        apiKey: '',
+                        sprintStartDate: '',
+                        testType: 'academic',
+                    },
+                    // Ensure history items have a BI placeholder
+                    history: MOCK_HISTORY_DATA.map(d => ({...d, bi: calculateBI(MOCK_HISTORY_DATA.filter(h => h.day <= d.day))})),
+                    currentTask: {
+                        day: 0,
+                        prompt: '',
+                        content: '',
+                        analysis: null,
+                        blindWrite: {
+                            source: "The global population reached 8.0 billion people in November 2022, marking a significant milestone. This figure represents an increase of 1.0 billion from 2010. Experts predict the population will peak at 10.4 billion in the 2080s.",
+                            retranslation: '',
+                            analysis: null,
+                            isBlindMode: false,
+                        }
+                    }
+                };
+            }
+
+            loadState() {
+                try {
+                    const storedState = localStorage.getItem(STORAGE_KEY);
+                    if (storedState) {
+                        const loadedState = JSON.parse(storedState);
+                        // Merge loaded state with defaults to ensure new keys exist
+                        return { 
+                            ...this.defaultState, 
+                            ...loadedState, 
+                            settings: { ...this.defaultState.settings, ...loadedState.settings },
+                            currentTask: { ...this.defaultState.currentTask, ...loadedState.currentTask }
+                        };
+                    }
+                } catch (e) {
+                    console.error("Error loading state:", e);
+                }
+                return this.defaultState;
+            }
+
+            saveState(state) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                } catch (e) {
+                    console.error("Error saving state:", e);
+                }
+            }
+
+            fetchDailyTask(day) {
+                const taskIndex = (day - 1) % MOCK_TASKS.length;
+                return MOCK_TASKS[taskIndex] || { day: day, prompt: 'No specific task found for this day. Focus on review.' };
+            }
+
+            /**
+             * Simulates complex NLP analysis for Task 1/2 submission.
+             */
+            async analyzeTaskSubmission(content) {
+                await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+
+                const wordCount = content.trim().split(/\s+/).filter(w => w.length > 0).length;
+                
+                // Mock Analysis:
+                const passiveCount = Math.floor(Math.random() * (wordCount / 12));
+                let passiveRatio = wordCount > 0 ? passiveCount / wordCount : 0;
+                passiveRatio = parseFloat(passiveRatio.toFixed(3));
+                
+                let newVerbs = Math.floor(Math.random() * 5) + 4; // Range 4 to 8
+                if (passiveRatio > 0.35) {
+                    newVerbs = Math.max(3, newVerbs - 2); 
+                }
+
+                const passivePass = passiveRatio < MAX_PASSIVE_RATIO;
+                const verbsPass = newVerbs >= MIN_NEW_VERBS;
+                
+                const missingVerbs = verbsPass ? [] : ['elucidate', 'mitigate', 'galvanize', 'confer', 'underscore', 'epitomize'].slice(0, MIN_NEW_VERBS - newVerbs);
+
+                const overallStatus = (passivePass && verbsPass && wordCount >= MIN_WORD_COUNT) ? 'Pass' : 'Fail';
+
+                return {
+                    wordCount,
+                    passiveRatio,
+                    newVerbs,
+                    passivePass,
+                    verbsPass,
+                    missingVerbs,
+                    overallStatus
+                };
+            }
+
+            /**
+             * Calculates Omission Rate and generates Diff Analysis (FR-004, T010).
+             */
+            async analyzeBlindWrite(sourceText, retranslationText) {
+                await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+
+                const sourceTokens = tokenizeKeyTokens(sourceText);
+                const retranslationTokens = tokenizeKeyTokens(retranslationText);
+                
+                const retranslationSet = new Set(retranslationTokens.map(t => t.toLowerCase()));
+
+                let omittedCount = 0;
+                
+                // Generate Diff HTML and count omissions
+                let diffHtml = sourceText;
+                let processedSourceText = sourceText;
+
+                sourceTokens.forEach(token => {
+                    const lowerToken = token.toLowerCase();
+                    const regex = new RegExp(`\\b${token.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'g');
+                    
+                    if (!retranslationSet.has(lowerToken)) {
+                        omittedCount++;
+                        // Use a non-greedy replacement to avoid replacing tokens already wrapped
+                        processedSourceText = processedSourceText.replace(regex, `<span class="omitted">${token}</span>`);
+                    } else {
+                        processedSourceText = processedSourceText.replace(regex, `<span class="retained">${token}</span>`);
+                    }
+                });
+                
+                const totalSourceTokens = sourceTokens.length;
+                const omissionRate = totalSourceTokens > 0 ? omittedCount / totalSourceTokens : 0;
+                const omissionPass = omissionRate < MAX_OMISSION_RATE;
+
+                return {
+                    omissionRate: parseFloat(omissionRate.toFixed(4)),
+                    omissionPass,
+                    totalSourceTokens,
+                    omittedCount,
+                    diffHtml: processedSourceText
+                };
+            }
+        }
+
+        class TimerService {
+            constructor(callback, timeoutCallback) {
+                this.interval = null;
+                this.duration = TASK_DURATION_SECONDS;
+                this.remaining = TASK_DURATION_SECONDS;
+                this.isRunning = false;
+                this.callback = callback;
+                this.timeoutCallback = timeoutCallback;
+            }
+
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.interval = setInterval(() => {
+                    this.remaining--;
+                    this.callback(this.remaining);
+                    if (this.remaining <= 0) {
+                        this.stop();
+                        this.timeoutCallback();
+                    }
+                }, 1000);
+            }
+
+            stop() {
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                this.isRunning = false;
+            }
+
+            reset() {
+                this.stop();
+                this.remaining = this.duration;
+                this.callback(this.remaining);
+            }
+
+            getRemaining() {
+                return this.remaining;
+            }
+        }
+
+        class UIHandler {
+            constructor(app) {
+                this.app = app;
+                this.contentEl = document.getElementById('app-content');
+                this.navLinksEl = document.getElementById('nav-links');
+                this.toastContainer = document.getElementById('toast-container');
+                this.modal = document.getElementById('settings-modal');
+            }
+
+            // --- General UI ---
+
+            updateI18n() {
+                const lang = this.app.state.lang;
+                const translations = I18N[lang];
+                
+                document.getElementById('lang-toggle').textContent = lang === 'zh' ? 'EN' : 'ZH';
+
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (translations[key]) {
+                        el.textContent = translations[key];
+                    }
+                });
+            }
+
+            renderNavigation() {
+                const links = [
+                    { id: 'dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', i18n: 'nav_dashboard' },
+                    { id: 'daily_task', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01', i18n: 'nav_daily_task' },
+                    { id: 'blind_write', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z', i18n: 'nav_blind_write' },
+                    { id: 'mock_test', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', i18n: 'nav_mock_test' },
+                ];
+
+                this.navLinksEl.innerHTML = links.map(link => {
+                    const isActive = this.app.state.currentView === link.id;
+                    const activeClass = isActive ? 'bg-indigo-50 text-indigo-700' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700';
+                    const disabledAttr = link.id === 'mock_test' ? 'disabled' : '';
+                    const disabledClass = link.id === 'mock_test' ? 'opacity-50 cursor-not-allowed' : '';
+                    
+                    return `
+                        <button data-view="${link.id}" ${disabledAttr} class="nav-link ${activeClass} ${disabledClass} px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out flex items-center">
+                            <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${link.icon}"/></svg>
+                            <span data-i18n="${link.i18n}">${I18N[this.app.state.lang][link.i18n]}</span>
+                        </button>
+                    `;
+                }).join('');
+                
+                document.querySelectorAll('.nav-link').forEach(btn => {
+                    if (!btn.disabled) {
+                        btn.addEventListener('click', (e) => this.app.changeView(e.currentTarget.getAttribute('data-view')));
+                    }
+                });
+            }
+
+            showToast(type, titleKey, messageKey, duration = 4000) {
+                const lang = this.app.state.lang;
+                const title = I18N[lang][titleKey] || titleKey;
+                const message = I18N[lang][messageKey] || messageKey;
+
+                let bgColor, icon;
+                switch (type) {
+                    case 'success':
+                        bgColor = 'bg-green-600';
+                        icon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                        break;
+                    case 'error':
+                        bgColor = 'bg-red-600';
+                        icon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                        break;
+                    case 'info':
+                    default:
+                        bgColor = 'bg-indigo-600';
+                        icon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                        break;
+                }
+
+                const toast = document.createElement('div');
+                toast.className = `${bgColor} text-white p-4 rounded-lg shadow-xl transition-all duration-300 transform translate-x-full opacity-0`;
+                toast.style.minWidth = '250px';
+                toast.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="mr-2">${icon}</div>
+                        <div>
+                            <p class="font-bold text-sm">${title}</p>
+                            <p class="text-xs">${message}</p>
+                        </div>
+                    </div>
+                `;
+
+                this.toastContainer.appendChild(toast);
+
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-full', 'opacity-0');
+                    toast.classList.add('translate-x-0', 'opacity-100');
+                }, 10);
+
+                // Animate out and remove
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-0', 'opacity-100');
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            }
+
+            // --- View Rendering ---
+
+            renderView(viewName) {
+                this.app.state.currentView = viewName;
+                this.renderNavigation();
+                this.contentEl.innerHTML = '';
+                
+                switch (viewName) {
+                    case 'dashboard':
+                        this.renderDashboard();
+                        break;
+                    case 'daily_task':
+                        this.renderDailyTask();
+                        break;
+                    case 'blind_write':
+                        this.renderBlindWrite();
+                        break;
+                    case 'mock_test':
+                        this.contentEl.innerHTML = `<div class="p-10 text-center text-gray-500 text-xl" data-i18n="nav_mock_test">${I18N[this.app.state.lang].nav_mock_test}</div>`;
+                        break;
+                }
+                this.updateI18n();
+                this.app.dataService.saveState(this.app.state);
+            }
+
+            renderDashboard() {
+                const lang = this.app.state.lang;
+                
+                // Recalculate BI for all history entries for accurate chart/table display
+                const historyWithBI = this.app.state.history.map((d, index) => {
+                    const subset = this.app.state.history.slice(0, index + 1);
+                    return { ...d, bi: calculateBI(subset) };
+                });
+                
+                const history = historyWithBI;
+                const bi = calculateBI(history);
+                const predictedScore = predictScore(bi);
+
+                let microTaskMessage = I18N[lang].bi_low;
+                if (bi >= 0.04) {
+                    microTaskMessage = I18N[lang].bi_high;
+                } else if (bi >= 0.02) {
+                    microTaskMessage = I18N[lang].bi_medium;
+                }
+
+                const biColor = bi < BI_TARGET ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+                const scoreColor = predictedScore >= 7.0 ? 'text-indigo-600' : 'text-yellow-600';
+                
+                const chartData = history.slice(-7);
+                
+                const chartSvg = this.renderPerformanceChart(chartData);
+
+                this.contentEl.innerHTML = `
+                    <h1 class="text-3xl font-bold mb-6 text-gray-900" data-i18n="nav_dashboard">儀表板</h1>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- BI Card -->
+                        <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                            <p class="text-sm font-medium text-gray-500" data-i18n="dashboard_bi">瓶頸指數 (BI)</p>
+                            <p class="mt-1 text-5xl font-extrabold ${biColor}">${bi.toFixed(4)}</p>
+                            <p class="mt-2 text-xs text-gray-500">Target: < ${BI_TARGET.toFixed(2)}</p>
+                        </div>
+
+                        <!-- Score Card -->
+                        <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                            <p class="text-sm font-medium text-gray-500" data-i18n="dashboard_score">預測分數</p>
+                            <p class="mt-1 text-5xl font-extrabold ${scoreColor}">${predictedScore.toFixed(1)}</p>
+                            <p class="mt-2 text-xs text-gray-500">Based on 7-day performance data.</p>
+                        </div>
+
+                        <!-- Micro Tasks Card -->
+                        <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                            <p class="text-sm font-medium text-gray-500" data-i18n="dashboard_micro_tasks">個人化微任務</p>
+                            <div class="mt-2 p-3 bg-indigo-50 rounded-lg">
+                                <p class="text-sm font-medium text-indigo-700">${microTaskMessage}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart -->
+                    <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 mb-8">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900">Performance Trend (Last 7 Days)</h2>
+                        ${chartSvg}
+                    </div>
+
+                    <!-- History Table -->
+                    <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                        <h2 class="text-xl font-semibold mb-4 text-gray-900" data-i18n="dashboard_history">近期衝刺歷史</h2>
+                        ${this.renderHistoryTable(history)}
+                    </div>
+                `;
+                this.updateI18n();
+            }
+            
+            renderPerformanceChart(data) {
+                const WIDTH = 800;
+                const HEIGHT = 300;
+                const PADDING = 40;
+                const CHART_WIDTH = WIDTH - 2 * PADDING;
+                const CHART_HEIGHT = HEIGHT - 2 * PADDING;
+                const numDataPoints = data.length;
+                if (numDataPoints < 2) return '<p class="text-center text-gray-400 py-10">Need at least 2 days of data for charting.</p>';
+
+                const xStep = CHART_WIDTH / (numDataPoints - 1);
+                
+                // Passive Ratio (Max 50% = 0.5)
+                const maxPassive = 0.5; 
+                const passiveScaleY = CHART_HEIGHT / maxPassive;
+
+                // BI (Max 0.1)
+                const maxBI = 0.1;
+                const biScaleY = CHART_HEIGHT / maxBI;
+
+                // Generate points
+                const passivePoints = data.map((d, i) => {
+                    const x = PADDING + i * xStep;
+                    const y = PADDING + CHART_HEIGHT - (d.passive_ratio) * passiveScaleY;
+                    return `${x},${y}`;
+                }).join(' ');
+
+                // Omission Rate is scaled by 10 for better visibility on the same chart (Max 0.05 * 10 = 0.5)
+                const omissionPoints = data.map((d, i) => {
+                    const x = PADDING + i * xStep;
+                    const y = PADDING + CHART_HEIGHT - (d.omission_rate * 10) * passiveScaleY; 
+                    return `${x},${y}`;
+                }).join(' ');
+
+                const biPoints = data.map((d, i) => {
+                    const x = PADDING + i * xStep;
+                    const y = PADDING + CHART_HEIGHT - d.bi * biScaleY;
+                    return `${x},${y}`;
+                }).join(' ');
+
+                let svg = `<svg viewBox="0 0 ${WIDTH} ${HEIGHT}" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">`;
+                
+                // Background Grid and Axes
+                svg += `<line x1="${PADDING}" y1="${PADDING}" x2="${PADDING}" y2="${HEIGHT - PADDING}" stroke="#e5e7eb"/>`; // Y-axis
+                svg += `<line x1="${PADDING}" y1="${HEIGHT - PADDING}" x2="${WIDTH - PADDING}" y2="${HEIGHT - PADDING}" stroke="#e5e7eb"/>`; // X-axis
+
+                // Horizontal Grid Lines (Passive Ratio / Omission Scaled)
+                [0, 0.1, 0.2, 0.3, 0.4, 0.5].forEach(ratio => {
+                    const y = PADDING + CHART_HEIGHT - ratio * passiveScaleY;
+                    svg += `<line x1="${PADDING}" y1="${y}" x2="${WIDTH - PADDING}" y2="${y}" stroke="#f3f4f6" stroke-dasharray="2 2"/>`;
+                    svg += `<text x="${PADDING - 5}" y="${y + 4}" font-size="10" fill="#6b7280" text-anchor="end">${(ratio * 100).toFixed(0)}%</text>`;
+                });
+                
+                // BI Target Line (0.02)
+                const biTargetY = PADDING + CHART_HEIGHT - BI_TARGET * biScaleY;
+                svg += `<line x1="${PADDING}" y1="${biTargetY}" x2="${WIDTH - PADDING}" y2="${biTargetY}" stroke="#f59e0b" stroke-dasharray="4 4" stroke-width="1"/>`;
+                svg += `<text x="${WIDTH - PADDING + 5}" y="${biTargetY + 4}" font-size="10" fill="#f59e0b">BI Target (${BI_TARGET})</text>`;
+
+                // Data Lines
+                // Passive Ratio (Blue)
+                svg += `<polyline fill="none" stroke="#4f46e5" stroke-width="2" points="${passivePoints}"/>`;
+                // Omission Rate (Red)
+                svg += `<polyline fill="none" stroke="#dc2626" stroke-width="2" points="${omissionPoints}"/>`;
+                // BI (Green)
+                svg += `<polyline fill="none" stroke="#10b981" stroke-width="2" points="${biPoints}"/>`;
+
+                // Data Points and Labels (X-Axis)
+                data.forEach((d, i) => {
+                    const x = PADDING + i * xStep;
+                    svg += `<circle cx="${x}" cy="${PADDING + CHART_HEIGHT - d.passive_ratio * passiveScaleY}" r="3" fill="#4f46e5"/>`;
+                    svg += `<circle cx="${x}" cy="${PADDING + CHART_HEIGHT - (d.omission_rate * 10) * passiveScaleY}" r="3" fill="#dc2626"/>`;
+                    svg += `<circle cx="${x}" cy="${PADDING + CHART_HEIGHT - d.bi * biScaleY}" r="3" fill="#10b981"/>
+
+                    <!-- X-axis labels -->
+                    <text x="${x}" y="${HEIGHT - PADDING + 15}" font-size="10" fill="#6b7280" text-anchor="middle">Day ${d.day}</text>`;
+                });
+
+                // Legend
+                svg += `
+                    <g transform="translate(${WIDTH - PADDING - 150}, 10)">
+                        <rect x="0" y="0" width="10" height="10" fill="#4f46e5"/>
+                        <text x="15" y="9" font-size="12" fill="#4f46e5">Passive Ratio (%)</text>
+                        <rect x="0" y="15" width="10" height="10" fill="#dc2626"/>
+                        <text x="15" y="24" font-size="12" fill="#dc2626">Omission Rate (x10)</text>
+                        <rect x="0" y="30" width="10" height="10" fill="#10b981"/>
+                        <text x="15" y="39" font-size="12" fill="#10b981">BI Value</text>
+                    </g>
+                `;
+
+                svg += `</svg>`;
+                return svg;
+            }
+
+            renderHistoryTable(history) {
+                const lang = this.app.state.lang;
+                
+                const rows = history.slice(-8).map(data => {
+                    const statusClass = data.status === 'Pass' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                    const biClass = data.bi < BI_TARGET ? 'text-green-600 font-medium' : 'text-red-600 font-medium';
+                    
+                    return `
+                        <tr class="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition">
+                            <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${data.day}</td>
+                            <td class="px-6 py-3 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                                    ${I18N[lang][`status_${data.status.toLowerCase()}`]}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">${(data.passive_ratio * 100).toFixed(1)}%</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">${(data.omission_rate * 100).toFixed(2)}%</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">${data.new_verbs} / ${MIN_NEW_VERBS}</td>
+                            <td class="px-6 py-3 whitespace-nowrap text-sm ${biClass}">${data.bi.toFixed(4)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="history_day">Day</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="history_status">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="history_passive">Passive %</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="history_omission">Omission %</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="history_verbs">Verbs</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" data-i18n="history_bi">BI 值</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            renderDailyTask() {
+                const lang = this.app.state.lang;
+                const task = this.app.state.currentTask;
+                const analysis = task.analysis;
+                const isRunning = this.app.timerService.isRunning;
+                
+                const taskDay = calculateSprintDay(this.app.state.settings.sprintStartDate);
+                const taskData = this.app.dataService.fetchDailyTask(taskDay);
+                
+                // Ensure state reflects the current day's prompt
+                if (task.day !== taskDay) {
+                    this.app.state.currentTask.day = taskDay;
+                    this.app.state.currentTask.prompt = taskData.prompt;
+                    this.app.state.currentTask.content = '';
+                    this.app.state.currentTask.analysis = null;
+                }
+                
+                const timerFormatted = this.app.timerService.formatTime(this.app.timerService.getRemaining());
+
+                const editorDisabled = analysis !== null || !isRunning && task.content.length > 0;
+                const wordCount = task.content.trim().split(/\s+/).filter(w => w.length > 0).length;
+                const submitDisabled = isRunning || wordCount < MIN_WORD_COUNT || analysis !== null;
+                const startDisabled = isRunning;
+                
+                const timerBtnClass = isRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700';
+
+                let feedbackHtml = '';
+                if (analysis) {
+                    const passivePassClass = analysis.passivePass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                    const verbsPassClass = analysis.verbsPass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+
+                    feedbackHtml = `
+                        <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3" data-i18n="feedback_title">分析回饋</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                ${this.renderStatusBadge('status_word_count', analysis.wordCount, `${analysis.wordCount} / ${MIN_WORD_COUNT}`, analysis.wordCount >= MIN_WORD_COUNT)}
+                                ${this.renderStatusBadge('status_passive_ratio', analysis.passiveRatio, `${(analysis.passiveRatio * 100).toFixed(1)}% / <30%`, analysis.passivePass, passivePassClass)}
+                                ${this.renderStatusBadge('status_new_verbs', analysis.newVerbs, `${analysis.newVerbs} / ${MIN_NEW_VERBS}`, analysis.verbsPass, verbsPassClass)}
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (!analysis.verbsPass) {
+                        const verbFailMsg = I18N[lang].feedback_verb_fail.replace('{required}', MIN_NEW_VERBS).replace('{found}', analysis.newVerbs);
+                        feedbackHtml += `
+                            <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <p class="text-sm font-semibold text-red-700">${verbFailMsg}</p>
+                                <p class="text-xs text-red-600 mt-1" data-i18n="feedback_verb_list">${I18N[lang].feedback_verb_list}</p>
+                                <ul class="list-disc list-inside text-xs text-red-600 ml-2">
+                                    ${analysis.missingVerbs.map(v => `<li>${v}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                }
+
+                this.contentEl.innerHTML = `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Left Column: Editor and Controls -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <!-- Task Prompt Card -->
+                            <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                                <h2 class="text-xl font-semibold text-indigo-700 mb-2" data-i18n="sprint_day">${I18N[lang].sprint_day} ${taskDay}</h2>
+                                <p class="text-sm font-medium text-gray-500 mb-3" data-i18n="task_prompt">寫作提示</p>
+                                <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                    <p class="text-gray-700">${task.prompt}</p>
+                                </div>
+                            </div>
+
+                            <!-- Editor Card -->
+                            <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                                <textarea id="task-editor" rows="15" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150"
+                                    placeholder="${I18N[lang].task_editor_placeholder}" 
+                                    ${editorDisabled ? 'disabled' : ''}>${task.content}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Timer and Feedback -->
+                        <div class="lg:col-span-1 space-y-6">
+                            <!-- Timer Card -->
+                            <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 text-center">
+                                <p id="timer-label" class="text-sm font-medium text-gray-500" data-i18n="${isRunning ? 'timer_running' : 'timer_start'}">${isRunning ? I18N[lang].timer_running : I18N[lang].timer_start}</p>
+                                <p id="timer-display" class="text-6xl font-extrabold mt-2 ${isRunning ? 'text-red-600' : 'text-gray-800'}">${timerFormatted}</p>
+                                
+                                <button id="start-timer-btn" class="mt-4 w-full text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150 ${timerBtnClass}" ${startDisabled ? 'disabled' : ''}>
+                                    ${startDisabled && this.app.isProcessing ? this.renderSpinner() : I18N[lang].timer_start}
+                                </button>
+                                
+                                <button id="submit-task-btn" class="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150 disabled:opacity-50" ${submitDisabled ? 'disabled' : ''}>
+                                    <span id="submit-task-text" data-i18n="timer_submit">提交並分析</span>
+                                </button>
+                            </div>
+
+                            <!-- Live Status Card -->
+                            <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-3">Live Status</h3>
+                                <div class="space-y-3">
+                                    ${this.renderStatusBadge('status_word_count', wordCount, `${wordCount} / ${MIN_WORD_COUNT}`, wordCount >= MIN_WORD_COUNT, 'w-full justify-between')}
+                                    <div id="passive-ratio-live">${this.renderStatusBadge('status_passive_ratio', 0, `0.0% / <30%`, true, 'w-full justify-between opacity-50')}</div>
+                                    <div id="new-verbs-live">${this.renderStatusBadge('status_new_verbs', 0, `0 / ${MIN_NEW_VERBS}`, false, 'w-full justify-between opacity-50')}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Analysis Feedback -->
+                            <div id="task-feedback-container">
+                                ${feedbackHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                this.attachTaskListeners();
+                this.updateI18n();
+            }
+            
+            renderStatusBadge(i18nKey, value, displayValue, isPass, customClass = '') {
+                const lang = this.app.state.lang;
+                const statusText = isPass ? I18N[lang].status_pass : I18N[lang].status_fail;
+                const colorClass = isPass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+
+                return `
+                    <div class="flex items-center text-sm ${customClass}">
+                        <span class="font-medium text-gray-700" data-i18n="${i18nKey}">${I18N[lang][i18nKey]}</span>
+                        <div class="flex items-center ml-auto space-x-2">
+                            <span class="text-gray-600">${displayValue}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colorClass}">
+                                ${statusText}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderBlindWrite() {
+                const lang = this.app.state.lang;
+                const bw = this.app.state.currentTask.blindWrite;
+                const analysis = bw.analysis;
+                const isBlindMode = bw.isBlindMode;
+
+                const sourceClass = isBlindMode ? 'blind-source-hidden' : 'h-48';
+                const retranslationDisabled = !isBlindMode;
+                const submitDisabled = !isBlindMode || bw.retranslation.length === 0 || this.app.isProcessing;
+                
+                let feedbackHtml = '';
+                if (analysis) {
+                    const omissionPassClass = analysis.omissionPass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                    const omissionStatusText = analysis.omissionPass ? I18N[lang].status_pass : I18N[lang].status_fail;
+
+                    feedbackHtml = `
+                        <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3" data-i18n="blind_diff_title">差異分析</h3>
+                            
+                            <div class="flex space-x-4 mb-4 text-sm">
+                                <span class="retained" data-i18n="blind_diff_retained">${I18N[lang].blind_diff_retained}</span>
+                                <span class="omitted" data-i18n="blind_diff_omitted">${I18N[lang].blind_diff_omitted}</span>
+                            </div>
+
+                            <div class="p-3 bg-white border border-gray-300 rounded-lg text-gray-800 leading-relaxed text-sm">
+                                ${analysis.diffHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                this.contentEl.innerHTML = `
+                    <h1 class="text-3xl font-bold mb-6 text-gray-900" data-i18n="nav_blind_write">盲寫回譯追蹤</h1>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Left Column: Source Text -->
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-3" data-i18n="blind_source_title">原文 (原始文本)</h2>
+                                <textarea id="blind-source-editor" rows="8" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all duration-500 ${sourceClass}"
+                                    placeholder="Paste your source text here..." 
+                                    ${isBlindMode ? 'disabled' : ''}>${bw.source}</textarea>
+                                
+                                <button id="start-blind-btn" class="mt-4 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150 disabled:opacity-50" ${isBlindMode ? 'disabled' : ''}>
+                                    <span data-i18n="blind_start">隱藏原文並開始盲寫</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Omission Rate Display -->
+                            ${analysis ? `
+                                <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                                    ${this.renderStatusBadge('blind_omission_rate', analysis.omissionRate, `${(analysis.omissionRate * 100).toFixed(3)}% / <3.00%`, analysis.omissionPass, 'w-full justify-between')}
+                                    <p class="text-xs text-gray-500 mt-2">Total Key Tokens: ${analysis.totalSourceTokens}, Omitted: ${analysis.omittedCount}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Right Column: Retranslation Editor and Analysis -->
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-3" data-i18n="blind_retranslation_title">回譯 (盲寫文本)</h2>
+                                <textarea id="blind-retranslation-editor" rows="15" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none transition duration-150"
+                                    placeholder="${I18N[lang].blind_retranslation_placeholder}" 
+                                    ${retranslationDisabled ? 'disabled' : ''}>${bw.retranslation}</textarea>
+                                
+                                <button id="submit-blind-btn" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150 disabled:opacity-50" ${submitDisabled ? 'disabled' : ''}>
+                                    <span id="submit-blind-text" data-i18n="blind_submit">提交並分析遺漏率</span>
+                                </button>
+                            </div>
+                            
+                            <div id="blind-feedback-container">
+                                ${feedbackHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                this.attachBlindWriteListeners();
+                this.updateI18n();
+            }
+            
+            renderSpinner() {
+                return `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading...
+                `;
+            }
+
+            // --- Event Listener Attachments ---
+
+            attachTaskListeners() {
+                const editor = document.getElementById('task-editor');
+                const startBtn = document.getElementById('start-timer-btn');
+                const submitBtn = document.getElementById('submit-task-btn');
+
+                if (editor) {
+                    editor.addEventListener('input', (e) => this.app.handleTaskInput(e.target.value));
+                }
+                if (startBtn) {
+                    startBtn.addEventListener('click', () => this.app.startTaskTimer());
+                }
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', () => this.app.handleTaskSubmission());
+                }
+            }
+            
+            attachBlindWriteListeners() {
+                const sourceEditor = document.getElementById('blind-source-editor');
+                const retranslationEditor = document.getElementById('blind-retranslation-editor');
+                const startBtn = document.getElementById('start-blind-btn');
+                const submitBtn = document.getElementById('submit-blind-btn');
+
+                if (sourceEditor) {
+                    sourceEditor.addEventListener('input', (e) => {
+                        this.app.state.currentTask.blindWrite.source = e.target.value;
+                        this.app.dataService.saveState(this.app.state);
+                    });
+                }
+                if (retranslationEditor) {
+                    retranslationEditor.addEventListener('input', (e) => {
+                        this.app.state.currentTask.blindWrite.retranslation = e.target.value;
+                        // Enable submit button if content exists
+                        if (submitBtn) submitBtn.disabled = e.target.value.length === 0 || this.app.isProcessing;
+                        this.app.dataService.saveState(this.app.state);
+                    });
+                }
+                if (startBtn) {
+                    startBtn.addEventListener('click', () => this.app.handleBlindWriteStart());
+                }
+                if (submitBtn) {
+                    submitBtn.addEventListener('click', () => this.app.handleBlindWriteSubmission());
+                }
+            }
+        }
+
+        class IELTSCoach {
+            constructor() {
+                this.dataService = new DataService();
+                this.state = this.dataService.loadState();
+                
+                this.timerService = new TimerService(
+                    (remaining) => this.updateTimerDisplay(remaining),
+                    () => this.handleTaskTimeout()
+                );
+                
+                this.ui = new UIHandler(this);
+                this.isProcessing = false; // Global lock for async actions
+            }
+
+            init() {
+                this.ui.renderNavigation();
+                this.ui.updateI18n();
+                this.changeView(this.state.currentView);
+                this.attachGlobalListeners();
+                this.loadSettingsToModal();
+            }
+            
+            attachGlobalListeners() {
+                document.getElementById('settings-btn').addEventListener('click', () => this.toggleSettingsModal(true));
+                document.getElementById('close-settings-btn').addEventListener('click', () => this.toggleSettingsModal(false));
+                document.getElementById('save-settings-btn').addEventListener('click', () => this.saveSettings());
+                document.getElementById('lang-toggle').addEventListener('click', () => this.toggleLanguage());
+            }
+            
+            // --- State & View Management ---
+
+            changeView(viewName) {
+                this.ui.renderView(viewName);
+            }
+            
+            toggleLanguage() {
+                this.state.lang = this.state.lang === 'zh' ? 'en' : 'zh';
+                this.ui.updateI18n();
+                this.ui.renderNavigation();
+                this.ui.renderView(this.state.currentView); // Re-render current view with new language
+                this.dataService.saveState(this.state);
+            }
+            
+            // --- Settings Management ---
+
+            loadSettingsToModal() {
+                document.getElementById('api-key').value = this.state.settings.apiKey;
+                document.getElementById('start-date').value = this.state.settings.sprintStartDate;
+                document.getElementById('test-type').value = this.state.settings.testType;
+            }
+
+            toggleSettingsModal(show) {
+                this.modal = document.getElementById('settings-modal');
+                if (show) {
+                    this.loadSettingsToModal();
+                    this.modal.classList.remove('hidden');
+                } else {
+                    this.modal.classList.add('hidden');
+                }
+            }
+
+            saveSettings() {
+                this.state.settings.apiKey = document.getElementById('api-key').value;
+                this.state.settings.sprintStartDate = document.getElementById('start-date').value;
+                this.state.settings.testType = document.getElementById('test-type').value;
+                
+                this.dataService.saveState(this.state);
+                this.toggleSettingsModal(false);
+                this.ui.showToast('success', 'toast_success', 'toast_settings_saved');
+                
+                if (this.state.currentView === 'daily_task' || this.state.currentView === 'dashboard') {
+                    this.ui.renderView(this.state.currentView);
+                }
+            }
+            
+            // --- Daily Task Logic ---
+            
+            updateTimerDisplay(remaining) {
+                const display = document.getElementById('timer-display');
+                const label = document.getElementById('timer-label');
+                if (display) {
+                    display.textContent = this.timerService.formatTime(remaining);
+                    display.classList.toggle('text-red-600', remaining <= 60);
+                    display.classList.toggle('text-gray-800', remaining > 60);
+                }
+                if (label) {
+                    label.setAttribute('data-i18n', 'timer_running');
+                    label.textContent = I18N[this.state.lang].timer_running;
+                }
+            }
+            
+            startTaskTimer() {
+                this.timerService.reset();
+                this.timerService.start();
+                
+                // Lock editor if it was unlocked after a failed submission (B2 Fix)
+                const editor = document.getElementById('task-editor');
+                if (editor) editor.disabled = false;
+                
+                this.state.currentTask.analysis = null; // Clear previous analysis
+                this.ui.renderDailyTask();
+            }
+            
+            handleTaskInput(content) {
+                this.state.currentTask.content = content;
+                this.state.currentTask.analysis = null; // Clear analysis on input change
+                
+                const wordCount = content.trim().split(/\s+/).filter(w => w.length > 0).length;
+                const submitBtn = document.getElementById('submit-task-btn');
+                
+                if (submitBtn) {
+                    submitBtn.disabled = wordCount < MIN_WORD_COUNT || this.isProcessing;
+                }
+                
+                // Live Status Update (Passive/Verbs are mocked until submission, but word count is real)
+                const wordPass = wordCount >= MIN_WORD_COUNT;
+                const wordBadgeHtml = this.ui.renderStatusBadge('status_word_count', wordCount, `${wordCount} / ${MIN_WORD_COUNT}`, wordPass, 'w-full justify-between');
+                
+                const statusCard = document.querySelector('.space-y-3');
+                if (statusCard && statusCard.children.length > 0) {
+                    statusCard.children[0].outerHTML = wordBadgeHtml;
+                }
+                
+                this.dataService.saveState(this.state);
+            }
+            
+            handleTaskTimeout() {
+                this.ui.showToast('info', 'toast_info', 'toast_task_timeout');
+                this.handleTaskSubmission(true); // Forced submission
+            }
+
+            async performAction(buttonId, actionFunction) {
+                if (this.isProcessing) return;
+                this.isProcessing = true;
+                
+                const button = document.getElementById(buttonId);
+                const originalText = button.innerHTML;
+                
+                if (button) {
+                    button.disabled = true;
+                    button.innerHTML = this.ui.renderSpinner();
+                }
+                
+                try {
+                    await actionFunction();
+                } catch (error) {
+                    console.error(error);
+                    this.ui.showToast('error', 'toast_error', error.message || 'An unexpected error occurred.');
+                } finally {
+                    this.isProcessing = false;
+                    if (button) {
+                        button.innerHTML = originalText;
+                        // Re-evaluate disabled state based on current state
+                        if (buttonId === 'submit-task-btn') {
+                            const wordCount = this.state.currentTask.content.trim().split(/\s+/).filter(w => w.length > 0).length;
+                            button.disabled = wordCount < MIN_WORD_COUNT || this.state.currentTask.analysis !== null;
+                        } else if (buttonId === 'start-timer-btn') {
+                            button.disabled = this.timerService.isRunning;
+                        } else if (buttonId === 'submit-blind-btn') {
+                            button.disabled = !this.state.currentTask.blindWrite.isBlindMode || this.state.currentTask.blindWrite.retranslation.length === 0;
+                        } else {
+                            button.disabled = false;
+                        }
+                    }
+                }
+            }
+
+            handleTaskSubmission(isTimeout = false) {
+                const content = this.state.currentTask.content;
+                const wordCount = content.trim().split(/\s+/).filter(w => w.length > 0).length;
+                
+                if (wordCount < MIN_WORD_COUNT && !isTimeout) {
+                    this.ui.showToast('error', 'toast_error', 'feedback_word_count_fail');
+                    return;
+                }
+                
+                this.timerService.stop();
+                const editor = document.getElementById('task-editor');
+                if (editor) editor.disabled = true; // FR003: Lock editor
+
+                this.performAction('submit-task-btn', async () => {
+                    this.ui.showToast('info', 'toast_info', 'toast_task_submitted');
+                    
+                    const analysis = await this.dataService.analyzeTaskSubmission(content);
+                    this.state.currentTask.analysis = analysis;
+                    
+                    // Critical Validation (B2 Fix): Check New Verbs
+                    if (!analysis.verbsPass) {
+                        // Re-enable timer start button and unlock editor for modification
+                        const startBtn = document.getElementById('start-timer-btn');
+                        if (startBtn) startBtn.disabled = false;
+                        if (editor) editor.disabled = false;
+                    }
+                    
+                    // Update History
+                    const currentDay = this.state.currentTask.day;
+                    const historySubset = this.state.history.filter(d => d.day < currentDay);
+                    
+                    const newEntry = {
+                        day: currentDay,
+                        passive_ratio: analysis.passiveRatio,
+                        omission_rate: 0.00, // Task submission doesn't have omission rate yet
+                        new_verbs: analysis.newVerbs,
+                        status: analysis.overallStatus,
+                        bi: calculateBI(historySubset)
+                    };
+                    
+                    const existingIndex = this.state.history.findIndex(d => d.day === currentDay);
+                    if (existingIndex !== -1) {
+                        this.state.history[existingIndex] = { ...this.state.history[existingIndex], ...newEntry };
+                    } else {
+                        this.state.history.push(newEntry);
+                    }
+                    
+                    this.dataService.saveState(this.state);
+                    this.ui.renderDailyTask(); // Re-render to show feedback
+                    this.ui.showToast('success', 'toast_success', `Task status: ${analysis.overallStatus}`);
+                });
+            }
+            
+            // --- Blind Write Logic ---
+
+            handleBlindWriteStart() {
+                this.state.currentTask.blindWrite.isBlindMode = true;
+                this.state.currentTask.blindWrite.analysis = null;
+                this.ui.renderBlindWrite();
+            }
+            
+            handleBlindWriteSubmission() {
+                const bw = this.state.currentTask.blindWrite;
+                
+                this.performAction('submit-blind-btn', async () => {
+                    this.ui.showToast('info', 'toast_info', 'toast_blind_submitted');
+                    
+                    const analysis = await this.dataService.analyzeBlindWrite(bw.source, bw.retranslation);
+                    this.state.currentTask.blindWrite.analysis = analysis;
+                    this.state.currentTask.blindWrite.isBlindMode = false; // Reveal source text
+                    
+                    // Update History
+                    const currentDay = this.state.currentTask.day;
+                    const existingIndex = this.state.history.findIndex(d => d.day === currentDay);
+                    
+                    if (existingIndex !== -1) {
+                        this.state.history[existingIndex].omission_rate = analysis.omissionRate;
+                    } else {
+                        // If task wasn't done, create a placeholder entry
+                        this.state.history.push({
+                            day: currentDay,
+                            passive_ratio: 0,
+                            omission_rate: analysis.omissionRate,
+                            new_verbs: 0,
+                            status: 'N/A',
+                            bi: 0
+                        });
+                    }
+                    
+                    this.dataService.saveState(this.state);
+                    this.ui.renderBlindWrite();
+                    this.ui.showToast('success', 'toast_success', `Omission Rate: ${(analysis.omissionRate * 100).toFixed(2)}%`);
+                });
+            }
+        }
+
+        // --- Initialization ---
+
+        let app;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            app = new IELTSCoach();
+            app.init();
+        });
+
+        // Standardized Test Hook
+        window.injectTestRunner = function(runner) {
+            // Allow external tools to access the app instance
+            runner.app = app; 
+            console.log("🧪 Test Runner Hook Injected");
+        };
+    </script>
+</body>
+</html>

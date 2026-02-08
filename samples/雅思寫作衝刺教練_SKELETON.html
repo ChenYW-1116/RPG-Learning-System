@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">雅思寫作衝刺教練</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* 滾動條優化 */
+        textarea::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        /* 盲寫差異標記 */
+        .omitted {
+            background-color: #fee2e2;
+            color: #991b1b;
+            text-decoration: line-through;
+            padding: 0 2px;
+            border-radius: 2px;
+            margin: 0 1px;
+        }
+
+        .correct {
+            color: #166534;
+            font-weight: 500;
+        }
+
+        /* @slot:ui_utilities - 加載動畫 CSS */
+        .loader {
+            border-top-color: var(--primary);
+            animation: spinner 1.5s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        /* ✨ AI 閃爍效果 */
+        .ai-glow {
+            animation: glow 2s infinite ease-in-out;
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(37, 99, 235, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+            }
+        }
+    </style>
+</head>
+
+<body class="text-slate-800 antialiased">
+
+    <!-- 導航欄 -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="bg-blue-600 p-2 rounded-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                            </path>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold text-slate-900" data-i18n="app_title">IELTS Coach</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <select id="langSelect"
+                        class="bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2">
+                        <option value="en">English</option>
+                        <option value="zh">繁體中文</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        <!-- 分頁控制 -->
+        <div class="flex flex-wrap gap-2 mb-8 bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit">
+            <button onclick="app.switchTab('dashboard')"
+                class="tab-btn active px-6 py-2 rounded-lg text-sm font-medium transition-all"
+                data-tab="dashboard">數據看板</button>
+            <button onclick="app.switchTab('practice')"
+                class="tab-btn px-6 py-2 rounded-lg text-sm font-medium transition-all"
+                data-tab="practice">精讀分析</button>
+            <button onclick="app.switchTab('blindwrite')"
+                class="tab-btn px-6 py-2 rounded-lg text-sm font-medium transition-all"
+                data-tab="blindwrite">盲寫測驗</button>
+        </div>
+
+        <!-- 數據看板分頁 -->
+        <section id="tab-dashboard" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="stats-container">
+                <!-- 由 JS 渲染 -->
+            </div>
+
+            <!-- @slot:feature_inspiration - AI 靈感助手 UI 區域 -->
+            <div
+                class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-lg mb-8 text-white relative overflow-hidden">
+                <div class="relative z-10">
+                    <h3 class="text-xl font-bold mb-2">✨ AI 寫作靈感助手</h3>
+                    <p class="text-blue-100 text-sm mb-4">輸入作文題目，為你生成雅思高分觀點與詞彙。</p>
+                    <div class="flex gap-2">
+                        <input id="aiTopicInput" type="text" placeholder="例如：Is tourism beneficial for local cultures?"
+                            class="flex-1 px-4 py-2 rounded-lg text-slate-800 focus:outline-none">
+                        <button id="aiInspireBtn"
+                            class="bg-white text-blue-600 px-6 py-2 rounded-lg font-bold hover:bg-blue-50 transition-colors flex items-center gap-2">
+                            <span>獲取靈感 ✨</span>
+                            <div id="inspireLoader"
+                                class="hidden loader w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full">
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <!-- 裝飾背景 -->
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full"></div>
+            </div>
+
+            <div id="aiInspireResult" class="hidden mb-8"></div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-bold mb-4">學習進度日誌</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                            <tr>
+                                <th class="px-4 py-3">日期</th>
+                                <th class="px-4 py-3">被動句比例</th>
+                                <th class="px-4 py-3">遺漏率</th>
+                                <th class="px-4 py-3">新動詞</th>
+                                <th class="px-4 py-3">狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- 由 JS 渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 練習分頁 -->
+        <section id="tab-practice" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">貼入範文文本</label>
+                        <textarea id="essayInput"
+                            class="w-full h-64 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder="在此粘貼雅思 7+ 範文..."></textarea>
+                        <div class="flex gap-2 mt-4">
+                            <!-- @slot:feature_essay_analysis - 分析按鈕 -->
+                            <button id="analyzeBtn"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2">
+                                <span>分析範文</span>
+                                <div id="analyzeLoader"
+                                    class="hidden loader w-4 h-4 border-2 border-white border-t-transparent rounded-full">
+                                </div>
+                            </button>
+                            <!-- @slot:feature_essay_rewrite - 改寫按鈕 -->
+                            <button id="aiRewriteBtn"
+                                class="flex-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold py-3 rounded-xl transition-all flex justify-center items-center gap-2 border border-indigo-200">
+                                <span>AI 高階改寫 ✨</span>
+                                <div id="rewriteLoader"
+                                    class="hidden loader w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full">
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <!-- @slot:feature_essay_analysis - 分析結果顯示區 -->
+                    <div id="analysisResult"
+                        class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-h-[400px]">
+                        <div class="text-slate-400 text-center py-20">
+                            <svg class="w-16 h-16 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            <p>分析後將在此顯示語法特徵與新詞...</p>
+                        </div>
+                    </div>
+                    <!-- @slot:feature_essay_rewrite - 改寫結果顯示區 -->
+                    <div id="rewriteResult"
+                        class="hidden bg-indigo-50 p-6 rounded-2xl shadow-sm border border-indigo-200">
+                        <!-- AI 改寫顯示區 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 盲寫分頁 -->
+        <section id="tab-blindwrite" class="tab-content hidden">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">盲寫還原練習</h2>
+                    <button id="showSourceBtn" class="text-blue-600 text-sm font-medium">查看原文</button>
+                </div>
+                <div id="sourceDisplay"
+                    class="hidden mb-6 p-4 bg-slate-50 rounded-xl text-slate-600 text-sm border-l-4 border-blue-500">
+                </div>
+
+                <textarea id="blindWriteInput"
+                    class="w-full h-64 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                    placeholder="根據記憶嘗試還原剛才分析的範文..."></textarea>
+
+                <button id="checkBlindWriteBtn"
+                    class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 rounded-xl transition-all">
+                    提交並分析表現
+                </button>
+
+                <div id="blindWriteDiff" class="mt-8 hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                            <h3 class="font-bold mb-2 text-slate-700">遺漏與拼寫對比</h3>
+                            <div id="diffResult" class="text-sm leading-relaxed"></div>
+                        </div>
+                        <div class="space-y-4">
+                            <div id="omissionStats" class="grid grid-cols-2 gap-4"></div>
+                            <!-- @slot:blind_write_diagnosis - AI 診斷結果區 -->
+                            <div id="aiDiagnosisResult"
+                                class="p-4 bg-blue-50 rounded-xl border border-blue-100 text-sm">
+                                <h4 class="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                                    AI 表現診斷 ✨
+                                    <span id="diagnosisLoader"
+                                        class="hidden loader w-3 h-3 border-2 border-blue-700 border-t-transparent rounded-full"></span>
+                                </h4>
+                                <div id="diagnosisContent" class="text-blue-900 italic">正在獲取 AI 反饋...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 訊息提示 -->
+    <div id="toast" class="fixed bottom-4 right-4 translate-y-20 transition-transform duration-300 z-[100]">
+        <div id="toastContent" class="px-6 py-3 rounded-xl shadow-lg text-white flex items-center gap-3"></div>
+    </div>
+
+    <script type="module">
+        // ============================================================
+        // @slot:api_service_layer - Gemini API Wrapper
+        // 掛載方式: Reference (內聯 Class 定義)
+        // 來源技能: gemini-api-wrapper
+        // ============================================================
+        const apiKey = ""; // TODO: 從設定載入
+
+        class GeminiAPIWrapper {
+            constructor(config = {}) {
+                this.apiKey = config.apiKey || "";
+                this.model = config.model || "gemini-2.5-flash-preview-09-2025";
+                this.retryDelays = config.retryDelays || [1000, 2000, 4000];
+                this.baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
+            }
+
+            async call(prompt, systemPrompt, useJson = true) {
+                const url = `${this.baseUrl}/${this.model}:generateContent?key=${this.apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: useJson ? { responseMimeType: "application/json" } : {}
+                };
+
+                for (let delay of [...this.retryDelays, 0]) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        const text = data.candidates[0].content.parts[0].text;
+                        return useJson ? JSON.parse(text) : text;
+                    } catch (e) {
+                        if (delay === 0) throw e;
+                        await new Promise(r => setTimeout(r, delay));
+                    }
+                }
+            }
+
+            setApiKey(key) { this.apiKey = key; }
+        }
+
+        // 初始化 API 實例
+        const geminiApi = new GeminiAPIWrapper({ apiKey });
+
+        // ============================================================
+        // @slot:ui_utilities - UI 工具函數
+        // 掛載方式: Snippet
+        // 來源技能: ui-loader-manager
+        // ============================================================
+        function toggleLoader(type, show) {
+            const loader = document.getElementById(`${type}Loader`);
+            const btn = document.getElementById(`${type}Btn`);
+            if (loader) loader.classList.toggle('hidden', !show);
+            if (btn) btn.disabled = show;
+        }
+
+        function showToast(msgKey, type = 'success') {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            content.className = `px-6 py-3 rounded-xl shadow-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+            content.innerText = i18n[app.lang][msgKey] || msgKey;
+            toast.classList.remove('translate-y-20');
+            setTimeout(() => toast.classList.add('translate-y-20'), 3000);
+        }
+
+        // ============================================================
+        // I18N 國際化配置
+        // ============================================================
+        const i18n = {
+            en: {
+                app_title: "IELTS Writing Coach",
+                toast_success: "Success!",
+                toast_error: "Error occurred",
+                analyzing: "Analyzing...",
+                no_essay: "Please paste text first."
+            },
+            zh: {
+                app_title: "雅思寫作衝刺教練",
+                toast_success: "完成！",
+                toast_error: "發生錯誤",
+                analyzing: "處理中...",
+                no_essay: "請先輸入內容。"
+            }
+        };
+
+        // ============================================================
+        // 主應用程式類別
+        // ============================================================
+        class IELTSCoach {
+            constructor() {
+                this.lang = 'zh';
+                this.state = JSON.parse(localStorage.getItem('ielts_coach_v3')) || {
+                    history: [],
+                    currentEssay: "",
+                    lastAnalysis: null
+                };
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.renderDashboard();
+                this.updateUIStrings();
+            }
+
+            setupEventListeners() {
+                document.getElementById('langSelect').addEventListener('change', (e) => {
+                    this.lang = e.target.value;
+                    this.updateUIStrings();
+                });
+
+                // @slot:feature_essay_analysis - 綁定分析按鈕
+                document.getElementById('analyzeBtn').addEventListener('click', () => this.analyzeEssay());
+
+                // @slot:feature_essay_rewrite - 綁定改寫按鈕
+                document.getElementById('aiRewriteBtn').addEventListener('click', () => this.rewriteEssay());
+
+                // @slot:feature_inspiration - 綁定靈感按鈕
+                document.getElementById('aiInspireBtn').addEventListener('click', () => this.inspireTopic());
+
+                // 盲寫相關
+                document.getElementById('checkBlindWriteBtn').addEventListener('click', () => this.evaluateBlindWrite());
+                document.getElementById('showSourceBtn').addEventListener('click', () => {
+                    const el = document.getElementById('sourceDisplay');
+                    el.classList.toggle('hidden');
+                    el.innerText = this.state.currentEssay;
+                });
+            }
+
+            updateUIStrings() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    el.innerText = i18n[this.lang][key] || key;
+                });
+            }
+
+            switchTab(tabId) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.tab === tabId);
+                });
+            }
+
+            // ============================================================
+            // @slot:feature_essay_analysis - 範文分析功能
+            // 來源技能: ai-essay-analyzer
+            // ============================================================
+            async analyzeEssay() {
+                const text = document.getElementById('essayInput').value.trim();
+                if (!text) return showToast('no_essay', 'error');
+
+                toggleLoader('analyze', true);
+                try {
+                    const sys = "You are an IELTS expert. Analyze the essay. Return JSON: { passive_sentences: [], advanced_verbs: [{word:'', meaning:''}], passive_ratio: 0.2, score_estimate: '7.5' }";
+                    const result = await geminiApi.call(`Analyze: ${text}`, sys);
+
+                    this.state.currentEssay = text;
+                    this.state.lastAnalysis = result;
+                    this.saveState();
+                    this.renderAnalysis(result);
+                    showToast('toast_success');
+                } catch (e) {
+                    showToast('toast_error', 'error');
+                } finally {
+                    toggleLoader('analyze', false);
+                }
+            }
+
+            // ============================================================
+            // @slot:feature_essay_rewrite - AI 高階改寫功能
+            // 來源技能: ai-essay-rewriter
+            // ============================================================
+            async rewriteEssay() {
+                const text = document.getElementById('essayInput').value.trim();
+                if (!text) return showToast('no_essay', 'error');
+
+                toggleLoader('rewrite', true);
+                try {
+                    const sys = "Rewrite the user's IELTS essay into a Band 9 version. Focus on lexical resource and grammatical range. Return raw text.";
+                    const result = await geminiApi.call(`Rewrite this: ${text}`, sys, false);
+
+                    const resEl = document.getElementById('rewriteResult');
+                    resEl.classList.remove('hidden');
+                    resEl.innerHTML = `<h4 class="font-bold text-indigo-800 mb-2">✨ Band 9 範文改寫：</h4><p class="text-sm text-indigo-900 leading-relaxed">${result.replace(/\n/g, '<br>')}</p>`;
+                } catch (e) {
+                    showToast('toast_error', 'error');
+                } finally {
+                    toggleLoader('rewrite', false);
+                }
+            }
+
+            // ============================================================
+            // @slot:feature_inspiration - AI 靈感助手功能
+            // 來源技能: ai-inspiration-generator
+            // ============================================================
+            async inspireTopic() {
+                const topic = document.getElementById('aiTopicInput').value.trim();
+                if (!topic) return;
+
+                toggleLoader('inspire', true);
+                try {
+                    const sys = "Provide 3 pros, 3 cons, and 5 academic vocabulary for this IELTS topic. Return JSON: { pros: [], cons: [], vocab: [{word:'', usage:''}] }";
+                    const result = await geminiApi.call(`Topic: ${topic}`, sys);
+
+                    const resEl = document.getElementById('aiInspireResult');
+                    resEl.classList.remove('hidden');
+                    resEl.innerHTML = `
+                        <div class="bg-white p-6 rounded-2xl border-2 border-blue-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-bold text-green-600 mb-2">正面觀點 (Pros)</h4>
+                                <ul class="text-sm list-disc pl-4 space-y-1">${result.pros.map(p => `<li>${p}</li>`).join('')}</ul>
+                                <h4 class="font-bold text-red-600 mt-4 mb-2">反面觀點 (Cons)</h4>
+                                <ul class="text-sm list-disc pl-4 space-y-1">${result.cons.map(c => `<li>${c}</li>`).join('')}</ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-blue-600 mb-2">推薦主題詞彙</h4>
+                                <div class="space-y-2">
+                                    ${result.vocab.map(v => `<div class="text-sm"><strong>${v.word}</strong>: <span class="text-slate-500">${v.usage}</span></div>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } catch (e) {
+                    showToast('toast_error', 'error');
+                } finally {
+                    toggleLoader('inspire', false);
+                }
+            }
+
+            // ============================================================
+            // @slot:blind_write_diagnosis - AI 盲寫診斷功能
+            // 來源技能: ai-blind-write-diagnosis
+            // ============================================================
+            async diagnoseBlindWrite(source, attempt) {
+                const diagLoader = document.getElementById('diagnosisLoader');
+                const diagContent = document.getElementById('diagnosisContent');
+                if (diagLoader) diagLoader.classList.remove('hidden');
+
+                try {
+                    const sys = "Compare the source and user attempt. Briefly point out the most critical grammar or vocabulary mistake. Keep it under 50 words. Be encouraging.";
+                    const result = await geminiApi.call(`Source: ${source}\nAttempt: ${attempt}`, sys, false);
+                    if (diagContent) diagContent.innerText = result;
+                } catch (e) {
+                    if (diagContent) diagContent.innerText = "暫時無法連接 AI 診斷，請稍後再試。";
+                } finally {
+                    if (diagLoader) diagLoader.classList.add('hidden');
+                }
+            }
+
+            evaluateBlindWrite() {
+                const attempt = document.getElementById('blindWriteInput').value.trim();
+                const source = this.state.currentEssay;
+                if (!source) return showToast('no_essay', 'error');
+
+                const sourceWords = source.toLowerCase().match(/\b(\w+)\b/g) || [];
+                const attemptWords = attempt.toLowerCase().match(/\b(\w+)\b/g) || [];
+
+                let html = "";
+                let omitted = 0;
+                sourceWords.forEach(w => {
+                    if (attemptWords.includes(w)) {
+                        html += `<span class="correct">${w} </span>`;
+                    } else {
+                        html += `<span class="omitted">${w}</span> `;
+                        omitted++;
+                    }
+                });
+
+                document.getElementById('blindWriteDiff').classList.remove('hidden');
+                document.getElementById('diffResult').innerHTML = html;
+
+                const rate = (omitted / sourceWords.length);
+                document.getElementById('omissionStats').innerHTML = `
+                    <div class="p-3 bg-red-100 rounded-lg text-center"><div class="text-xs">遺漏率</div><div class="text-xl font-bold">${(rate * 100).toFixed(1)}%</div></div>
+                    <div class="p-3 bg-green-100 rounded-lg text-center"><div class="text-xs">精準度</div><div class="text-xl font-bold">${(100 - rate * 100).toFixed(1)}%</div></div>
+                `;
+
+                this.addHistoryRecord(rate);
+                this.renderDashboard();
+
+                // @slot:blind_write_diagnosis - 調用 AI 診斷
+                this.diagnoseBlindWrite(source, attempt);
+            }
+
+            // ============================================================
+            // UI 渲染函數
+            // ============================================================
+            renderAnalysis(data) {
+                const container = document.getElementById('analysisResult');
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-blue-600">雅思專家分析</h3>
+                            <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">預估得分: ${data.score_estimate}</span>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-700">📌 被動句 (Grammar Range)</h4>
+                            <div class="mt-2 space-y-1">${data.passive_sentences.map(s => `<div class="text-xs p-2 bg-slate-50 rounded italic border-l-2 border-blue-400">${s}</div>`).join('')}</div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-700">💡 詞彙寶庫 (Lexical Resource)</h4>
+                            <div class="mt-2 grid grid-cols-2 gap-2">
+                                ${data.advanced_verbs.map(v => `<div class="p-2 border rounded text-xs"><strong>${v.word}</strong><br><span class="text-slate-500">${v.meaning}</span></div>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderDashboard() {
+                const hist = this.state.history;
+                const stats = document.getElementById('stats-container');
+                const avgOmission = hist.length ? (hist.reduce((a, b) => a + b.omission_rate, 0) / hist.length * 100).toFixed(1) : 0;
+
+                stats.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl border">
+                        <div class="text-slate-400 text-xs font-bold uppercase">總練習次數</div>
+                        <div class="text-3xl font-bold text-slate-800">${hist.length}</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border">
+                        <div class="text-slate-400 text-xs font-bold uppercase">平均遺漏率</div>
+                        <div class="text-3xl font-bold text-red-500">${avgOmission}%</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border">
+                        <div class="text-slate-400 text-xs font-bold uppercase">學習動力</div>
+                        <div class="text-3xl font-bold text-green-500">${hist.length > 5 ? '🔥' : '🌱'}</div>
+                    </div>
+                `;
+
+                document.getElementById('history-table-body').innerHTML = hist.slice(0, 10).map(h => `
+                    <tr class="border-t text-xs">
+                        <td class="px-4 py-3">${h.date}</td>
+                        <td class="px-4 py-3">${(h.passive_ratio * 100).toFixed(0)}%</td>
+                        <td class="px-4 py-3 font-bold text-red-600">${(h.omission_rate * 100).toFixed(1)}%</td>
+                        <td class="px-4 py-3">${h.new_verbs}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 bg-slate-100 rounded">${h.status}</span></td>
+                    </tr>
+                `).join('');
+            }
+
+            addHistoryRecord(rate) {
+                const rec = {
+                    date: new Date().toLocaleDateString(),
+                    passive_ratio: this.state.lastAnalysis?.passive_ratio || 0,
+                    omission_rate: rate,
+                    new_verbs: this.state.lastAnalysis?.advanced_verbs?.length || 0,
+                    status: rate < 0.2 ? '優秀' : '待改進'
+                };
+                this.state.history.unshift(rec);
+                this.saveState();
+            }
+
+            saveState() {
+                localStorage.setItem('ielts_coach_v3', JSON.stringify(this.state));
+            }
+        }
+
+        // ============================================================
+        // 應用程式初始化
+        // ============================================================
+        window.app = new IELTSCoach();
+        window.onload = () => window.app.init();
+    </script>
+</body>
+
+</html>

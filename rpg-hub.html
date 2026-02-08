@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quest Empire - 挑戰者成長平台</title>
+    <meta name="description" content="透過挑戰競技場獲得代幣與經驗值，解鎖工具，分享成長歷程">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0F0F1A 0%, #1A1A2E 50%, #0F0F1A 100%);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+
+        .title-glow {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(90deg, #6366F1, #8B5CF6, #EC4899, #F59E0B, #10B981, #6366F1);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleShimmer 5s linear infinite;
+        }
+
+        @keyframes titleShimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 300% 50%;
+            }
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+        }
+
+        .stat-box {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-4px);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .xp-bar-container {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 12px;
+            padding: 3px;
+        }
+
+        .xp-bar {
+            height: 16px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #6366F1, #8B5CF6, #EC4899);
+            background-size: 200% 100%;
+            animation: xpGlow 2s ease-in-out infinite;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes xpGlow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .arena-card {
+            background: linear-gradient(145deg, rgba(127, 29, 29, 0.3), rgba(30, 41, 59, 0.8));
+            border: 2px solid #EF4444;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arena-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(239, 68, 68, 0.3);
+        }
+
+        .arena-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.15), transparent 60%);
+        }
+
+        .battle-record {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid;
+            border-radius: 0 12px 12px 0;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .battle-record.victory {
+            border-left-color: #10B981;
+        }
+
+        .battle-record.defeat {
+            border-left-color: #EF4444;
+        }
+
+        .plugin-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .plugin-card:hover {
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        .plugin-card.owned {
+            border-color: #10B981;
+        }
+
+        .tier-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-arena {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-arena:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6);
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            color: #94A3B8;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #6366F1;
+            border-bottom-color: #6366F1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #1E293B, #0F172A);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1A1A2E;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6366F1, #8B5CF6);
+            border-radius: 4px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Tool Store Styles */
+        .category-filter {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94A3B8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-filter:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #E2E8F0;
+        }
+
+        .category-filter.active {
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            border-color: transparent;
+            color: white;
+        }
+
+        .tool-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .tool-card.owned {
+            border-color: #10B981;
+        }
+
+        .tool-card.owned::after {
+            content: '✓ 已擁有';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #10B981;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .equipment-card {
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(30, 41, 59, 0.9));
+            border: 2px solid #10B981;
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .equipment-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(16, 185, 129, 0.3);
+        }
+
+        .feature-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 10px;
+            font-size: 10px;
+            color: #A5B4FC;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .rating-stars {
+            color: #FBBF24;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <!-- Language Toggle -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="langToggleBtn" type="button" onclick="toggleLanguage()"
+            class="bg-slate-700/80 hover:bg-slate-600 backdrop-blur-md text-gray-300 text-sm py-2 px-4 rounded-full border border-slate-600 shadow-2xl transition flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            <span id="langBtnText">EN</span>
+        </button>
+    </div>
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="title-glow text-4xl md:text-5xl font-black mb-2 tracking-wider" data-i18n="mainTitle">QUEST
+                EMPIRE</h1>
+            <p class="text-gray-400" data-i18n="subTitle">🎮 挑戰者成長平台 — 透過競技場挑戰獲得代幣與經驗值</p>
+        </header>
+
+        <!-- Player Status -->
+        <section class="glass-card p-6 mb-6">
+            <div class="flex flex-col md:flex-row items-center gap-6">
+                <div class="text-center">
+                    <div id="rank-icon" class="text-6xl mb-2">🌱</div>
+                    <div id="rank-title" class="text-lg font-bold text-indigo-400">新手挑戰者</div>
+                    <div class="text-sm text-gray-500">Lv.<span id="player-level">1</span></div>
+                </div>
+                <div class="flex-1 w-full">
+                    <div class="flex justify-between items-end mb-2">
+                        <div>
+                            <span class="text-sm text-gray-400" data-i18n="totalXP">總經驗值</span>
+                            <div class="text-2xl font-bold text-yellow-400 font-['Orbitron']"><span
+                                    id="total-xp">0</span> XP</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm text-gray-400" data-i18n="tokens">💰 代幣</span>
+                            <div class="text-2xl font-bold text-amber-400 font-['Orbitron']"><span
+                                    id="total-tokens">0</span></div>
+                        </div>
+                    </div>
+                    <div class="xp-bar-container">
+                        <div class="xp-bar" id="xp-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between mt-2 text-xs text-gray-500">
+                        <span><span id="xp-current">0</span> / <span id="xp-total">150</span></span>
+                        <span id="xp-needed-container">還需 <span id="xp-needed" class="text-indigo-400">150</span> XP
+                            升級</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="stat-box">
+                        <div class="stat-value text-green-400" id="stat-victories">0</div>
+                        <div class="text-xs text-gray-400" data-i18n="victories">勝利場次</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value text-red-400" id="stat-defeats">0</div>
+                        <div class="text-xs text-gray-400" data-i18n="defeats">失敗場次</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value text-purple-400" id="plugins-count">0</div>
+                        <div class="text-xs text-gray-400" data-i18n="unlockedTools">已解鎖工具</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value text-orange-400" id="streak-days">0</div>
+                        <div class="text-xs text-gray-400" data-i18n="streakDays">連續天數</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Arena Entry -->
+        <section class="arena-card mb-8" onclick="window.location.href='ielts_challenger_arena.html'">
+            <div class="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                <div class="text-7xl animate-pulse">⚔️</div>
+                <div class="flex-1 text-center md:text-left">
+                    <h2 class="text-2xl font-bold text-red-400 mb-2" data-i18n="arenaTitle">挑戰者競技場</h2>
+                    <p class="text-gray-300 mb-4" data-i18n="arenaDesc">提交作文挑戰你的弱點 Boss！AI 會自動評估並判定勝敗。</p>
+                    <div class="flex flex-wrap gap-4 justify-center md:justify-start">
+                        <div class="text-sm"><span class="text-green-400 font-bold" data-i18n="arenaRewardWin">✅ 勝利 = XP
+                                + 代幣</span></div>
+                        <div class="text-sm"><span class="text-yellow-400 font-bold" data-i18n="arenaRewardReview">📝 檢討
+                                = 額外 XP 加成</span></div>
+                        <div class="text-sm"><span class="text-purple-400 font-bold" data-i18n="arenaRewardUnlock">🔓 解鎖
+                                = 使用代幣換 Plugin</span></div>
+                    </div>
+                </div>
+                <button class="btn-arena" data-i18n="arenaBtn">進入競技場 →</button>
+            </div>
+        </section>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b border-gray-700 mb-6 overflow-x-auto">
+            <button class="tab-btn active" data-tab="battles" data-i18n="tabBattles">📜 戰鬥紀錄</button>
+            <button class="tab-btn" data-tab="tools" data-i18n="tabTools">🧰 工具商店</button>
+            <button class="tab-btn" data-tab="equipment" data-i18n="tabEquip">🎒 我的裝備</button>
+            <button class="tab-btn" data-tab="upload-tool" data-i18n="tabUpload">📤 上傳工具</button>
+            <button class="tab-btn" data-tab="plugins" data-i18n="tabPlugins">🔌 效果商店</button>
+            <button class="tab-btn" data-tab="achievements" data-i18n="tabAchieve">🏆 成就</button>
+        </div>
+
+        <!-- Tab Content: Battle History -->
+        <div id="tab-battles" class="tab-content active">
+            <h2 class="text-xl font-bold mb-4" data-i18n="logTitle">📜 最近戰鬥紀錄</h2>
+            <div id="battle-history" class="space-y-4"></div>
+        </div>
+
+        <!-- Tab Content: Tools Store (HTML 工具商店) -->
+        <div id="tab-tools" class="tab-content">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold" data-i18n="storeTitle">🧰 工具商店</h2>
+                    <p class="text-gray-400" data-i18n="storeDesc">使用代幣兌換強大的 HTML 工具，提升你的工作效率！</p>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <button class="category-filter active" data-category="all" data-i18n="catAll">全部</button>
+                    <button class="category-filter" data-category="github" data-i18n="catGithub">🔧 GitHub</button>
+                    <button class="category-filter" data-category="writing" data-i18n="catWriting">✍️ 寫作</button>
+                    <button class="category-filter" data-category="practice" data-i18n="catPractice">🎯 練習</button>
+                    <button class="category-filter" data-category="analysis" data-i18n="catAnalysis">📊 分析</button>
+                </div>
+            </div>
+            <div id="tool-store" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+        </div>
+
+        <!-- Tab Content: My Equipment (個人裝備) -->
+        <div id="tab-equipment" class="tab-content">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold" data-i18n="equipTitle">🎒 我的裝備</h2>
+                    <p class="text-gray-400" data-i18n="equipDesc">這裡是你已兌換的工具，點擊即可使用！</p>
+                </div>
+                <div class="text-sm text-gray-500">
+                    <span data-i18n="equipOwned">已擁有</span> <span id="owned-tools-count"
+                        class="text-purple-400 font-bold">0</span> <span data-i18n="equipUnit">個工具</span>
+                </div>
+            </div>
+            <div id="my-equipment" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+            <div id="no-equipment" class="hidden text-center py-16">
+                <div class="text-6xl mb-4">🎒</div>
+                <p class="text-gray-400 mb-2" data-i18n="equipEmpty">你還沒有任何裝備</p>
+                <p class="text-gray-500 text-sm" data-i18n="equipEmptyDesc">前往工具商店兌換你的第一個工具吧！</p>
+            </div>
+        </div>
+
+        <!-- Tab Content: Upload Tool (上傳工具) -->
+        <div id="tab-upload-tool" class="tab-content">
+            <div class="bg-blue-500/10 border border-blue-500/30 p-4 rounded-lg mb-6">
+                <h3 class="font-bold text-blue-400 mb-2" data-i18n="uploadHeader">💡 空間同步模式</h3>
+                <p class="text-gray-300 text-sm mb-2" data-i18n="uploadHeaderDesc">現在支援直接將工具上傳至系統空間！</p>
+                <ol class="list-decimal list-inside text-sm text-gray-400 space-y-1">
+                    <li data-i18n="uploadStep1">選擇你的 HTML 工具檔案（系統會自動將其同步到 <code
+                            class="bg-gray-800 px-1 py-0.5 rounded">tools/</code> 空間）。</li>
+                    <li data-i18n="uploadStep2">填寫工具資訊後點擊上傳。</li>
+                    <li data-i18n="uploadStep3">上傳後，你和其他玩家即可直接從空間下載並使用該工具。</li>
+                </ol>
+            </div>
+
+            <div class="glass-card p-6 max-w-2xl">
+                <div class="space-y-4">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1" data-i18n="toolName">工具名稱 *</label>
+                            <input id="upload-tool-name" type="text" data-i18n-placeholder="placeholderToolName"
+                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                                placeholder="例：GitHub 自動推送助手">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1" data-i18n="toolFile">選擇 HTML 檔案 *</label>
+                            <div
+                                class="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
+                                <button type="button" onclick="document.getElementById('upload-tool-file').click()"
+                                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-1.5 px-4 rounded-full transition whitespace-nowrap"
+                                    data-i18n="btnSelectFile">選擇檔案</button>
+                                <span id="file-name-display" class="text-xs text-gray-400 truncate"
+                                    data-i18n="noFileSelected">未選擇任何檔案</span>
+                                <input id="upload-tool-file" type="file" accept=".html" class="hidden"
+                                    onchange="updateFileNameDisplay(this)">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1" data-i18n="toolFileDesc">檔案將自動儲存至 tools 資料夾</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1" data-i18n="toolDescHeader">描述 * (至少 10
+                            字)</label>
+                        <textarea id="upload-tool-desc"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white h-20"
+                            data-i18n-placeholder="toolDescPlaceholder" placeholder="描述工具的功能與使用方式..."></textarea>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1" data-i18n="toolIcon">圖示</label>
+                            <input id="upload-tool-icon" type="text"
+                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                                placeholder="🔧" maxlength="2">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1" data-i18n="toolCategory">分類 *</label>
+                            <select id="upload-tool-category"
+                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white">
+                                <option value="github" data-i18n="catGithub">🔧 GitHub 工具</option>
+                                <option value="writing" data-i18n="catWriting">✍️ 寫作輔助</option>
+                                <option value="practice" data-i18n="catPractice">🎯 練習工具</option>
+                                <option value="analysis" data-i18n="catAnalysis">📊 分析工具</option>
+                                <option value="utility" data-i18n="catUtility">⚙️ 其他工具</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1" data-i18n="toolCost">代幣價格 (10-500)</label>
+                            <input id="upload-tool-cost" type="number" min="10" max="500"
+                                class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                                value="50">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1" data-i18n="toolFeatures">特色功能 (用逗號分隔)</label>
+                        <input id="upload-tool-features" type="text" data-i18n-placeholder="placeholderFeatures"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                            placeholder="例：自動保存, AI 輔助, 一鍵操作">
+                    </div>
+                    <div class="pt-4 border-t border-gray-700">
+                        <button onclick="uploadNewTool()" class="btn-primary w-full text-lg py-3" data-i18n="uploadBtn">
+                            🚀 上傳到工具商店
+                        </button>
+                        <p class="text-xs text-gray-500 mt-2 text-center" data-i18n="uploadNote">
+                            上傳成功後可獲得 25 XP，且你將自動擁有該工具
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Plugin Store (效果商店) -->
+        <div id="tab-plugins" class="tab-content">
+            <h2 class="text-xl font-bold mb-4" data-i18n="pluginTitle">🔌 效果商店</h2>
+            <p class="text-gray-400 mb-4" data-i18n="pluginDesc">使用代幣解鎖特效插件，獲得 XP、代幣加成等效果！</p>
+            <div id="plugin-store" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+        </div>
+
+        <!-- Tab Content: Achievements -->
+        <div id="tab-achievements" class="tab-content">
+            <h2 class="text-xl font-bold mb-4" data-i18n="achieveTitle">🏆 成就列表</h2>
+            <div id="achievements-grid" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center py-8 border-t border-gray-800 mt-8">
+            <p class="text-gray-500 text-sm">Quest Empire v2.1 — 工具商店系統已上線 ⚔️🧰</p>
+            <button onclick="resetProgress()" class="mt-4 text-xs text-gray-600 hover:text-red-500"
+                data-i18n="resetBtn">⚠️ 重置所有進度</button>
+        </footer>
+    </div>
+
+    <!-- Reflection Modal -->
+    <div id="reflection-modal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold mb-4" data-i18n="reflectTitle">📝 撰寫戰鬥檢討</h3>
+            <p class="text-gray-400 mb-2" data-i18n="reflectSubtitle">透過深度反思獲得額外經驗值加成！</p>
+            <p id="reflection-battle-info" class="text-indigo-400 mb-4"></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1" data-i18n="reflectLabel">反思內容 (至少 50 字)</label>
+                    <textarea id="reflection-content"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white h-32"
+                        data-i18n-placeholder="placeholderReflection"
+                        placeholder="這次戰鬥中學到什麼？哪些弱點需要加強？下次如何改進？"></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('reflection-modal')" class="flex-1 px-4 py-2 bg-gray-700 rounded-lg"
+                        data-i18n="btnLater">稍後再說</button>
+                    <button onclick="submitReflection()" class="flex-1 btn-primary" data-i18n="btnSubmit">提交反思</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="DevScribeRPG.js"></script>
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 🌍 INTERNATIONALIZATION (i18n)
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window.i18n = {
+            currentLang: 'zh',
+            translations: {
+                zh: {
+                    pageTitle: "Quest Empire - 挑戰者成長平台",
+                    mainTitle: "QUEST EMPIRE",
+                    subTitle: "🎮 挑戰者成長平台 — 透過競技場挑戰獲得代幣與經驗值",
+
+                    // Player Status
+                    currentRank: "當前等級",
+                    totalXP: "總經驗值",
+                    tokens: "💰 代幣",
+                    victories: "勝利場次",
+                    defeats: "失敗場次",
+                    unlockedTools: "已解鎖工具",
+                    streakDays: "連續天數",
+                    xpNeeded: "還需 {xp} XP 升級",
+
+                    // Arena Card
+                    arenaTitle: "挑戰者競技場",
+                    arenaDesc: "提交作文挑戰你的弱點 Boss！AI 會自動評估並判定勝敗。",
+                    arenaBtn: "進入競技場 →",
+                    arenaRewardWin: "✅ 勝利 = XP + 代幣",
+                    arenaRewardReview: "📝 檢討 = 額外 XP 加成",
+                    arenaRewardUnlock: "🔓 解鎖 = 使用代幣換 Plugin",
+
+                    // Tabs
+                    tabBattles: "📜 戰鬥紀錄",
+                    tabTools: "🧰 工具商店",
+                    tabEquip: "🎒 我的裝備",
+                    tabUpload: "📤 上傳工具",
+                    tabPlugins: "🔌 效果商店",
+                    tabAchieve: "🏆 成就",
+
+                    // Battle Log
+                    logTitle: "📜 最近戰鬥紀錄",
+                    logEmpty: "還沒有戰鬥紀錄",
+                    logEmptyDesc: "前往競技場開始你的第一場挑戰！",
+                    winTitle: "挑戰成功！",
+                    loseTitle: "挑戰失敗",
+                    reviewBtn: "📝 撰寫檢討 (+XP)",
+                    reviewed: "已反思 ✓",
+                    improvement: "📈 進步",
+                    regression: "📉 需加強",
+
+                    // Tools Store
+                    storeTitle: "🧰 工具商店",
+                    storeDesc: "使用代幣兌換強大的 HTML 工具，提升你的工作效率！",
+                    catAll: "全部",
+                    catGithub: "🔧 GitHub",
+                    catWriting: "✍️ 寫作",
+                    catPractice: "🎯 練習",
+                    catAnalysis: "📊 分析",
+                    catUtility: "⚙️ 其他",
+                    toolEmpty: "此分類目前沒有工具",
+                    clickToUse: "點擊使用 →",
+                    usages: "次使用",
+
+                    // Equipment
+                    equipTitle: "🎒 我的裝備",
+                    equipDesc: "這裡是你已兌換的工具，點擊即可使用！",
+                    equipOwned: "已擁有",
+                    equipUnit: "個工具",
+                    equipEmpty: "你還沒有任何裝備",
+                    equipEmptyDesc: "前往工具商店兌換你的第一個工具吧！",
+
+                    // Upload
+                    uploadHeader: "💡 空間同步模式",
+                    uploadHeaderDesc: "現在支援直接將工具上傳至系統空間！",
+                    uploadStep1: "選擇你的 HTML 工具檔案（系統會自動將其同步到 tools/ 空間）。",
+                    uploadStep2: "填寫工具資訊後點擊上傳。",
+                    uploadStep3: "上傳後，你和其他玩家即可直接從空間下載並使用該工具。",
+                    toolName: "工具名稱 *",
+                    toolFile: "選擇 HTML 檔案 *",
+                    toolFileDesc: "檔案將自動儲存至 tools 資料夾",
+                    toolDescHeader: "描述 * (至少 10 字)",
+                    toolDescPlaceholder: "描述工具的功能與使用方式...",
+                    toolIcon: "圖示",
+                    toolCategory: "分類 *",
+                    toolCost: "代幣價格 (10-500)",
+                    toolFeatures: "特色功能 (用逗號分隔)",
+                    uploadBtn: "🚀 上傳到工具商店",
+                    uploadNote: "上傳成功後可獲得 25 XP，且你將自動擁有該工具",
+
+                    // Equipment
+                    launchTool: "🚀 啟動工具",
+                    fileName: "📂 檔案",
+
+                    // Plugins
+                    pluginTitle: "🔌 效果商店",
+                    pluginDesc: "使用代幣解鎖特效插件，獲得 XP、代幣加成等效果！",
+                    pluginOwned: "✓ 已擁有",
+
+                    // Achievements
+                    achieveTitle: "🏆 成就列表",
+                    achieveUnlocked: "✓ 已解鎖",
+
+                    // Footer
+                    resetBtn: "⚠️ 重置所有進度",
+
+                    // Ranks (Common with Arena)
+                    rpgRank1: '新手挑戰者',
+                    rpgRank2: '學徒冒險者',
+                    rpgRank3: '探索者',
+                    rpgRank4: '挑戰大師',
+                    rpgRank5: '菁英戰士',
+                    rpgRank6: '專家嚮導',
+                    rpgRank7: '創造大師',
+                    rpgRank8: '煉金術大師',
+                    rpgRank9: '傳奇奠基者',
+                    rpgRank10: '帝國領袖',
+
+                    // Tiers
+                    tierPrototype: "原型",
+                    tierBronze: "青銅",
+                    tierSilver: "白銀",
+                    tierGold: "黃金",
+                    tierLegendary: "傳奇",
+
+                    // Default Plugins
+                    plugin_xp_boost_name: "經驗值加速器",
+                    plugin_xp_boost_desc: "完成挑戰時獲得額外 20% XP 加成",
+                    plugin_token_boost_name: "代幣收集器",
+                    plugin_token_boost_desc: "完成挑戰時獲得額外 30% 代幣",
+                    plugin_streak_shield_name: "連續天數護盾",
+                    plugin_streak_shield_desc: "保護一次中斷的連續天數紀錄",
+                    plugin_reflection_bonus_name: "深度反思增幅",
+                    plugin_reflection_bonus_desc: "撰寫檢討文章時獲得額外 50% XP",
+                    plugin_challenge_radar_name: "挑戰雷達",
+                    plugin_challenge_radar_desc: "推薦適合你的挑戰類型",
+
+                    // Default Tools
+                    tool_github_push_name: "GitHub Push 助手",
+                    tool_github_push_desc: "一鍵推送代碼到 GitHub，支援 Exe 文件、AI 路徑解析、同步功能",
+                    tool_create_pr_name: "PR 創建器",
+                    tool_create_pr_desc: "快速創建 GitHub Pull Request，自動生成描述和標籤",
+                    tool_draft_editor_name: "草稿編輯器",
+                    tool_draft_editor_desc: "強大的寫作草稿編輯工具，支援多種格式和自動保存",
+                    tool_github_issue_name: "Issue 票據創建器",
+                    tool_github_issue_desc: "快速創建 GitHub Issue，支援模板和自動分類",
+                    tool_immerse_practice_name: "沉浸式練習器",
+                    tool_immerse_practice_desc: "英語沉浸式練習工具，支援 WT1 類型的寫作訓練",
+                    tool_proof_writing_name: "寫作證明儀表板",
+                    tool_proof_writing_desc: "追蹤和展示你的寫作進度，生成專業的成果報告",
+                    tool_learning_coach_name: "個人學習教練",
+                    tool_learning_coach_desc: "AI 驅動的個人化學習互動工具",
+                    tool_deliberate_practice_name: "刻意練習對策幫手",
+                    tool_deliberate_practice_desc: "根據你的弱點提供針對性的練習策略",
+                    tool_spec_kit_agent_name: "Spec Kit AI Agent",
+                    tool_spec_kit_agent_desc: "基於 Spec-Driven Development 方法論的 AI 代碼生成器，輕鬆創建前端應用",
+
+                    // Tool Features
+                    featExe: "Exe 支援",
+                    featAI: "AI 路徑",
+                    featSync: "同步功能",
+                    featStrict: "組件嚴格模式",
+                    featMaps: "GitHitMaps",
+                    featAutoDesc: "自動描述",
+                    featTag: "標籤生成",
+                    featTemplate: "模板支援",
+                    featAutoSave: "自動保存",
+                    featMultiFormat: "多格式支援",
+                    featVersion: "版本控制",
+                    featTemplates: "模板系統",
+                    featAutoCat: "自動分類",
+                    featPriority: "優先級設定",
+                    featImmersive: "沉浸式學習",
+                    featWT1: "WT1 專用",
+                    featTrack: "進度追蹤",
+                    featReport: "報告生成",
+                    featVisual: "數據視覺化",
+                    featAIInteract: "AI 互動",
+                    featAdvice: "個人化建議",
+                    featWeakness: "弱點分析",
+                    featStrategy: "策略建議",
+                    featPlan: "練習計劃",
+
+                    // Achievements
+                    ach_first_challenge_name: "初次挑戰",
+                    ach_first_challenge_desc: "完成第一個挑戰",
+                    ach_first_reflection_name: "反思者",
+                    ach_first_reflection_desc: "撰寫第一篇檢討文章",
+                    ach_challenge_10_name: "挑戰達人",
+                    ach_challenge_10_desc: "完成 10 個挑戰",
+                    ach_challenge_50_name: "挑戰大師",
+                    ach_challenge_50_desc: "完成 50 個挑戰",
+                    ach_token_500_name: "財富累積者",
+                    ach_token_500_desc: "累積 500 代幣",
+                    ach_token_2000_name: "代幣大亨",
+                    ach_token_2000_desc: "累積 2000 代幣",
+                    ach_unlock_plugin_name: "工具解鎖者",
+                    ach_unlock_plugin_desc: "解鎖第一個 Plugin",
+                    ach_unlock_5_plugins_name: "工具收藏家",
+                    ach_unlock_5_plugins_desc: "解鎖 5 個 Plugin",
+                    ach_create_plugin_name: "創造者",
+                    ach_create_plugin_desc: "創建第一個自製 Plugin",
+                    ach_plugin_sold_name: "開發商",
+                    ach_plugin_sold_desc: "自製 Plugin 被他人兌換",
+                    ach_streak_7_name: "週末戰士",
+                    ach_streak_7_desc: "連續 7 天活動",
+                    ach_level_10_name: "帝國領袖",
+                    ach_level_10_desc: "達到最高等級",
+
+                    // Alerts & Notifications
+                    alertMin50: "反思內容至少需要 50 字！",
+                    notifyReflectSuccess: "反思已提交！",
+                    notifyReflectReward: "+{xp} XP, +{tokens} 💰",
+                    confirmUnlockPlugin: "確定要用 {cost} 代幣解鎖「{name}」效果？",
+                    notifyPluginUnlocked: "效果已解鎖！",
+                    alertToolNotFound: "找不到此工具",
+                    confirmUnlockTool: "確定要用 {cost} 代幣兌換「{name}」？\n\n{desc}",
+                    notifyToolUnlocked: "工具已兌換！",
+                    notifyToolOwned: "{name} 已加入你的裝備",
+                    notifyLaunching: "啟動工具",
+                    alertEnterName: "請輸入工具名稱",
+                    alertSelectFile: "請選擇 HTML 檔案",
+                    alertMin10: "描述至少需要 10 個字",
+                    notifyUploading: "上傳中...",
+                    notifySyncing: "正在同步到系統空間...",
+                    notifyUploadSuccess: "工具上傳與同步成功！",
+                    notifyUploadReward: "{name} 已上架，獲得 +{xp} XP",
+                    alertRegisteFail: "遊戲系統註冊失敗: ",
+                    alertUploadFail: "上傳失敗: 無法連接到空間伺服器 (arena_api.py)。請確認 Python 後端正在運行。\n錯誤: ",
+                    notifyPluginUploaded: "效果已上傳！",
+                    confirmReset: "⚠️ 確定要重置所有進度嗎？此操作無法撤銷！",
+                    battleResult: "戰鬥結果",
+                    victory: "勝利",
+                    defeat: "失敗",
+
+                    // Form Placeholders & Labels
+                    placeholderToolName: "例：GitHub 自動推送助手",
+                    placeholderFeatures: "例：自動保存, AI 輔助, 一鍵操作",
+                    toolDescPlaceholder: "描述工具的功能與使用方式...",
+                    btnSelectFile: "選擇檔案",
+                    noFileSelected: "未選擇任何檔案",
+
+                    // Metrics (From Arena)
+                    ta_overview_clarity: 'TA: 概述清晰度',
+                    ta_key_step_coverage: 'TA: 關鍵步驟涵蓋度',
+                    ta_step_coverage: 'TA: 步驟涵蓋度',
+                    ta_factual_accuracy: 'TA: 事實準確性',
+                    ta_logic_accuracy: 'TA: 邏輯準確性',
+                    ta_data_accuracy: 'TA: 邏輯準確性',
+                    cc_sequencing_markers: 'CC: 順序標記',
+                    cc_sequencing_markers_desc: '評估是否有效使用時間順序詞（如：First, Next, Then, Finally）。',
+                    cc_referencing: 'CC: 指代連接',
+                    cc_paragraphing: 'CC: 段落邏輯',
+                    cc_logical_paragraphing: 'CC: 段落邏輯',
+                    lr_process_verbs: 'LR: 流程動詞',
+                    lr_topic_vocabulary: 'LR: 主題詞彙量',
+                    lr_topic_nouns: 'LR: 主題詞彙',
+                    lr_paraphrasing: 'LR: 改寫能力',
+                    lr_paraphrasing_power: 'LR: 改寫能力',
+
+                    // Reflection Modal
+                    reflectTitle: "📝 撰寫戰鬥檢討",
+                    reflectSubtitle: "透過深度反思獲得額外經驗值加成！",
+                    reflectLabel: "反思內容 (至少 50 字)",
+                    placeholderReflection: "這次戰鬥中學到什麼？哪些弱點需要加強？下次如何改進？",
+                    btnLater: "稍後再說",
+                    btnSubmit: "提交反思",
+                    band: "Band的分數",
+                    lr_conciseness: 'LR: 精簡度',
+                    lr_precision_conciseness: 'LR: 精準與精簡',
+                    lr_precision_and_conciseness: 'LR: 精準與精簡',
+                    gra_passive_voice: 'GRA: 被動語態',
+                    gra_passive_voice_control: 'GRA: 被動語態控制',
+                    gra_complex_structures: 'GRA: 句型多樣性',
+                    gra_sentence_variety: 'GRA: 句型變換',
+                    gra_error_free_density: 'GRA: 無錯誤率',
+                    gra_error_free_sentences: '無錯誤率',
+                    firstSubmission: "首次提交！",
+                    first_submission: "首次提交！",
+                    firstsubmission: "首次提交！",
+
+                    // Error Messages (from RPG Engine)
+                    errToolNotFound: "找不到此工具",
+                    errPluginNotFound: "找不到效果插件",
+                    errAlreadyOwned: "你已經擁有此項目",
+                    errInsufficientTokens: "代幣不足！需要 {cost} 代幣，你只有 {balance} 代幣",
+                    errNotUnlockedPlugin: "你還沒有解鎖此效果",
+                    errAlreadyActivePlugin: "此效果已經啟用",
+                    errMaxActivePlugins: "最多同時啟用 3 個效果",
+                    errNotActivePlugin: "此效果未啟用",
+                    errMinLengthName: "名稱至少需要 2 個字元",
+                    errMinLengthDesc: "描述至少需要 10 個字元",
+                    errTokenRange: "代幣價格需在 10-500 之間",
+                    errInvalidFileName: "請提供有效的 HTML 檔案名稱",
+                    errInvalidCategory: "請選擇有效的分類",
+                    errNotCompleted: "只能對已完成的挑戰撰寫檢討",
+                    errAlreadyReflected: "此挑戰已有檢討文章",
+                    errMinLengthReflection: "檢討文章至少需要 50 個字元",
+
+                    // Notifications
+                    notifyEarnedXP: "獲得 {xp} XP",
+                    notifyLevelUpTitle: "等級提升！",
+                    notifyLevelUpMsg: "恭喜升級至 Lv.{level} {title}",
+                    notifyAchievementUnlocked: "成就解鎖",
+                    notifyToolSaleTitle: "工具販售成功！",
+                    notifyToolSaleMsg: "+{reward} 💰 創作者回饋",
+                    rpgGainXP: "獲得經驗值",
+                    rpgContrib: "公會貢獻：推送檔案",
+                    rpgArenaWin: "競技場勝利",
+                    rpgUnlockTool: "兌換工具：{name}",
+                    rpgUnlockPlugin: "解鎖效果：{name}",
+                    rpgUseTool: "使用工具：{name}",
+                },
+                en: {
+                    pageTitle: "Quest Empire - Challenger Hub",
+                    mainTitle: "QUEST EMPIRE",
+                    subTitle: "🎮 Challenger Hub — Earn Tokens & XP through Arena Challenges",
+
+                    // Player Status
+                    currentRank: "Rank",
+                    totalXP: "Total XP",
+                    tokens: "💰 Tokens",
+                    victories: "Victories",
+                    defeats: "Defeats",
+                    unlockedTools: "Tools Unlocked",
+                    streakDays: "Streak Days",
+                    xpNeeded: "{xp} XP to Level Up",
+
+                    // Arena Card
+                    arenaTitle: "Challenger Arena",
+                    arenaDesc: "Submit essays to challenge your weakness Boss! AI evaluates your battle.",
+                    arenaBtn: "Enter Arena →",
+                    arenaRewardWin: "✅ Win = XP + Tokens",
+                    arenaRewardReview: "📝 Review = XP Bonus",
+                    arenaRewardUnlock: "🔓 Unlock = Get Plugins",
+
+                    // Tabs
+                    tabBattles: "📜 Battle Log",
+                    tabTools: "🧰 Tool Store",
+                    tabEquip: "🎒 Equipment",
+                    tabUpload: "📤 Upload",
+                    tabPlugins: "🔌 Plugin Store",
+                    tabAchieve: "🏆 Achievements",
+
+                    // Battle Log
+                    logTitle: "📜 Recent Battles",
+                    logEmpty: "No battle records yet",
+                    logEmptyDesc: "Go to the Arena to start your first challenge!",
+                    winTitle: "Victory!",
+                    loseTitle: "Defeated",
+                    reviewBtn: "📝 Write Review (+XP)",
+                    reviewed: "Reviewed ✓",
+                    improvement: "📈 Improved",
+                    regression: "📉 Needs Work",
+
+                    // Tools Store
+                    storeTitle: "🧰 Tool Store",
+                    storeDesc: "Exchange tokens for powerful HTML tools to boost productivity!",
+                    catAll: "All",
+                    catGithub: "🔧 GitHub",
+                    catWriting: "✍️ Writing",
+                    catPractice: "🎯 Practice",
+                    catAnalysis: "📊 Analysis",
+                    catUtility: "⚙️ Utility",
+                    toolEmpty: "No tools in this category",
+                    clickToUse: "Click to Use →",
+                    usages: "uses",
+
+                    // Equipment
+                    equipTitle: "🎒 My Equipment",
+                    equipDesc: "Tools you have redeemed. Click to launch!",
+                    equipOwned: "Owned",
+                    equipUnit: "Tools",
+                    equipEmpty: "You don't have any equipment yet",
+                    equipEmptyDesc: "Visit the Tool Store to get your first tool!",
+
+                    // Upload
+                    uploadHeader: "💡 Cloud Sync Mode",
+                    uploadHeaderDesc: "Direct upload to system cloud storage is now supported!",
+                    uploadStep1: "Select your HTML tool file (Auto-syncs to tools/ folder).",
+                    uploadStep2: "Fill in tool details and upload.",
+                    uploadStep3: "Once uploaded, you and others can use it instantly.",
+                    toolName: "Tool Name *",
+                    toolFile: "Select HTML File *",
+                    toolFileDesc: "Saved automatically to tools folder",
+                    toolDescHeader: "Description * (Min 10 chars)",
+                    toolDescPlaceholder: "Describe how to use this tool...",
+                    toolIcon: "Icon",
+                    toolCategory: "Category *",
+                    toolCost: "Token Cost (10-500)",
+                    toolFeatures: "Features (comma separated)",
+                    uploadBtn: "🚀 Upload to Store",
+                    uploadNote: "Get 25 XP upon success. You automatically own the tool.",
+
+                    // Equipment
+                    launchTool: "🚀 Launch Tool",
+                    fileName: "📂 File",
+
+                    // Plugins
+                    pluginTitle: "🔌 Plugin Store",
+                    pluginDesc: "Unlock effects to get XP/Token bonuses!",
+                    pluginOwned: "✓ Owned",
+
+                    // Achievements
+                    achieveTitle: "🏆 Achievements",
+                    achieveUnlocked: "✓ Unlocked",
+
+                    // Footer
+                    resetBtn: "⚠️ Reset All Progress",
+
+                    // Ranks
+                    rpgRank1: 'Novice Challenger',
+                    rpgRank2: 'Apprentice Adventurer',
+                    rpgRank3: 'Explorer',
+                    rpgRank4: 'Challenge Master',
+                    rpgRank5: 'Elite Warrior',
+                    rpgRank6: 'Expert Guide',
+                    rpgRank7: 'Master Creator',
+                    rpgRank8: 'Grandmaster Alchemist',
+                    rpgRank9: 'Legendary Founder',
+                    rpgRank10: 'Empire Leader',
+
+                    // Tiers
+                    tierPrototype: "Prototype",
+                    tierBronze: "Bronze",
+                    tierSilver: "Silver",
+                    tierGold: "Gold",
+                    tierLegendary: "Legendary",
+
+                    // Default Plugins
+                    plugin_xp_boost_name: "XP Booster",
+                    plugin_xp_boost_desc: "Earn +20% bonus XP upon challenge completion",
+                    plugin_token_boost_name: "Token Collector",
+                    plugin_token_boost_desc: "Earn +30% bonus tokens upon challenge completion",
+                    plugin_streak_shield_name: "Streak Shield",
+                    plugin_streak_shield_desc: "Protects your daily streak once if you miss a day",
+                    plugin_reflection_bonus_name: "Deep Reflection Boost",
+                    plugin_reflection_bonus_desc: "Earn +50% XP when writing reflection reviews",
+                    plugin_challenge_radar_name: "Challenge Radar",
+                    plugin_challenge_radar_desc: "Recommends the best challenge type for you",
+
+                    // Default Tools
+                    tool_github_push_name: "GitHub Push Helper",
+                    tool_github_push_desc: "Push code to GitHub with Exe support, AI pathing, and sync",
+                    tool_create_pr_name: "PR Creator",
+                    tool_create_pr_desc: "Quickly create GitHub Pull Requests with auto-desc/tags",
+                    tool_draft_editor_name: "Draft Editor",
+                    tool_draft_editor_desc: "Powerful writing tool with multi-format and auto-save",
+                    tool_github_issue_name: "Issue Ticket Creator",
+                    tool_github_issue_desc: "Fast GitHub Issue creation with templates and categories",
+                    tool_immerse_practice_name: "Immersive Practice",
+                    tool_immerse_practice_desc: "English immersive tool specialized for WT1 writing",
+                    tool_proof_writing_name: "Proof Writing Dashboard",
+                    tool_proof_writing_desc: "Track and showcase your writing progress with reports",
+                    tool_learning_coach_name: "Private Learning Coach",
+                    tool_learning_coach_desc: "AI-driven personalized learning interaction tool",
+                    tool_deliberate_practice_name: "Deliberate Practice Sorter",
+                    tool_deliberate_practice_desc: "Targeted practice strategies based on your weaknesses",
+
+                    // Tool Features
+                    featExe: "Exe Support",
+                    featAI: "AI Path",
+                    featSync: "Sync Feature",
+                    featStrict: "Strict Mode",
+                    featMaps: "GitHitMaps",
+                    featAutoDesc: "Auto Description",
+                    featTag: "Tag Generation",
+                    featTemplate: "Template Support",
+                    featAutoSave: "Auto Save",
+                    featMultiFormat: "Multi-format",
+                    featVersion: "Version Control",
+                    featTemplates: "Templates",
+                    featAutoCat: "Auto Category",
+                    featPriority: "Priority Setting",
+                    featImmersive: "Immersive",
+                    featWT1: "WT1 Special",
+                    featTrack: "Progress Track",
+                    featReport: "Report Gen",
+                    featVisual: "Visual Data",
+                    featAIInteract: "AI Interaction",
+                    featAdvice: "AI Advice",
+                    featWeakness: "Weakness Analysis",
+                    featStrategy: "Strategy Suggestion",
+                    featPlan: "Practice Plan",
+
+                    // Achievements
+                    ach_first_challenge_name: "First Challenge",
+                    ach_first_challenge_desc: "Complete your very first challenge",
+                    ach_first_reflection_name: "Reflectionist",
+                    ach_first_reflection_desc: "Write your first reflection review",
+                    ach_challenge_10_name: "Challenge Expert",
+                    ach_challenge_10_desc: "Complete 10 challenges",
+                    ach_challenge_50_name: "Challenge Master",
+                    ach_challenge_50_desc: "Complete 50 challenges",
+                    ach_token_500_name: "Wealth Accumulator",
+                    ach_token_500_desc: "Accumulate 500 tokens",
+                    ach_token_2000_name: "Token Tycoon",
+                    ach_token_2000_desc: "Accumulate 2000 tokens",
+                    ach_unlock_plugin_name: "Tool Unlocker",
+                    ach_unlock_plugin_desc: "Unlock your first Plugin",
+                    ach_unlock_5_plugins_name: "Tool Collector",
+                    ach_unlock_5_plugins_desc: "Unlock 5 different Plugins",
+                    ach_create_plugin_name: "The Creator",
+                    ach_create_plugin_desc: "Create your first custom Plugin",
+                    ach_plugin_sold_name: "Developer",
+                    ach_plugin_sold_desc: "Your custom Plugin was redeemed by others",
+                    ach_streak_7_name: "Weekend Warrior",
+                    ach_streak_7_desc: "Maintain a 7-day activity streak",
+                    ach_level_10_name: "Empire Leader",
+                    ach_level_10_desc: "Reach the maximum level",
+
+                    // Alerts & Notifications
+                    alertMin50: "Reflection must be at least 50 characters!",
+                    notifyReflectSuccess: "Reflection submitted!",
+                    notifyReflectReward: "+{xp} XP, +{tokens} 💰",
+                    confirmUnlockPlugin: "Are you sure you want to unlock '{name}' for {cost} tokens?",
+                    notifyPluginUnlocked: "Effect unlocked!",
+                    alertToolNotFound: "Tool not found",
+                    confirmUnlockTool: "Are you sure you want to redeem '{name}' for {cost} tokens?\n\n{desc}",
+                    notifyToolUnlocked: "Tool redeemed!",
+                    notifyToolOwned: "{name} has been added to your gear",
+                    notifyLaunching: "Launching Tool",
+                    alertEnterName: "Please enter tool name",
+                    alertSelectFile: "Please select an HTML file",
+                    alertMin10: "Description must be at least 10 characters",
+                    notifyUploading: "Uploading...",
+                    notifySyncing: "Syncing to system space...",
+                    notifyUploadSuccess: "Upload & Sync Successful!",
+                    notifyUploadReward: "{name} is now live! Earned +{xp} XP",
+                    alertRegisteFail: "Game registration failed: ",
+                    alertUploadFail: "Upload Failed: Cannot connect to space server (arena_api.py). Ensure the Python backend is running.\nError: ",
+                    notifyPluginUploaded: "Effect uploaded!",
+                    confirmReset: "⚠️ Are you sure you want to reset all progress? This cannot be undone!",
+                    battleResult: "Battle Result",
+                    victory: "Victory",
+                    defeat: "Defeat",
+
+                    // Form Placeholders & Labels
+                    placeholderToolName: "e.g., GitHub Push Helper",
+                    placeholderFeatures: "e.g., Auto-save, AI Helper, One-click",
+                    toolDescPlaceholder: "Describe how to use this tool...",
+                    btnSelectFile: "Choose File",
+                    noFileSelected: "No file selected",
+
+                    // Metrics (From Arena)
+                    ta_overview_clarity: 'TA: Overview Clarity',
+                    ta_key_step_coverage: 'TA: Key Step Coverage',
+                    ta_step_coverage: 'TA: Step Coverage',
+                    ta_factual_accuracy: 'TA: Factual Accuracy',
+                    ta_logic_accuracy: 'TA: Logic Accuracy',
+                    ta_data_accuracy: 'TA: Logic Accuracy',
+                    cc_sequencing_markers: 'CC: Sequencing Markers',
+                    cc_referencing: 'CC: Referencing',
+                    cc_paragraphing: 'CC: Paragraph Logic',
+                    cc_logical_paragraphing: 'CC: Logical Paragraphing',
+                    lr_process_verbs: 'LR: Process Verbs',
+                    lr_topic_vocabulary: 'LR: Topic Vocabulary',
+                    lr_topic_nouns: 'LR: Topic Nouns',
+                    lr_paraphrasing: 'LR: Paraphrasing',
+                    lr_paraphrasing_power: 'LR: Paraphrasing Power',
+                    lr_conciseness: 'LR: Conciseness',
+                    lr_precision_conciseness: 'LR: Precision & Conciseness',
+                    lr_precision_and_conciseness: 'LR: Precision & Conciseness',
+                    gra_passive_voice: 'GRA: Passive Voice',
+                    gra_passive_voice_control: 'GRA: Passive Voice Control',
+                    gra_complex_structures: 'GRA: Complex Structures',
+                    gra_sentence_variety: 'GRA: Sentence Variety',
+                    gra_error_free_density: 'GRA: Error-Free Density',
+                    gra_error_free_sentences: 'Error-Free Sentences',
+
+                    // Reflection Modal
+                    reflectTitle: "📝 Write Battle Reflection",
+                    reflectSubtitle: "Earn extra XP bonus through deep reflection!",
+                    reflectLabel: "Reflection Content (Min 50 chars)",
+                    placeholderReflection: "What did you learn? Which weaknesses need work? How to improve next time?",
+                    btnLater: "Maybe Later",
+                    btnSubmit: "Submit Reflection",
+                    band: "Band Score",
+                    firstSubmission: "First Submission!",
+                    first_submission: "First Submission!",
+                    firstsubmission: "First Submission!",
+
+                    // Error Messages (from RPG Engine)
+                    errToolNotFound: "Tool not found",
+                    errPluginNotFound: "Plugin not found",
+                    errAlreadyOwned: "You already own this item",
+                    errInsufficientTokens: "Insufficient tokens! Need {cost}, you have {balance}",
+                    errNotUnlockedPlugin: "You haven't unlocked this effect yet",
+                    errAlreadyActivePlugin: "This effect is already active",
+                    errMaxActivePlugins: "Maximum 3 active effects allowed",
+                    errNotActivePlugin: "This effect is not active",
+                    errMinLengthName: "Name must be at least 2 characters",
+                    errMinLengthDesc: "Description must be at least 10 characters",
+                    errTokenRange: "Token cost must be between 10 and 500",
+                    errInvalidFileName: "Please provide a valid HTML filename",
+                    errInvalidCategory: "Please select a valid category",
+                    errNotCompleted: "Can only write reflections for completed challenges",
+                    errAlreadyReflected: "This challenge already has a reflection",
+                    errMinLengthReflection: "Reflection must be at least 50 characters",
+
+                    // Notifications
+                    notifyEarnedXP: "Earned {xp} XP",
+                    notifyLevelUpTitle: "Level Up!",
+                    notifyLevelUpMsg: "Congratulations! Reached Lv.{level} {title}",
+                    notifyAchievementUnlocked: "Achievement Unlocked",
+                    notifyToolSaleTitle: "Tool Sold Successfully!",
+                    notifyToolSaleMsg: "+{reward} 💰 Creator Reward",
+                    rpgGainXP: "Gained Experience",
+                    rpgContrib: "Guild Contribution: Push Files",
+                    rpgArenaWin: "Arena Victory",
+                    rpgUnlockTool: "Redeemed Tool: {name}",
+                    rpgUnlockPlugin: "Unlocked Effect: {name}",
+                    rpgUseTool: "Used Tool: {name}",
+                }
+            },
+
+            t: function (key, params = {}) {
+                let text = (this.translations[this.currentLang] && this.translations[this.currentLang][key]) || key;
+                for (const [k, v] of Object.entries(params)) {
+                    text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+                }
+                return text;
+            },
+
+            setLanguage: function (lang) {
+                this.currentLang = lang;
+                localStorage.setItem('ielts_arena_lang', lang); // Share sync with Arena
+                this.applyTranslations();
+                updateUI(); // Re-render UI
+            },
+
+            loadSavedLanguage: function () {
+                const savedLang = localStorage.getItem('ielts_arena_lang');
+                if (savedLang && this.translations[savedLang]) {
+                    this.currentLang = savedLang;
+                }
+            },
+
+            applyTranslations: function () {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (key) el.innerHTML = this.t(key);
+                });
+
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (key) el.placeholder = this.t(key);
+                });
+
+                const btnText = document.getElementById('langBtnText');
+                if (btnText) {
+                    btnText.innerText = this.currentLang === 'zh' ? 'EN' : '中文';
+                }
+
+                document.documentElement.lang = this.currentLang === 'zh' ? 'zh-TW' : 'en';
+            }
+        };
+
+        window.toggleLanguage = function () {
+            const newLang = window.i18n.currentLang === 'zh' ? 'en' : 'zh';
+            window.i18n.setLanguage(newLang);
+        };
+
+        // Initialize i18n
+        window.i18n.loadSavedLanguage();
+        window.addEventListener('DOMContentLoaded', () => {
+            window.i18n.applyTranslations();
+        });
+
+        const ARENA_STORAGE_KEY = 'ielts_challenger_data';
+        let currentBattleIndex = null;
+        const t = window.i18n.t.bind(window.i18n);
+
+        // Feature translation map
+        const FEATURE_MAP = {
+            'Exe 支援': 'featExe',
+            'AI 路徑': 'featAI',
+            '同步功能': 'featSync',
+            '組件嚴格模式': 'featStrict',
+            'GitHitMaps': 'featMaps',
+            '自動描述': 'featAutoDesc',
+            '標籤生成': 'featTag',
+            '模板支援': 'featTemplate',
+            '自動保存': 'featAutoSave',
+            '多格式支援': 'featMultiFormat',
+            '版本控制': 'featVersion',
+            '模板系統': 'featTemplates',
+            '自動分類': 'featAutoCat',
+            '優先級設定': 'featPriority',
+            '沉浸式學習': 'featImmersive',
+            'WT1 專用': 'featWT1',
+            '進度追蹤': 'featTrack',
+            '報告生成': 'featReport',
+            '數據視覺化': 'featVisual',
+            'AI 互動': 'featAIInteract',
+            '個人化建議': 'featAdvice',
+            '弱點分析': 'featWeakness',
+            '策略建議': 'featStrategy',
+            '練習計劃': 'featPlan'
+        };
+
+        function translateFeature(f) {
+            const key = FEATURE_MAP[f];
+            return key ? t(key) : f;
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        function getArenaData() {
+            try {
+                const saved = localStorage.getItem(ARENA_STORAGE_KEY);
+                if (saved) return JSON.parse(saved);
+            } catch (e) { console.error(e); }
+            return { essays: [], battleLog: [], victories: 0, defeats: 0, currentBosses: [], bossDefeated: {} };
+        }
+
+        function updateUI() {
+            const state = DevScribeRPG.getState();
+            const arenaData = getArenaData();
+            const rank = DevScribeRPG.calculateLevel(state.totalXP);
+            const progress = DevScribeRPG.getProgressToNextLevel(state.totalXP);
+
+            // Player status
+            document.getElementById('rank-icon').textContent = rank.icon;
+            document.getElementById('rank-title').textContent = t('rpgRank' + rank.level);
+            document.getElementById('rank-title').style.color = rank.color;
+            document.getElementById('player-level').textContent = rank.level;
+            document.getElementById('total-xp').textContent = state.totalXP.toLocaleString();
+            document.getElementById('total-tokens').textContent = state.tokens.toLocaleString();
+            document.getElementById('xp-bar').style.width = progress.progress + '%';
+
+            // XP Needed
+            const xpVal = `<span class="text-indigo-400">${progress.xpNeeded.toLocaleString()}</span>`;
+            document.getElementById('xp-needed-container').innerHTML = t('xpNeeded', { xp: xpVal });
+
+            document.getElementById('xp-current').textContent = progress.currentInLevel.toLocaleString();
+            document.getElementById('xp-total').textContent = progress.totalInLevel.toLocaleString();
+
+            // Arena stats
+            document.getElementById('stat-victories').textContent = arenaData.victories || 0;
+            document.getElementById('stat-defeats').textContent = arenaData.defeats || 0;
+            const ownedTools = state.unlockedTools?.length || 0;
+            const ownedPlugins = state.unlockedPlugins?.length || 0;
+            document.getElementById('plugins-count').textContent = ownedTools + ownedPlugins;
+            document.getElementById('streak-days').textContent = state.currentStreak;
+
+            // Tool equipment count
+            document.getElementById('owned-tools-count').textContent = ownedTools;
+
+            renderBattleHistory(arenaData);
+            renderToolStore();
+            renderEquipment();
+            renderPluginStore();
+            renderAchievements();
+        }
+
+        function renderBattleHistory(arenaData) {
+            const container = document.getElementById('battle-history');
+            const battles = arenaData.battleLog || [];
+
+            if (battles.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-12">
+                        <div class="text-5xl mb-4">⚔️</div>
+                        <p>${t('logEmpty')}</p>
+                        <p class="text-sm mt-2">${t('logEmptyDesc')}</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = battles.slice(0, 10).map((battle, index) => {
+                const time = new Date(battle.timestamp).toLocaleString(window.i18n.currentLang === 'zh' ? 'zh-TW' : 'en-US');
+                const hasReflection = battle.reflection;
+                const resultTitle = battle.victory ? t('winTitle') : t('loseTitle');
+
+                return `
+                    <div class="battle-record ${battle.victory ? 'victory' : 'defeat'}">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">${battle.victory ? '🏆' : '💔'}</span>
+                                <div>
+                                    <div class="font-bold ${battle.victory ? 'text-green-400' : 'text-red-400'}">
+                                        ${resultTitle}
+                                    </div>
+                                    <div class="text-sm text-gray-400">${time}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-yellow-400 font-bold text-xl">Band ${battle.band?.toFixed(1) || '-'}</div>
+                                ${!hasReflection ? `
+                                    <button onclick="openReflectionModal(${index})" class="text-xs text-indigo-400 hover:underline mt-1">
+                                        ${t('reviewBtn')}
+                                    </button>
+                                ` : `<span class="text-xs text-gray-500">${t('reviewed')}</span>`}
+                            </div>
+                        </div>
+                        ${battle.improvements?.length > 0 ? `
+                            <div class="text-xs text-green-400 mt-2">
+                                ${t('improvement')}: ${battle.improvements.map(i => {
+                    const metric = typeof i === 'object' ? i.metric : i;
+                    // Try translating metric name with robust normalization
+                    const metricKey = metric.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+                    return t(metricKey) !== metricKey ? t(metricKey) : metric;
+                }).join(', ')}
+                            </div>
+                        ` : ''}
+                        ${battle.regressions?.length > 0 ? `
+                            <div class="text-xs text-red-400 mt-1">
+                                ${t('regression')}: ${battle.regressions.map(r => {
+                    const metric = typeof r === 'object' ? r.metric : r;
+                    const metricKey = metric.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+                    return t(metricKey) !== metricKey ? t(metricKey) : metric;
+                }).join(', ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Current category filter
+        let currentToolCategory = 'all';
+
+        // Tool Store Rendering
+        function renderToolStore(category = currentToolCategory) {
+            const tools = DevScribeRPG.getAllTools();
+            const state = DevScribeRPG.getState();
+            const tiers = DevScribeRPG.PLUGIN_TIERS;
+            const categories = DevScribeRPG.TOOL_CATEGORIES;
+
+            // Filter by category
+            const filteredTools = category === 'all'
+                ? tools
+                : tools.filter(t => t.category === category);
+
+            const container = document.getElementById('tool-store');
+
+            if (filteredTools.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <div class="text-5xl mb-4">🧰</div>
+                        <p>${t('toolEmpty')}</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = filteredTools.map(tool => {
+                const owned = state.unlockedTools?.includes(tool.id);
+                const tierInfo = tiers[tool.tier] || tiers.prototype;
+                const categoryInfo = categories[tool.category] || categories.utility;
+                // Translate category name
+                const catKey = 'cat' + tool.category.charAt(0).toUpperCase() + tool.category.slice(1);
+                const catName = t(catKey);
+
+                const rating = tool.rating ? '★'.repeat(Math.round(tool.rating)) + '☆'.repeat(5 - Math.round(tool.rating)) : '';
+
+                // i18n for names and descriptions
+                const nameKey = tool.id + '_name';
+                const descKey = tool.id + '_desc';
+                const toolName = t(nameKey) !== nameKey ? t(nameKey) : tool.name;
+                const toolDesc = t(descKey) !== descKey ? t(descKey) : tool.description;
+                const tierName = t('tier' + tool.tier.charAt(0).toUpperCase() + tool.tier.slice(1));
+
+                return `
+                    <div class="tool-card ${owned ? 'owned' : ''}" onclick="${owned ? `useTool('${tool.id}')` : `unlockTool('${tool.id}')`}">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-4xl">${tool.icon}</span>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-white">${toolName}</h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="tier-badge" style="background: ${tierInfo.color}20; color: ${tierInfo.color}">
+                                        ${tierInfo.icon} ${tierName}
+                                    </span>
+                                    <span class="text-xs" style="color: ${categoryInfo.color}">
+                                        ${categoryInfo.icon} ${catName}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-3">${toolDesc}</p>
+                        ${tool.features?.length > 0 ? `
+                            <div class="mb-3">
+                                ${tool.features.slice(0, 3).map(f => `<span class="feature-tag">${translateFeature(f)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="flex items-center justify-between">
+                            <div class="text-xs text-gray-500">
+                                ${tool.usages || 0} ${t('usages')}
+                                ${rating ? `<span class="rating-stars ml-2">${rating}</span>` : ''}
+                            </div>
+                            ${owned
+                        ? `<span class="text-green-400 text-sm font-semibold">${t('clickToUse')}</span>`
+                        : `<span class="text-amber-400 font-bold text-lg">${tool.tokenCost} 💰</span>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Equipment Page Rendering
+        function renderEquipment() {
+            const ownedTools = DevScribeRPG.getOwnedTools();
+            const tiers = DevScribeRPG.PLUGIN_TIERS;
+            const categories = DevScribeRPG.TOOL_CATEGORIES;
+
+            const container = document.getElementById('my-equipment');
+            const noEquipment = document.getElementById('no-equipment');
+
+            if (ownedTools.length === 0) {
+                container.innerHTML = '';
+                noEquipment.classList.remove('hidden');
+                return;
+            }
+
+            noEquipment.classList.add('hidden');
+
+            container.innerHTML = ownedTools.map(tool => {
+                const tierInfo = tiers[tool.tier] || tiers.prototype;
+                const categoryInfo = categories[tool.category] || categories.utility;
+
+                const nameKey = tool.id + '_name';
+                const descKey = tool.id + '_desc';
+                const toolName = t(nameKey) !== nameKey ? t(nameKey) : tool.name;
+                const toolDesc = t(descKey) !== descKey ? t(descKey) : tool.description;
+                const tierName = t('tier' + tool.tier.charAt(0).toUpperCase() + tool.tier.slice(1));
+
+                return `
+                    <div class="equipment-card" onclick="useTool('${tool.id}')">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-5xl">${tool.icon}</span>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-white text-lg">${toolName}</h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="tier-badge" style="background: ${tierInfo.color}20; color: ${tierInfo.color}">
+                                        ${tierInfo.icon} ${tierName}
+                                    </span>
+                                    <span class="text-xs" style="color: ${categoryInfo.color}">
+                                        ${categoryInfo.icon} ${t('cat' + tool.category.charAt(0).toUpperCase() + tool.category.slice(1))}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-300 mb-3">${toolDesc}</p>
+                        ${tool.features?.length > 0 ? `
+                            <div class="mb-3">
+                                ${tool.features.map(f => `<span class="feature-tag">${translateFeature(f)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-green-500/30">
+                            <span class="text-xs text-gray-400">${t('fileName')}: ${tool.fileName}</span>
+                            <span class="text-green-400 font-semibold">${t('launchTool')}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Plugin Store Rendering (效果商店)
+        function renderPluginStore() {
+            const plugins = DevScribeRPG.getAllPlugins();
+            const state = DevScribeRPG.getState();
+            const tiers = DevScribeRPG.PLUGIN_TIERS;
+
+            document.getElementById('plugin-store').innerHTML = plugins.map(p => {
+                const owned = state.unlockedPlugins.includes(p.id);
+                const tierInfo = tiers[p.tier];
+
+                const nameKey = p.id + '_name';
+                const descKey = p.id + '_desc';
+                const pluginName = t(nameKey) !== nameKey ? t(nameKey) : p.name;
+                const pluginDesc = t(descKey) !== descKey ? t(descKey) : p.description;
+                const tierName = t('tier' + p.tier.charAt(0).toUpperCase() + p.tier.slice(1));
+
+                return `
+                    <div class="plugin-card ${owned ? 'owned' : ''}" onclick="${owned ? '' : `unlockPlugin('${p.id}')`}">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-3xl">${p.icon}</span>
+                            <div class="flex-1">
+                                <h4 class="font-bold">${pluginName}</h4>
+                                <span class="tier-badge" style="background: ${tierInfo.color}20; color: ${tierInfo.color}">${tierInfo.icon} ${tierName}</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-3">${pluginDesc}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-500">${p.usages || 0} ${t('usages')}</span>
+                            ${owned
+                        ? `<span class="text-green-400 text-sm font-semibold">${t('pluginOwned')}</span>`
+                        : `<span class="text-amber-400 font-bold">${p.tokenCost} 💰</span>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAchievements() {
+            const state = DevScribeRPG.getState();
+            const achievements = DevScribeRPG.ACHIEVEMENTS;
+
+            document.getElementById('achievements-grid').innerHTML = achievements.map(ach => {
+                const unlocked = state.achievements.includes(ach.id);
+                const nameKey = 'ach_' + ach.id + '_name';
+                const descKey = 'ach_' + ach.id + '_desc';
+                const achName = t(nameKey) !== nameKey ? t(nameKey) : ach.name;
+                const achDesc = t(descKey) !== descKey ? t(descKey) : ach.description;
+
+                return `
+                    <div class="glass-card p-4 ${unlocked ? 'border-yellow-500 border' : 'opacity-60'}">
+                        <div class="flex items-center gap-3">
+                            <span class="text-3xl ${unlocked ? '' : 'grayscale'}">${ach.icon}</span>
+                            <div>
+                                <div class="font-bold ${unlocked ? 'text-yellow-400' : 'text-gray-400'}">${achName}</div>
+                                <div class="text-xs text-gray-400">${achDesc}</div>
+                            </div>
+                        </div>
+                        ${unlocked ? `<div class="text-xs text-green-400 mt-2">${t('achieveUnlocked')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openReflectionModal(battleIndex) {
+            currentBattleIndex = battleIndex;
+            const arenaData = getArenaData();
+            const battle = arenaData.battleLog[battleIndex];
+            document.getElementById('reflection-battle-info').textContent =
+                `${t('battleResult')}: ${battle.victory ? t('victory') : t('defeat')} | ${t('band')} ${battle.band?.toFixed(1) || '-'}`;
+            document.getElementById('reflection-modal').classList.add('active');
+        }
+
+        function submitReflection() {
+            const content = document.getElementById('reflection-content').value.trim();
+            if (content.length < 50) {
+                alert(t('alertMin50'));
+                return;
+            }
+
+            const arenaData = getArenaData();
+            const battle = arenaData.battleLog[currentBattleIndex];
+
+            // Mark as reflected
+            battle.reflection = {
+                content,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem(ARENA_STORAGE_KEY, JSON.stringify(arenaData));
+
+            // Award bonus XP and tokens
+            const qualityScore = Math.min(100, Math.floor(content.length / 10) + 30);
+            const bonusXP = Math.floor(30 * (qualityScore / 100));
+            const bonusTokens = Math.floor(10 * (qualityScore / 100));
+
+            // Update state via DevScribeRPG
+            const state = DevScribeRPG.getState();
+            state.totalXP += bonusXP;
+            state.tokens += bonusTokens;
+            state.totalReflections = (state.totalReflections || 0) + 1;
+
+            // Save to DevScribeRPG storage
+            localStorage.setItem('quest_empire_state', JSON.stringify(state));
+
+            DevScribeRPG.showNotification(t('notifyReflectSuccess'), t('notifyReflectReward', { xp: bonusXP, tokens: bonusTokens }), 'success', '📝');
+
+            closeModal('reflection-modal');
+            document.getElementById('reflection-content').value = '';
+
+            // Reload state
+            location.reload();
+        }
+
+        function unlockPlugin(pluginId) {
+            const plugin = DevScribeRPG.getPluginById(pluginId);
+            const nameKey = plugin.id + '_name';
+            const pluginName = t(nameKey) !== nameKey ? t(nameKey) : plugin.name;
+
+            if (confirm(t('confirmUnlockPlugin', { cost: plugin.tokenCost, name: pluginName }))) {
+                const result = DevScribeRPG.unlockPlugin(pluginId);
+                if (result.success) {
+                    DevScribeRPG.showNotification(t('notifyPluginUnlocked'), pluginName, 'success', '🔓');
+                    updateUI();
+                } else {
+                    const errorMsg = result.errorKey ? t(result.errorKey, result.params) : result.error;
+                    alert('❌ ' + errorMsg);
+                }
+            }
+        }
+
+        // ========= HTML Tools Functions =========
+
+        // Unlock (purchase) a tool
+        function unlockTool(toolId) {
+            const tool = DevScribeRPG.getToolById(toolId);
+            if (!tool) {
+                alert(t('alertToolNotFound'));
+                return;
+            }
+
+            const nameKey = tool.id + '_name';
+            const descKey = tool.id + '_desc';
+            const toolName = t(nameKey) !== nameKey ? t(nameKey) : tool.name;
+            const toolDesc = t(descKey) !== descKey ? t(descKey) : tool.description;
+
+            if (confirm(t('confirmUnlockTool', { cost: tool.tokenCost, name: toolName, desc: toolDesc }))) {
+                const result = DevScribeRPG.unlockTool(toolId);
+                if (result.success) {
+                    DevScribeRPG.showNotification(t('notifyToolUnlocked'), t('notifyToolOwned', { name: toolName }), 'success', '🧰');
+                    updateUI();
+                } else {
+                    const errorMsg = result.errorKey ? t(result.errorKey, result.params) : result.error;
+                    alert('❌ ' + errorMsg);
+                }
+            }
+        }
+
+        // Use an owned tool (open the HTML file)
+        function useTool(toolId) {
+            const tool = DevScribeRPG.getToolById(toolId);
+            const nameKey = toolId + '_name';
+            const toolName = t(nameKey) !== nameKey ? t(nameKey) : (tool ? tool.name : toolId);
+
+            const result = DevScribeRPG.useTool(toolId);
+            if (result.success) {
+                DevScribeRPG.showNotification(t('notifyLaunching'), toolName, 'info', '🚀');
+                // Open the tool in a new window/tab
+                window.open(result.fileName, '_blank');
+            } else {
+                const errorMsg = result.errorKey ? t(result.errorKey, result.params) : result.error;
+                alert('❌ ' + errorMsg);
+            }
+        }
+
+        function updateFileNameDisplay(input) {
+            const display = document.getElementById('file-name-display');
+            if (input.files && input.files[0]) {
+                display.textContent = input.files[0].name;
+                display.removeAttribute('data-i18n');
+            } else {
+                display.setAttribute('data-i18n', 'noFileSelected');
+                display.textContent = t('noFileSelected');
+            }
+        }
+
+        // Upload a new tool (With true file upload)
+        async function uploadNewTool() {
+            const name = document.getElementById('upload-tool-name').value.trim();
+            const fileInput = document.getElementById('upload-tool-file');
+            const description = document.getElementById('upload-tool-desc').value.trim();
+            const icon = document.getElementById('upload-tool-icon').value.trim() || '🔧';
+            const category = document.getElementById('upload-tool-category').value;
+            const tokenCost = parseInt(document.getElementById('upload-tool-cost').value) || 50;
+            const featuresInput = document.getElementById('upload-tool-features').value.trim();
+            const features = featuresInput ? featuresInput.split(',').map(f => f.trim()).filter(f => f) : [];
+
+            // Basic Validation
+            if (!name) return alert(t('alertEnterName'));
+            if (!fileInput.files || fileInput.files.length === 0) return alert(t('alertSelectFile'));
+            if (description.length < 10) return alert(t('alertMin10'));
+
+            const file = fileInput.files[0];
+
+            // 1. First, upload the file to our Python Store
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                DevScribeRPG.showNotification(t('notifyUploading'), t('notifySyncing'), 'info', '⏳');
+
+                const response = await fetch('http://localhost:5000/api/upload-tool', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Server upload failed');
+                }
+
+                const remoteFileName = data.filename; // e.g., "tools/myfile.html"
+                console.log('File uploaded:', remoteFileName);
+
+                // 2. Register the tool metadata in LocalStorage (Game System)
+                const result = DevScribeRPG.uploadTool({
+                    name,
+                    fileName: remoteFileName, // Use the path returned by server
+                    description,
+                    icon,
+                    category,
+                    tokenCost,
+                    features
+                });
+
+                if (result.success) {
+                    DevScribeRPG.showNotification(
+                        t('notifyUploadSuccess'),
+                        t('notifyUploadReward', { name: result.tool.name, xp: result.bonusXP }),
+                        'success',
+                        '📤'
+                    );
+
+                    // Clear form
+                    document.getElementById('upload-tool-name').value = '';
+                    fileInput.value = ''; // Clear file input
+                    document.getElementById('upload-tool-desc').value = '';
+                    document.getElementById('upload-tool-icon').value = '';
+                    document.getElementById('upload-tool-category').value = 'github';
+                    document.getElementById('upload-tool-cost').value = '50';
+                    document.getElementById('upload-tool-features').value = '';
+
+                    updateUI();
+
+                    // Switch to tools tab
+                    document.querySelector('[data-tab="tools"]').click();
+                } else {
+                    alert(t('alertRegisteFail') + result.error);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert(t('alertUploadFail') + err.message);
+            }
+        }
+
+        function createNewPlugin() {
+            const result = DevScribeRPG.createPlugin({
+                name: document.getElementById('new-plugin-name').value,
+                description: document.getElementById('new-plugin-desc').value,
+                icon: document.getElementById('new-plugin-icon').value || '🔧',
+                tokenCost: parseInt(document.getElementById('new-plugin-cost').value) || 50
+            });
+            if (result.success) {
+                DevScribeRPG.showNotification(t('notifyPluginUploaded'), result.plugin.name, 'success', '🛠️');
+                document.getElementById('new-plugin-name').value = '';
+                document.getElementById('new-plugin-desc').value = '';
+                document.getElementById('new-plugin-icon').value = '';
+                document.getElementById('new-plugin-cost').value = '50';
+                updateUI();
+            } else {
+                alert('❌ ' + result.error);
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function resetProgress() {
+            if (confirm(t('confirmReset'))) {
+                DevScribeRPG.resetState();
+                localStorage.removeItem(ARENA_STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        // ========= Event Listeners =========
+
+        // Category filter for tool store
+        document.querySelectorAll('.category-filter').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-filter').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentToolCategory = btn.dataset.category;
+                renderToolStore(currentToolCategory);
+            });
+        });
+
+        // Listen for storage changes (from Arena)
+        window.addEventListener('storage', (e) => {
+            if (e.key === ARENA_STORAGE_KEY || e.key === 'quest_empire_state') {
+                updateUI();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', updateUI);
+    </script>
+</body>
+
+</html>

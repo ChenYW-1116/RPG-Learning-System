@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>結構化寫作訓練與效能追蹤系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --primary-indigo: #4f46e5;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        .view-section {
+            min-height: calc(100vh - 64px);
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* 自訂捲軸樣式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 模糊效果 */
+        .blur-text {
+            filter: blur(8px);
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Toast 通知動畫 */
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-active {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- 導航欄 (Header) -->
+    <header class="sticky top-0 z-10 bg-white shadow-md px-4 py-3">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-indigo-600 p-2 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-indigo-600 hidden md:block" data-i18n="app-title">結構化寫作訓練系統</h1>
+            </div>
+
+            <nav class="flex space-x-1 md:space-x-4">
+                <button onclick="switchView('sprint')" class="nav-link px-3 py-2 rounded-md font-medium text-gray-600 hover:text-indigo-600" data-i18n="nav-sprint">動詞衝刺</button>
+                <button onclick="switchView('blind')" class="nav-link px-3 py-2 rounded-md font-medium text-gray-600 hover:text-indigo-600" data-i18n="nav-blind">盲寫回譯</button>
+                <button onclick="switchView('dashboard')" class="nav-link px-3 py-2 rounded-md font-medium text-gray-600 hover:text-indigo-600" data-i18n="nav-dashboard">效能儀表板</button>
+            </nav>
+
+            <button id="btn-settings" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6">
+        
+        <!-- 模組一：動詞衝刺 (Verb Sprint) -->
+        <section id="view-sprint" class="view-section active">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 控制面板 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-indigo-600 mb-4" data-i18n="sprint-control">衝刺控制</h2>
+                        <div id="timer-display" class="text-6xl font-mono font-bold text-center py-8 text-gray-800">15:00</div>
+                        <div class="flex flex-col space-y-2">
+                            <button id="btn-timer-start" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded transition" data-i18n="btn-start">開始衝刺</button>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="btn-timer-pause" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 rounded transition" data-i18n="btn-pause">暫停</button>
+                                <button id="btn-timer-reset" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded transition" data-i18n="btn-reset">重設</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="grammarly-json">Grammarly JSON 貼上區</label>
+                        <textarea id="grammarly-input" class="w-full h-32 border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500 text-xs font-mono" placeholder='{"issues": [...]}'></textarea>
+                        <button id="btn-process-grammarly" class="w-full mt-2 bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition text-sm" data-i18n="btn-process">處理數據並計算</button>
+                    </div>
+                </div>
+
+                <!-- 輸入與數據 -->
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800" data-i18n="sprint-workspace">寫作工作區</h2>
+                        <div class="flex space-x-4">
+                            <div class="text-center">
+                                <span class="block text-xs text-gray-500 uppercase" data-i18n="target-verbs">目標動詞數</span>
+                                <span id="stat-verb-count" class="text-2xl font-bold text-indigo-600">0 / 6</span>
+                            </div>
+                            <div class="text-center">
+                                <span class="block text-xs text-gray-500 uppercase" data-i18n="passive-voice">被動語態</span>
+                                <span id="stat-passive-rate" class="text-2xl font-bold text-indigo-600">0.0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="verb-list-label">動詞清單 (每行一個新動詞)</label>
+                    <textarea id="verb-list-input" class="w-full h-32 border border-gray-300 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500 mb-4" placeholder="例如: accelerate&#10;leverage&#10;mitigate..."></textarea>
+                    
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="writing-area">訓練文本區域</label>
+                    <textarea id="sprint-text-area" class="w-full h-64 border border-gray-300 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="在此開始您的寫作練習..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- 模組二：盲寫回譯 (Blind Retranslation) -->
+        <section id="view-blind" class="view-section">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
+                    <div>
+                        <h2 class="text-2xl font-bold text-indigo-600" data-i18n="blind-title">盲寫回譯訓練</h2>
+                        <p class="text-gray-500 text-sm" data-i18n="blind-desc">輸入原文、翻譯，然後嘗試將其回譯成英文並比對。</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <span class="block text-xs text-gray-500 uppercase" data-i18n="omission-rate">數據遺漏率 (OR)</span>
+                            <span id="blind-or-display" class="text-2xl font-bold text-red-500">0.0%</span>
+                        </div>
+                        <button id="btn-toggle-blind" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition" data-i18n="btn-hide-original">切換隱藏原文</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-2 flex items-center">
+                            <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs mr-2">1</span>
+                            <span data-i18n="col-original">原始英文 (Original)</span>
+                        </label>
+                        <textarea id="input-original" class="w-full flex-grow h-96 border border-gray-300 rounded-md p-3 transition duration-500 focus:ring-indigo-500 focus:border-indigo-500" placeholder="貼上高品質原文..."></textarea>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-2 flex items-center">
+                            <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs mr-2">2</span>
+                            <span data-i18n="col-notes">中文口譯 / 筆記</span>
+                        </label>
+                        <textarea id="input-notes" class="w-full flex-grow h-96 border border-gray-300 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="輸入您的中文翻譯或邏輯筆記..."></textarea>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="font-semibold mb-2 flex items-center">
+                            <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs mr-2">3</span>
+                            <span data-i18n="col-retranslated">回譯英文 (Retranslated)</span>
+                        </label>
+                        <textarea id="input-retranslated" class="w-full flex-grow h-96 border border-gray-300 rounded-md p-3 focus:ring-indigo-500 focus:border-indigo-500" placeholder="根據您的筆記回譯成英文..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <button id="btn-calc-or" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-md transition" data-i18n="btn-compare">完成比對並計算遺漏率</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 模組三：效能儀表板 (Dashboard) -->
+        <section id="view-dashboard" class="view-section">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 數據輸入 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-indigo-600 mb-4" data-i18n="entry-title">測驗數據錄入</h2>
+                    <form id="form-score-entry" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="label-date">日期</label>
+                            <input type="date" id="input-date" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="label-band">Band Score (IELTS)</label>
+                            <input type="number" id="input-band" step="0.5" min="0" max="9" placeholder="7.0" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="label-gic">Grammarly Issue Count (GIC)</label>
+                            <input type="number" id="input-gic" min="0" placeholder="12" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700" data-i18n="label-or">Omission Rate (OR)</label>
+                            <input type="number" id="input-or-manual" step="0.1" min="0" max="100" placeholder="15.5" class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition" data-i18n="btn-submit">提交數據</button>
+                    </form>
+                </div>
+
+                <!-- 趨勢圖表 -->
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800" data-i18n="chart-title">瓶頸指數 (BI) 趨勢圖</h2>
+                        <span class="text-xs text-red-500 font-bold" data-i18n="target-line">目標紅線: BI < 0.02</span>
+                    </div>
+                    <div id="bi-chart-container" class="w-full h-80 flex items-center justify-center bg-gray-50 rounded border border-dashed border-gray-300">
+                        <!-- SVG Chart will be rendered here -->
+                        <div class="text-gray-400 text-sm italic" data-i18n="no-data">尚無足夠數據顯示圖表</div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-indigo-50 p-3 rounded text-center">
+                            <span class="block text-xs text-indigo-600 font-semibold" data-i18n="avg-band">平均成績</span>
+                            <span id="stat-avg-band" class="text-lg font-bold">-</span>
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded text-center">
+                            <span class="block text-xs text-indigo-600 font-semibold" data-i18n="avg-gic">平均 GIC</span>
+                            <span id="stat-avg-gic" class="text-lg font-bold">-</span>
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded text-center">
+                            <span class="block text-xs text-indigo-600 font-semibold" data-i18n="avg-or">平均 OR</span>
+                            <span id="stat-avg-or" class="text-lg font-bold">-</span>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded text-center">
+                            <span class="block text-xs text-red-600 font-semibold" data-i18n="current-bi">當前 BI</span>
+                            <span id="stat-current-bi" class="text-lg font-bold text-red-600">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 設定模態視窗 (Settings Modal) -->
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50 hidden">
+        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-indigo-600" data-i18n="settings-title">系統設定</h3>
+                <button id="btn-close-settings" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="setting-api">AI API 金鑰 (Base64)</label>
+                    <input type="password" id="api-key-input" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="輸入 API 金鑰...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-i18n="setting-lang">介面語言</label>
+                    <select id="lang-switcher" class="w-full border border-gray-300 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="zh-TW">繁體中文 (Traditional Chinese)</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="pt-4 space-y-2">
+                    <button id="btn-save-settings" class="w-full bg-indigo-600 text-white font-bold py-2 rounded hover:bg-indigo-700 transition" data-i18n="btn-save-settings">儲存設定</button>
+                    <button id="btn-clear-data" class="w-full bg-red-100 text-red-600 font-bold py-2 rounded hover:bg-red-200 transition" data-i18n="btn-clear-data">清除所有資料</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2"></div>
+
+    <script>
+        // --- 翻譯資料庫 ---
+        const translations = {
+            'zh-TW': {
+                'app-title': '結構化寫作訓練系統',
+                'nav-sprint': '動詞衝刺',
+                'nav-blind': '盲寫回譯',
+                'nav-dashboard': '效能儀表板',
+                'sprint-control': '衝刺控制',
+                'btn-start': '開始衝刺',
+                'btn-pause': '暫停',
+                'btn-reset': '重設',
+                'grammarly-json': 'Grammarly JSON 貼上區',
+                'btn-process': '處理數據並計算',
+                'sprint-workspace': '寫作工作區',
+                'target-verbs': '目標動詞數',
+                'passive-voice': '被動語態',
+                'verb-list-label': '動詞清單 (每行一個新動詞)',
+                'writing-area': '訓練文本區域',
+                'blind-title': '盲寫回譯訓練',
+                'blind-desc': '輸入原文、翻譯，然後嘗試將其回譯成英文並比對。',
+                'omission-rate': '數據遺漏率 (OR)',
+                'btn-hide-original': '切換隱藏原文',
+                'col-original': '原始英文 (Original)',
+                'col-notes': '中文口譯 / 筆記',
+                'col-retranslated': '回譯英文 (Retranslated)',
+                'btn-compare': '完成比對並計算遺漏率',
+                'entry-title': '測驗數據錄入',
+                'label-date': '日期',
+                'label-band': 'Band Score (IELTS)',
+                'label-gic': 'Grammarly Issue Count (GIC)',
+                'label-or': 'Omission Rate (OR)',
+                'btn-submit': '提交數據',
+                'chart-title': '瓶頸指數 (BI) 趨勢圖',
+                'target-line': '目標紅線: BI < 0.02',
+                'no-data': '尚無足夠數據顯示圖表',
+                'avg-band': '平均成績',
+                'avg-gic': '平均 GIC',
+                'avg-or': '平均 OR',
+                'current-bi': '當前 BI',
+                'settings-title': '系統設定',
+                'setting-api': 'AI API 金鑰 (Base64)',
+                'setting-lang': '介面語言',
+                'btn-save-settings': '儲存設定',
+                'btn-clear-data': '清除所有資料',
+                'toast-sprint-start': '衝刺開始！專注寫作。',
+                'toast-sprint-reset': '計時器已重設。',
+                'toast-save-success': '設定已儲存。',
+                'toast-data-saved': '測驗數據已新增。'
+            },
+            'en': {
+                'app-title': 'Structured Writing System',
+                'nav-sprint': 'Verb Sprint',
+                'nav-blind': 'Blind Retranslation',
+                'nav-dashboard': 'Dashboard',
+                'sprint-control': 'Sprint Control',
+                'btn-start': 'Start Sprint',
+                'btn-pause': 'Pause',
+                'btn-reset': 'Reset',
+                'grammarly-json': 'Grammarly JSON Area',
+                'btn-process': 'Process & Calculate',
+                'sprint-workspace': 'Writing Workspace',
+                'target-verbs': 'Target Verbs',
+                'passive-voice': 'Passive Voice',
+                'verb-list-label': 'Verb List (one per line)',
+                'writing-area': 'Training Text Area',
+                'blind-title': 'Blind Retranslation',
+                'blind-desc': 'Input original, notes, then retranslate back to English.',
+                'omission-rate': 'Omission Rate (OR)',
+                'btn-hide-original': 'Toggle Hide Original',
+                'col-original': 'Original English',
+                'col-notes': 'Chinese Notes',
+                'col-retranslated': 'Retranslated English',
+                'btn-compare': 'Compare & Calculate OR',
+                'entry-title': 'Data Entry',
+                'label-date': 'Date',
+                'label-band': 'Band Score',
+                'label-gic': 'Grammarly Issues (GIC)',
+                'label-or': 'Omission Rate (OR)',
+                'btn-submit': 'Submit Data',
+                'chart-title': 'Bottleneck Index (BI) Trend',
+                'target-line': 'Target: BI < 0.02',
+                'no-data': 'No data available for chart',
+                'avg-band': 'Avg Band',
+                'avg-gic': 'Avg GIC',
+                'avg-or': 'Avg OR',
+                'current-bi': 'Current BI',
+                'settings-title': 'Settings',
+                'setting-api': 'AI API Key (Base64)',
+                'setting-lang': 'Language',
+                'btn-save-settings': 'Save Settings',
+                'btn-clear-data': 'Clear All Data',
+                'toast-sprint-start': 'Sprint started! Focus now.',
+                'toast-sprint-reset': 'Timer reset.',
+                'toast-save-success': 'Settings saved.',
+                'toast-data-saved': 'Test data added.'
+            }
+        };
+
+        // --- 狀態管理 ---
+        let state = {
+            currentLang: localStorage.getItem('lang') || 'zh-TW',
+            records: JSON.parse(localStorage.getItem('writing-records')) || [],
+            timer: {
+                seconds: 900,
+                interval: null,
+                isRunning: false
+            },
+            sprintStats: {
+                targetVerbs: 6,
+                passiveRate: 0.0
+            }
+        };
+
+        // --- 核心功能模組 ---
+
+        // 1. 初始化與 I18N
+        function updateUI() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[state.currentLang][key]) {
+                    el.innerText = translations[state.currentLang][key];
+                }
+            });
+            document.documentElement.lang = state.currentLang;
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-600' : (type === 'error' ? 'bg-red-600' : 'bg-indigo-600');
+            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-xl toast-active flex items-center space-x-2`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        // 2. 視圖切換
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('text-indigo-600', 'bg-indigo-50');
+                if (link.getAttribute('onclick').includes(viewId)) {
+                    link.classList.add('text-indigo-600', 'bg-indigo-50');
+                }
+            });
+
+            if (viewId === 'dashboard') renderChart();
+        }
+
+        // 3. 動詞衝刺計時器
+        function updateTimerDisplay() {
+            const mins = Math.floor(state.timer.seconds / 60);
+            const secs = state.timer.seconds % 60;
+            document.getElementById('timer-display').innerText = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (state.timer.isRunning) return;
+            state.timer.isRunning = true;
+            showToast(translations[state.currentLang]['toast-sprint-start']);
+            state.timer.interval = setInterval(() => {
+                if (state.timer.seconds > 0) {
+                    state.timer.seconds--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(state.timer.interval);
+                    state.timer.isRunning = false;
+                    showToast('Time is up!', 'info');
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(state.timer.interval);
+            state.timer.isRunning = false;
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            state.timer.seconds = 900;
+            updateTimerDisplay();
+            showToast(translations[state.currentLang]['toast-sprint-reset'], 'info');
+        }
+
+        // 4. 動詞衝刺邏輯
+        function checkVerbs() {
+            const verbs = document.getElementById('verb-list-input').value.split('\n').filter(v => v.trim().length > 0);
+            document.getElementById('stat-verb-count').innerText = `${verbs.length} / ${state.sprintStats.targetVerbs}`;
+            if (verbs.length >= state.sprintStats.targetVerbs) {
+                document.getElementById('stat-verb-count').className = "text-2xl font-bold text-green-600";
+            } else {
+                document.getElementById('stat-verb-count').className = "text-2xl font-bold text-indigo-600";
+            }
+        }
+
+        function processGrammarly() {
+            const input = document.getElementById('grammarly-input').value;
+            try {
+                const data = JSON.parse(input);
+                // 模擬被動語態計算 (實際應解析 JSON 中的語法標籤)
+                // 這裡假設我們尋找特定 issue type
+                const passiveCount = (data.issues || []).filter(i => i.title === 'Passive voice').length;
+                const totalWords = document.getElementById('sprint-text-area').value.split(/\s+/).length || 1;
+                const rate = ((passiveCount / (totalWords / 20)) * 10).toFixed(1); // 簡易模擬公式
+                
+                document.getElementById('stat-passive-rate').innerText = `${rate}%`;
+                showToast('Grammarly data analyzed.');
+            } catch (e) {
+                showToast('Invalid JSON format', 'error');
+            }
+        }
+
+        // 5. 盲寫回譯邏輯
+        function toggleBlind() {
+            const el = document.getElementById('input-original');
+            el.classList.toggle('blur-text');
+        }
+
+        function calculateOR() {
+            const original = document.getElementById('input-original').value.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+            const retranslated = document.getElementById('input-retranslated').value.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+            
+            if (original.length === 0) return;
+
+            // 簡易詞袋比對演算法
+            const originalSet = new Set(original);
+            let missing = 0;
+            originalSet.forEach(word => {
+                if (!retranslated.includes(word)) missing++;
+            });
+
+            const or = ((missing / originalSet.size) * 100).toFixed(1);
+            document.getElementById('blind-or-display').innerText = `${or}%`;
+            showToast(`Comparison complete. OR: ${or}%`);
+        }
+
+        // 6. 效能儀表板與 BI 計算
+        function renderChart() {
+            const container = document.getElementById('bi-chart-container');
+            if (state.records.length < 2) return;
+
+            // 計算 BI: (GIC / 100) * (OR / 100)
+            const dataPoints = state.records.sort((a,b) => new Set(a.date) - new Set(b.date)).map(r => ({
+                x: r.date,
+                y: (r.gic / 100) * (r.or / 100)
+            }));
+
+            const width = 600;
+            const height = 200;
+            const padding = 30;
+            
+            const maxBI = Math.max(...dataPoints.map(d => d.y), 0.05);
+            
+            let pointsStr = dataPoints.map((p, i) => {
+                const x = padding + (i * (width - 2 * padding) / (dataPoints.length - 1));
+                const y = (height - padding) - (p.y / maxBI * (height - 2 * padding));
+                return `${x},${y}`;
+            }).join(' ');
+
+            // 目標紅線位置
+            const targetY = (height - padding) - (0.02 / maxBI * (height - 2 * padding));
+
+            container.innerHTML = `
+                <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                    <line x1="${padding}" y1="${targetY}" x2="${width - padding}" y2="${targetY}" stroke="#ef4444" stroke-width="2" stroke-dasharray="4" />
+                    <polyline fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" points="${pointsStr}" />
+                    ${dataPoints.map((p, i) => {
+                        const x = padding + (i * (width - 2 * padding) / (dataPoints.length - 1));
+                        const y = (height - padding) - (p.y / maxBI * (height - 2 * padding));
+                        return `<circle cx="${x}" cy="${y}" r="4" fill="#4f46e5" />`;
+                    }).join('')}
+                    <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" stroke="#cbd5e1" stroke-width="2" />
+                </svg>
+            `;
+
+            // 更新摘要統計
+            const avg = (arr) => arr.length ? (arr.reduce((a,b) => a+b, 0) / arr.length).toFixed(1) : '-';
+            document.getElementById('stat-avg-band').innerText = avg(state.records.map(r => r.band));
+            document.getElementById('stat-avg-gic').innerText = avg(state.records.map(r => r.gic));
+            document.getElementById('stat-avg-or').innerText = avg(state.records.map(r => r.or)) + '%';
+            
+            const lastBI = dataPoints[dataPoints.length - 1].y.toFixed(4);
+            document.getElementById('stat-current-bi').innerText = lastBI;
+        }
+
+        // --- 事件監聽 ---
+
+        document.getElementById('btn-timer-start').onclick = startTimer;
+        document.getElementById('btn-timer-pause').onclick = pauseTimer;
+        document.getElementById('btn-timer-reset').onclick = resetTimer;
+        document.getElementById('verb-list-input').oninput = checkVerbs;
+        document.getElementById('btn-process-grammarly').onclick = processGrammarly;
+        document.getElementById('btn-toggle-blind').onclick = toggleBlind;
+        document.getElementById('btn-calc-or').onclick = calculateOR;
+
+        document.getElementById('form-score-entry').onsubmit = (e) => {
+            e.preventDefault();
+            const newRecord = {
+                date: document.getElementById('input-date').value,
+                band: parseFloat(document.getElementById('input-band').value),
+                gic: parseInt(document.getElementById('input-gic').value),
+                or: parseFloat(document.getElementById('input-or-manual').value)
+            };
+            state.records.push(newRecord);
+            localStorage.setItem('writing-records', JSON.stringify(state.records));
+            showToast(translations[state.currentLang]['toast-data-saved']);
+            renderChart();
+            e.target.reset();
+        };
+
+        // 設定視窗
+        document.getElementById('btn-settings').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
+        document.getElementById('btn-close-settings').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
+        document.getElementById('btn-save-settings').onclick = () => {
+            state.currentLang = document.getElementById('lang-switcher').value;
+            localStorage.setItem('lang', state.currentLang);
+            updateUI();
+            document.getElementById('settings-modal').classList.add('hidden');
+            showToast(translations[state.currentLang]['toast-save-success']);
+        };
+        document.getElementById('btn-clear-data').onclick = () => {
+            if(confirm('確定要清除所有紀錄嗎？此動作無法復原。')) {
+                localStorage.removeItem('writing-records');
+                state.records = [];
+                location.reload();
+            }
+        };
+
+        // 頁面加載初始化
+        window.onload = () => {
+            updateUI();
+            updateTimerDisplay();
+            document.getElementById('lang-switcher').value = state.currentLang;
+            document.getElementById('input-date').valueAsDate = new Date();
+            switchView('sprint');
+        };
+    </script>
+</body>
+</html>

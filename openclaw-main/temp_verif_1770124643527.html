@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">IELTS Sprint Trainer</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-emerald-600: #10b981;
+            --color-passive: #fcd34d; /* Amber-300 for highlighting */
+            --color-danger: #dc2626;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom styles for contenteditable and passive highlighting */
+        [contenteditable]:focus { outline: none; }
+        
+        /* Custom scrollbar for editors */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d1d5db; /* Gray-300 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #9ca3af; }
+
+        /* Blind Write Mask Transition (T010) */
+        #blind-mask {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* B-Index Progress Ring Transition (T016) */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.7s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-10 h-16 flex items-center">
+        <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-emerald-600" data-i18n="app_title">IELTS Sprint Trainer</h1>
+            <div class="flex items-center space-x-4">
+                <span id="quota-display" class="text-sm font-medium text-gray-600 border border-gray-300 px-3 py-1 rounded-full">
+                    API Quota: 50/100
+                </span>
+                <select id="lang-switcher" class="bg-gray-100 border border-gray-300 text-sm rounded-lg p-1.5 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="en">English</option>
+                    <option value="zh">中文</option>
+                </select>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 mt-6">
+        <div class="lg:grid lg:grid-cols-3 gap-8">
+            
+            <!-- Column 1 & 2: Modules -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Writing Sprint Module (US-1) -->
+                <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700" data-i18n="sprint_title">📝 Writing Sprint Module</h2>
+                    
+                    <!-- Timer and Controls (T006) -->
+                    <div class="flex justify-between items-center mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex items-center space-x-4">
+                            <span id="timer-display" class="text-5xl font-extrabold text-red-600 tabular-nums">15:00</span>
+                            <span class="text-sm text-gray-500" data-i18n="sprint_duration">(15 Minutes)</span>
+                        </div>
+                        <button id="start-sprint-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150" data-i18n="start_timer">
+                            Start Timer
+                        </button>
+                    </div>
+
+                    <!-- Target Verbs (T007) -->
+                    <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <p class="text-sm font-medium text-emerald-800 mb-2" data-i18n="target_verbs_title">Target Verbs (Must use all 6):</p>
+                        <div id="target-verbs-container" class="flex flex-wrap gap-2">
+                            <!-- Verbs injected by script -->
+                        </div>
+                    </div>
+
+                    <!-- Writing Editor (T008) -->
+                    <div class="relative">
+                        <div id="sprint-editor" contenteditable="true" 
+                             class="custom-scrollbar min-h-[250px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150 bg-white text-gray-800"
+                             data-i18n="sprint_placeholder">
+                        </div>
+                        
+                        <!-- Real-time Stats (T008) -->
+                        <div class="mt-2 flex justify-between text-sm text-gray-600">
+                            <span data-i18n="word_count">Word Count:</span> <span id="word-count" class="font-medium">0</span>
+                            <span data-i18n="passive_ratio">Passive Ratio (Est.):</span> <span id="passive-ratio" class="font-medium text-blue-600">0.0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button (T009) -->
+                    <div class="mt-6">
+                        <div id="passive-warning" class="hidden p-3 mb-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm" role="alert">
+                            <span class="font-semibold" data-i18n="passive_high_warning">⚠️ High Risk Warning: Passive ratio exceeds 30%. Consider revising for active voice clarity.</span>
+                        </div>
+                        <button id="submit-sprint-btn" disabled class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 px-5 rounded-lg opacity-50 cursor-not-allowed transition duration-150 active:scale-95" data-i18n="submit_sprint">
+                            Submit Sprint (Disabled)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Blind Write-Back Module (US-2) -->
+                <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 relative">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700" data-i18n="blind_title">🗣️ Blind Write-Back Module</h2>
+                    
+                    <!-- Original Text Source (Used for calculation, visually hidden during practice) -->
+                    <div class="mb-4 p-4 bg-gray-100 rounded-lg border border-gray-200 hidden">
+                        <p id="original-source-text" class="italic text-gray-600 text-sm">
+                            The rapid acceleration of technological change necessitates that educators elaborate on complex concepts and synthesize diverse findings into coherent curricula. Furthermore, policymakers must articulate strategies to mitigate the potential societal risks catalyzed by automation, while delineating clear ethical guidelines.
+                        </p>
+                    </div>
+
+                    <!-- Recording and STT Area (T011, T012) -->
+                    <div class="mb-4">
+                        <p class="text-sm font-medium text-gray-700 mb-2" data-i18n="stt_title">1. Simulated STT Transcript (Listen & Confirm):</p>
+                        <div class="flex space-x-3 mb-3">
+                            <button id="record-btn" class="flex items-center justify-center w-12 h-12 text-white bg-red-600 hover:bg-red-700 rounded-full active:scale-95 transition duration-150" title="Record">
+                                ⏺︎
+                            </button>
+                            <button id="stop-btn" disabled class="flex items-center justify-center w-12 h-12 text-white bg-gray-500 rounded-full opacity-50 cursor-not-allowed" title="Stop">
+                                ⏹︎
+                            </button>
+                            <button id="play-btn" disabled class="flex items-center justify-center w-12 h-12 text-white bg-blue-500 hover:bg-blue-600 rounded-full opacity-50 cursor-not-allowed active:scale-95 transition duration-150" title="Play">
+                                ▶️
+                            </button>
+                        </div>
+                        <textarea id="stt-transcript-editor" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150 bg-white" placeholder="STT Transcript will appear here..."></textarea>
+                    </div>
+
+                    <!-- Write-Back Editor (T013) -->
+                    <div class="relative">
+                        <p class="text-sm font-medium text-gray-700 mb-2" data-i18n="writeback_title">2. Write-Back Translation:</p>
+                        <textarea id="writeback-editor" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150 bg-white" 
+                                  data-i18n="writeback_placeholder" placeholder="Translate the transcript back to the original text here..."></textarea>
+                        
+                        <!-- Blind Mask (T010) -->
+                        <div id="blind-mask" class="absolute inset-0 bg-gray-900 bg-opacity-95 flex flex-col items-center justify-center p-6 rounded-xl z-20">
+                            <svg class="animate-spin h-10 w-10 text-white mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-white text-lg font-semibold text-center" data-i18n="mask_message">Start recording to reveal the transcript and begin translation.</p>
+                        </div>
+                    </div>
+
+                    <!-- Accuracy Report (T014, T015) -->
+                    <div id="accuracy-report" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
+                        <h4 class="font-semibold text-gray-700 mb-2" data-i18n="accuracy_report_title">Accuracy Report:</h4>
+                        <p class="text-sm text-gray-600">
+                            <span data-i18n="levenshtein_distance">Levenshtein Distance:</span> <span id="lev-distance" class="font-medium">0</span> characters
+                        </p>
+                        <p class="text-lg font-bold mt-1">
+                            <span data-i18n="miss_rate">Data Miss Rate:</span> <span id="miss-rate" class="text-red-600">0.0%</span>
+                        </p>
+                    </div>
+
+                    <!-- Submit and Remedial Button (T015) -->
+                    <div class="mt-6 flex justify-between items-center">
+                        <button id="submit-writeback-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-lg active:scale-95 transition duration-150" data-i18n="submit_writeback">
+                            Submit Write-Back
+                        </button>
+                        <button id="remedial-btn" disabled class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg opacity-50 cursor-not-allowed transition duration-150 text-sm" data-i18n="generate_remedy">
+                            Generate Remedial Practice
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Column 3: Performance Report Dashboard (US-3) -->
+            <div class="lg:col-span-1 mt-8 lg:mt-0 space-y-8">
+                
+                <!-- Performance Dashboard Card -->
+                <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700" data-i18n="report_title">📊 Performance Report</h2>
+                    
+                    <!-- B-Index and Score (T016, T017) -->
+                    <div class="flex flex-col items-center justify-center text-center py-4">
+                        
+                        <!-- B-Index Progress Ring -->
+                        <div class="relative w-36 h-36 mb-4">
+                            <svg id="b-index-svg" class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                                <!-- Background Circle -->
+                                <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10" />
+                                <!-- Progress Circle -->
+                                <circle id="b-index-progress" class="progress-ring__circle" cx="60" cy="60" r="50" fill="none" stroke="var(--color-emerald-600)" stroke-width="10" stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="314.159" />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span id="b-index-value" class="text-3xl font-extrabold text-gray-800">0.00</span>
+                                <span class="text-sm text-gray-500" data-i18n="b_index_label">B-Index</span>
+                            </div>
+                        </div>
+
+                        <!-- Estimated IELTS Score -->
+                        <p class="text-sm text-gray-500" data-i18n="estimated_score_label">Estimated IELTS Score:</p>
+                        <p id="estimated-score" class="text-6xl font-extrabold text-emerald-600 mt-1">7.0</p>
+                    </div>
+
+                    <!-- Key Metrics -->
+                    <div class="mt-4 space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span data-i18n="metric_passive">Avg. Passive Ratio:</span>
+                            <span id="metric-passive" class="font-semibold text-blue-600">0.0%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span data-i18n="metric_miss_rate">Avg. Blind Miss Rate:</span>
+                            <span id="metric-miss-rate" class="font-semibold text-red-600">0.0%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span data-i18n="metric_verb_fail">Avg. Verb Failures:</span>
+                            <span id="metric-verb-fail" class="font-semibold text-gray-600">0.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smart Review Path (T018) -->
+                <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700" data-i18n="review_path_title">🧠 Smart Review Path</h2>
+                    <div id="review-recommendations" class="space-y-3">
+                        <!-- Recommendation Template -->
+                        <div id="recommendation-template" class="hidden p-4 border-l-4 border-blue-500 bg-blue-50 rounded-r-lg">
+                            <p class="font-semibold text-blue-800" data-i18n="recommendation_area">Area: Grammar & Voice</p>
+                            <p class="text-sm text-blue-700 mt-1" data-i18n="recommendation_advice">Advice: Focus on converting passive structures to active voice in complex sentences.</p>
+                        </div>
+                        
+                        <div id="initial-recommendation" class="p-4 border-l-4 border-gray-400 bg-gray-100 rounded-r-lg">
+                            <p class="font-semibold text-gray-800" data-i18n="recommendation_initial_area">Area: Data Collection</p>
+                            <p class="text-sm text-gray-700 mt-1" data-i18n="recommendation_initial_advice">Advice: Complete at least 5 sprints and 5 blind write-backs to generate a reliable B-Index.</p>
+                        </div>
+                    </div>
+                    <button id="generate-recs-btn" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg active:scale-95 transition duration-150 text-sm" data-i18n="generate_recs">
+                        Generate Personalized Recommendations
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    
+    <!-- Toast Notification Container (T004) -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2">
+        <!-- Toasts will be injected here -->
+    </div>
+
+    <script>
+        const CONFIG = {
+            // General
+            LANG_KEY: 'ielts_app_lang',
+            STATE_KEY: 'ielts_app_state',
+            PASSIVE_WARNING_THRESHOLD: 0.30, // 30%
+            MISS_RATE_REMEDY_THRESHOLD: 0.03, // 3%
+            MAX_API_QUOTA: 100,
+            INITIAL_API_USED: 50,
+            
+            // Sprint
+            SPRINT_DURATION_SECONDS: 900, // 15 minutes
+            TARGET_VERBS: ['elaborate', 'articulate', 'mitigate', 'synthesize', 'delineate', 'catalyze'],
+            
+            // Blind Write
+            ORIGINAL_TEXT: "The rapid acceleration of technological change necessitates that educators elaborate on complex concepts and synthesize diverse findings into coherent curricula. Furthermore, policymakers must articulate strategies to mitigate the potential societal risks catalyzed by automation, while delineating clear ethical guidelines.",
+            SIMULATED_STT_TRANSCRIPT: "The rapid acceleration of technological change needs that educators elaborate on complex concepts and synthesize diverse findings into coherent curricula. Furthermore, policymakers must articulate strategies to mitigate the potential societal risks catalyzed by automation, while delineating clear ethical guidelines.", // 'necessitates' -> 'needs' (simulated error)
+            
+            // Report Weights
+            WEIGHT_PASSIVE: 0.5,
+            WEIGHT_MISS_RATE: 0.3,
+            WEIGHT_VERB_FAIL: 0.2,
+            B_INDEX_HIGH_RISK: 0.02,
+        };
+
+        const I18N = {
+            en: {
+                app_title: "IELTS Sprint Trainer",
+                start_timer: "Start Timer",
+                stop_timer: "Stop Timer",
+                sprint_duration: "(15 Minutes)",
+                target_verbs_title: "Target Verbs (Must use all 6):",
+                sprint_placeholder: "Start writing your 150-word essay here...",
+                word_count: "Word Count:",
+                passive_ratio: "Passive Ratio (Est.):",
+                passive_high_warning: "⚠️ High Risk Warning: Passive ratio exceeds 30%. Consider revising for active voice clarity.",
+                submit_sprint: "Submit Sprint",
+                timer_active: "Timer Active", // ADDED for better UX
+                
+                blind_title: "🗣️ Blind Write-Back Module",
+                original_source_title: "Original Source Text (Hidden during practice):",
+                stt_title: "1. Simulated STT Transcript (Listen & Confirm):",
+                writeback_title: "2. Write-Back Translation:",
+                writeback_placeholder: "Translate the transcript back to the original text here...",
+                mask_message: "Start recording to reveal the transcript and begin translation.",
+                submit_writeback: "Submit Write-Back",
+                generate_remedy: "Generate Remedial Practice",
+                
+                accuracy_report_title: "Accuracy Report:",
+                levenshtein_distance: "Levenshtein Distance:",
+                miss_rate: "Data Miss Rate:",
+                
+                report_title: "📊 Performance Report",
+                b_index_label: "B-Index",
+                estimated_score_label: "Estimated IELTS Score:",
+                metric_passive: "Avg. Passive Ratio:",
+                metric_miss_rate: "Avg. Blind Miss Rate:",
+                metric_verb_fail: "Avg. Verb Failures:",
+                review_path_title: "🧠 Smart Review Path",
+                generate_recs: "Generate Personalized Recommendations",
+                recommendation_area: "Area: {area}",
+                recommendation_advice: "Advice: {advice}",
+                recommendation_initial_area: "Area: Data Collection",
+                recommendation_initial_advice: "Advice: Complete at least 5 sprints and 5 blind write-backs to generate a reliable B-Index.",
+
+                // Toasts
+                toast_timer_started: "Sprint Timer started. Good luck!",
+                toast_timer_expired: "Time's up! Article submitted automatically.",
+                toast_sprint_submitted: "Sprint submitted successfully. Data recorded.",
+                toast_recording_start: "Recording simulated...",
+                toast_recording_complete: "Recording complete. STT transcript generated.",
+                toast_writeback_submitted: "Write-Back submitted. Accuracy calculated.",
+                toast_remedy_enabled: "Miss Rate is high. Remedial practice suggested.",
+                toast_recs_generated: "Recommendations generated based on B-Index.",
+                toast_quota_used: "API Quota used: {used}/{max}.",
+                toast_quota_exhausted: "Quota exhausted. Using local algorithms for scoring.",
+                toast_error: "An error occurred: {message}",
+                toast_generating: "Generating...",
+                toast_submitting: "Submitting...",
+                toast_calculating: "Calculating...",
+            },
+            zh: {
+                app_title: "雅思衝刺訓練師",
+                start_timer: "啟動計時",
+                stop_timer: "停止計時",
+                sprint_duration: "(15 分鐘)",
+                target_verbs_title: "目標動詞 (必須全部使用 6 個):",
+                sprint_placeholder: "在這裡開始撰寫您的 150 字文章...",
+                word_count: "字數統計:",
+                passive_ratio: "被動語態比例 (估計):",
+                passive_high_warning: "⚠️ 高風險警告：被動語態比例超過 30%。建議修改為主動語態以提高清晰度。",
+                submit_sprint: "提交衝刺文章",
+                timer_active: "計時器運行中", // ADDED for better UX
+
+                blind_title: "🗣️ 盲寫回譯模組",
+                original_source_title: "原文 (練習期間隱藏):",
+                stt_title: "1. 模擬語音轉文字逐字稿 (聽錄與確認):",
+                writeback_title: "2. 回譯翻譯:",
+                writeback_placeholder: "在此將逐字稿翻譯回原文...",
+                mask_message: "開始錄音以顯示逐字稿並開始翻譯。",
+                submit_writeback: "提交回譯",
+                generate_remedy: "生成補救練習",
+
+                accuracy_report_title: "準確度報告:",
+                levenshtein_distance: "編輯距離 (Levenshtein Distance):",
+                miss_rate: "資料遺漏率:",
+
+                report_title: "📊 性能報告",
+                b_index_label: "瓶頸指數 (B-Index)",
+                estimated_score_label: "雅思預估分數:",
+                metric_passive: "平均被動語態比例:",
+                metric_miss_rate: "平均盲寫遺漏率:",
+                metric_verb_fail: "平均動詞使用失敗次數:",
+                review_path_title: "🧠 智慧複習路徑",
+                generate_recs: "生成個性化建議",
+                recommendation_area: "領域: {area}",
+                recommendation_advice: "建議: {advice}",
+                recommendation_initial_area: "領域: 數據收集",
+                recommendation_initial_advice: "建議: 完成至少 5 次衝刺和 5 次盲寫回譯以生成可靠的 B-Index。",
+
+                // Toasts
+                toast_timer_started: "衝刺計時器已啟動。祝您好運！",
+                toast_timer_expired: "時間到！文章已自動提交。",
+                toast_sprint_submitted: "衝刺文章提交成功。數據已記錄。",
+                toast_recording_start: "錄音模擬中...",
+                toast_recording_complete: "錄音完成。STT 逐字稿已生成。",
+                toast_writeback_submitted: "回譯提交成功。準確度已計算。",
+                toast_remedy_enabled: "遺漏率偏高。建議進行補救練習。",
+                toast_recs_generated: "已根據 B-Index 生成建議。",
+                toast_quota_used: "API 配額使用: {used}/{max}。",
+                toast_quota_exhausted: "配額已用盡。正在使用本地算法進行評分。",
+                toast_error: "發生錯誤: {message}",
+                toast_generating: "生成中...",
+                toast_submitting: "提交中...",
+                toast_calculating: "計算中...",
+            }
+        };
+
+        // --- GLOBAL STATE ---
+        let app = {
+            STATE: {
+                currentLang: 'en',
+                apiQuotaUsed: CONFIG.INITIAL_API_USED,
+                isTimerRunning: false,
+                sprintTimeLeft: CONFIG.SPRINT_DURATION_SECONDS,
+                sprintInterval: null,
+                
+                // History data structure (T016)
+                history: {
+                    sprints: [], 
+                    writebacks: [] 
+                },
+                
+                // Blind Write State
+                blind: {
+                    isRecording: false,
+                    isSttReady: false,
+                    missRate: 0,
+                }
+            },
+            
+            // Handlers and Sub-Modules (Object Initialization Safety)
+            UIHandler: {},
+            LocalStorageHandler: {},
+            Router: {},
+            SprintModule: {},
+            BlindModule: {},
+            ReportModule: {},
+            Utils: {}
+        };
+
+        // --- UTILITIES (Algorithms & Helpers) ---
+
+        app.Utils.cleanText = (text) => {
+            // Remove HTML tags and trim whitespace
+            return text.replace(/<[^>]*>?/gm, '').trim(); 
+        };
+
+        app.Utils.countWords = (text) => {
+            const cleaned = app.Utils.cleanText(text);
+            if (!cleaned) return 0;
+            return cleaned.split(/\s+/).length;
+        };
+
+        // Passive Voice Regular Expression (T008)
+        const PASSIVE_REGEX = /\b(is|are|was|were|be|been|being)\s+([a-z]+ed|known|seen|done|given|taken|made|said|found|used|come|gone|got|held|kept|left|put|run|set|thought|told|written)\b/gi;
+
+        app.Utils.calculatePassiveRatio = (text) => {
+            const cleaned = app.Utils.cleanText(text);
+            const totalWords = app.Utils.countWords(cleaned);
+            if (totalWords === 0) return 0;
+
+            const matches = cleaned.match(PASSIVE_REGEX);
+            const passiveCount = matches ? matches.length : 0;
+            
+            // Simplified metric: Passive phrases found / (Total Words / 15)
+            const ratio = passiveCount / (totalWords / 15);
+            return Math.min(ratio, 1.0); // Cap at 100%
+        };
+        
+        // Levenshtein Distance Algorithm (T014)
+        app.Utils.levenshteinDistance = (a, b) => {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+
+            const matrix = [];
+
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    const cost = (b.charAt(i - 1) === a.charAt(j - 1)) ? 0 : 1;
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j] + 1,      // deletion
+                        matrix[i][j - 1] + 1,      // insertion
+                        matrix[i - 1][j - 1] + cost // substitution
+                    );
+                }
+            }
+
+            return matrix[b.length][a.length];
+        };
+
+        // --- LOCAL STORAGE HANDLER (T004) ---
+
+        app.LocalStorageHandler.loadState = () => {
+            try {
+                const storedState = localStorage.getItem(CONFIG.STATE_KEY);
+                if (storedState) {
+                    const loadedState = JSON.parse(storedState);
+                    app.STATE.history = loadedState.history || app.STATE.history;
+                    app.STATE.apiQuotaUsed = loadedState.apiQuotaUsed || CONFIG.INITIAL_API_USED;
+                    // Reset transient states
+                    app.STATE.isTimerRunning = false;
+                    app.STATE.sprintTimeLeft = CONFIG.SPRINT_DURATION_SECONDS;
+                }
+            } catch (e) {
+                console.error("Error loading state:", e);
+            }
+        };
+
+        app.LocalStorageHandler.saveState = () => {
+            try {
+                const persistentState = {
+                    history: app.STATE.history,
+                    apiQuotaUsed: app.STATE.apiQuotaUsed
+                };
+                localStorage.setItem(CONFIG.STATE_KEY, JSON.stringify(persistentState));
+            } catch (e) {
+                console.error("Error saving state:", e);
+            }
+        };
+        
+        app.LocalStorageHandler.loadLanguage = () => {
+            const storedLang = localStorage.getItem(CONFIG.LANG_KEY);
+            app.STATE.currentLang = storedLang || 'en';
+        };
+
+        app.LocalStorageHandler.saveLanguage = (lang) => {
+            localStorage.setItem(CONFIG.LANG_KEY, lang);
+            app.STATE.currentLang = lang;
+        };
+
+
+        // --- UI HANDLER & TOASTS (T004, Action Guard) ---
+
+        app.UIHandler.translate = (lang) => {
+            const elements = document.querySelectorAll('[data-i18n]');
+            const translations = I18N[lang];
+            
+            elements.forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.getAttribute('contenteditable') === 'true') {
+                         el.setAttribute('placeholder', translations[key]);
+                    } else if (el.tagName === 'TITLE') {
+                        document.title = translations[key];
+                    } else {
+                        el.textContent = translations[key];
+                    }
+                }
+            });
+            
+            app.SprintModule.updateTimerButtonUI();
+        };
+
+        app.UIHandler.toast = (messageKey, type = 'info', placeholders = {}) => {
+            const container = document.getElementById('toast-container');
+            let message = I18N[app.STATE.currentLang][messageKey] || messageKey;
+
+            Object.keys(placeholders).forEach(key => {
+                message = message.replace(`{${key}}`, placeholders[key]);
+            });
+
+            let bgColor, icon;
+            switch (type) {
+                case 'success': bgColor = 'bg-emerald-500'; icon = '✓'; break;
+                case 'error': bgColor = 'bg-red-500'; icon = '✗'; break;
+                case 'warning': bgColor = 'bg-amber-500'; icon = '!'; break;
+                case 'info': default: bgColor = 'bg-blue-500'; icon = 'i'; break;
+            }
+
+            const toastEl = document.createElement('div');
+            toastEl.className = `p-4 rounded-lg shadow-xl text-white flex items-center space-x-3 transition-opacity duration-300 opacity-0 transform translate-x-full ${bgColor}`;
+            toastEl.innerHTML = `
+                <span class="font-bold text-lg">${icon}</span>
+                <p class="text-sm">${message}</p>
+            `;
+            
+            container.appendChild(toastEl);
+            
+            setTimeout(() => {
+                toastEl.classList.remove('opacity-0', 'translate-x-full');
+                toastEl.classList.add('opacity-100', 'translate-x-0');
+            }, 10);
+
+            setTimeout(() => {
+                toastEl.classList.remove('opacity-100', 'translate-x-0');
+                toastEl.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toastEl.remove(), 300);
+            }, 5000);
+        };
+
+        // UI Hardening (Action Guard)
+        app.UIHandler.performAction = async (actionFunction, buttonId, loadingTextKey = null) => {
+            const btn = document.getElementById(buttonId);
+            if (!btn || btn.disabled) return;
+
+            const originalText = btn.textContent;
+            const originalClasses = btn.className;
+            const originalDisabled = btn.disabled; // Capture functional state
+
+            // Disable button and show loading state
+            btn.disabled = true;
+            btn.textContent = loadingTextKey ? `${I18N[app.STATE.currentLang][loadingTextKey]}` : 'Loading...';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            try {
+                await actionFunction();
+            } catch (error) {
+                console.error("Action Guard caught an error:", error);
+                app.UIHandler.toast('toast_error', 'error', { message: error.message });
+                
+                // On error, revert to pre-action state
+                btn.disabled = originalDisabled;
+                btn.textContent = originalText;
+                btn.className = originalClasses; // Revert ALL classes on error only
+                return; // Exit on error after reverting
+            } finally {
+                // On success, the actionFunction has set the final state.
+                // We only need to clean up loading classes and restore text if necessary.
+                
+                // If the button is still disabled (e.g., submit button), ensure loading classes are gone.
+                if (btn.disabled === true) {
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    // Action function re-enabled it or it was always enabled. Restore text.
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        };
+        
+        // API Quota Guard (T019)
+        app.Utils.mockApiCall = async (endpoint, data) => {
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            if (app.STATE.apiQuotaUsed >= CONFIG.MAX_API_QUOTA) {
+                app.UIHandler.toast('toast_quota_exhausted', 'warning');
+                return { success: false, reason: 'QUOTA_EXHAUSTED' };
+            }
+
+            app.STATE.apiQuotaUsed++;
+            document.getElementById('quota-display').textContent = `API Quota: ${CONFIG.MAX_API_QUOTA - app.STATE.apiQuotaUsed}/${CONFIG.MAX_API_QUOTA}`;
+            app.LocalStorageHandler.saveState();
+            app.UIHandler.toast('toast_quota_used', 'info', { used: app.STATE.apiQuotaUsed, max: CONFIG.MAX_API_QUOTA });
+
+            // Mock successful API response
+            if (endpoint === 'sprint_score') {
+                const passiveRatio = data.passiveRatio;
+                const score = 9.0 - (passiveRatio * 5); 
+                return { success: true, score: Math.max(6.0, score).toFixed(1) };
+            }
+            if (endpoint === 'recommendations') {
+                const bIndex = data.bIndex;
+                let recs = [];
+                if (bIndex > 0.05) {
+                    recs = [{ area: "Grammar & Voice", advice: "High passive voice usage detected. Practice sentence inversion and active structures." }];
+                } else if (bIndex > 0.02) {
+                    recs = [{ area: "Vocabulary & Cohesion", advice: "Review advanced transition words and synonyms for common vocabulary." }];
+                } else {
+                    recs = [{ area: "Fluency & Depth", advice: "Maintain current performance. Focus on integrating complex ideas and philosophical depth." }];
+                }
+                return { success: true, recommendations: recs };
+            }
+
+            return { success: true };
+        };
+
+
+        // --- SPRINT MODULE (US-1) ---
+
+        app.SprintModule.updateTimerDisplay = () => {
+            const time = app.STATE.sprintTimeLeft;
+            const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+            const seconds = (time % 60).toString().padStart(2, '0');
+            const displayEl = document.getElementById('timer-display');
+            
+            displayEl.textContent = `${minutes}:${seconds}`;
+            
+            if (time <= 60) {
+                displayEl.classList.add('text-red-600');
+            } else {
+                displayEl.classList.remove('text-red-600');
+            }
+        };
+
+        app.SprintModule.updateTimerButtonUI = () => {
+            const btn = document.getElementById('start-sprint-btn');
+            const isRunning = app.STATE.isTimerRunning;
+            
+            btn.disabled = isRunning;
+            btn.textContent = isRunning 
+                ? I18N[app.STATE.currentLang].timer_active || 'Timer Active' // FIXED: Use descriptive text for running timer
+                : I18N[app.STATE.currentLang].start_timer || 'Start Timer';
+            
+            if (isRunning) {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700'); // ADDED: Remove active color
+                btn.classList.add('bg-gray-500');
+            } else {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-500');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700'); // ADDED: Apply active color
+            }
+        };
+
+        app.SprintModule.startTimer = () => {
+            if (app.STATE.isTimerRunning) {
+                // Manual stop is not allowed per spec, but we handle it defensively
+                // app.SprintModule.stopTimer(false); 
+                return;
+            }
+            
+            app.STATE.isTimerRunning = true;
+            document.getElementById('submit-sprint-btn').disabled = true;
+            document.getElementById('submit-sprint-btn').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            app.SprintModule.updateTimerButtonUI();
+            app.UIHandler.toast('toast_timer_started', 'info');
+
+            app.STATE.sprintInterval = setInterval(() => {
+                app.STATE.sprintTimeLeft--;
+                app.SprintModule.updateTimerDisplay();
+
+                if (app.STATE.sprintTimeLeft <= 0) {
+                    app.SprintModule.stopTimer(true); // Auto-submit (T006)
+                }
+            }, 1000);
+        };
+
+        app.SprintModule.stopTimer = (autoSubmit = false) => {
+            if (app.STATE.sprintInterval) {
+                clearInterval(app.STATE.sprintInterval);
+                app.STATE.sprintInterval = null;
+            }
+            app.STATE.isTimerRunning = false;
+            
+            if (autoSubmit) {
+                app.UIHandler.toast('toast_timer_expired', 'warning');
+                
+                const submitBtn = document.getElementById('submit-sprint-btn');
+                submitBtn.disabled = false;
+                
+                // FIXED: Set active button styles when enabled
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-red-600', 'hover:bg-red-700');
+                submitBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                
+                // Use performAction wrapper to handle async submission logic
+                app.UIHandler.performAction(app.SprintModule.handleSubmitSprint, 'submit-sprint-btn', 'toast_submitting');
+            } else {
+                // If stopped manually (shouldn't happen based on UI, but for reset safety)
+                app.STATE.sprintTimeLeft = CONFIG.SPRINT_DURATION_SECONDS;
+                app.SprintModule.updateTimerDisplay();
+                document.getElementById('submit-sprint-btn').disabled = true;
+            }
+
+            app.SprintModule.updateTimerButtonUI();
+        };
+
+        app.SprintModule.handleEditorInput = () => {
+            const editor = document.getElementById('sprint-editor');
+            const text = app.Utils.cleanText(editor.textContent);
+            
+            // 1. Word Count
+            const wordCount = app.Utils.countWords(text);
+            document.getElementById('word-count').textContent = wordCount;
+
+            // 2. Passive Ratio Estimation (T008)
+            const passiveRatio = app.Utils.calculatePassiveRatio(text);
+            document.getElementById('passive-ratio').textContent = `${(passiveRatio * 100).toFixed(1)}%`;
+            
+            // 3. Warning Threshold (T009)
+            const warningEl = document.getElementById('passive-warning');
+            if (passiveRatio > CONFIG.PASSIVE_WARNING_THRESHOLD) {
+                warningEl.classList.remove('hidden');
+            } else {
+                warningEl.classList.add('hidden');
+            }
+        };
+        
+        app.SprintModule.checkVerbUsage = (text) => {
+            let failures = 0;
+            const textLower = text.toLowerCase();
+            CONFIG.TARGET_VERBS.forEach(verb => {
+                const regex = new RegExp(`\\b${verb}\\b`, 'i');
+                if (!regex.test(textLower)) {
+                    failures++;
+                }
+            });
+            return { failures };
+        };
+
+        app.SprintModule.handleSubmitSprint = async () => {
+            const editor = document.getElementById('sprint-editor');
+            const text = app.Utils.cleanText(editor.textContent);
+            const passiveRatio = app.Utils.calculatePassiveRatio(text);
+            const { failures } = app.SprintModule.checkVerbUsage(text);
+            
+            let estimatedScore = 7.0; 
+            
+            const apiResult = await app.Utils.mockApiCall('sprint_score', { text, passiveRatio });
+
+            if (apiResult.success) {
+                estimatedScore = apiResult.score;
+            } else {
+                // Fallback to local algorithm (T019)
+                estimatedScore = (9.0 - (passiveRatio * 4) - (failures * 0.2));
+                estimatedScore = Math.max(6.0, parseFloat(estimatedScore.toFixed(1)));
+            }
+
+            // Record Data (T016)
+            app.STATE.history.sprints.push({
+                text: text,
+                passiveRatio: passiveRatio,
+                verbFailures: failures,
+                score: parseFloat(estimatedScore),
+                timestamp: Date.now()
+            });
+            
+            app.LocalStorageHandler.saveState();
+            
+            // Reset UI
+            editor.textContent = '';
+            document.getElementById('word-count').textContent = '0';
+            document.getElementById('passive-ratio').textContent = '0.0%';
+            document.getElementById('passive-warning').classList.add('hidden');
+            
+            // FIXED: Re-disable submit button and revert classes to initial disabled state
+            const submitBtn = document.getElementById('submit-sprint-btn');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-red-600', 'hover:bg-red-700');
+            submitBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+            
+            // Update Dashboard
+            app.ReportModule.updateDashboard();
+
+            app.UIHandler.toast('toast_sprint_submitted', 'success');
+        };
+
+        // --- BLIND WRITE-BACK MODULE (US-2) ---
+
+        app.BlindModule.toggleMask = (show) => {
+            const mask = document.getElementById('blind-mask');
+            if (show) {
+                mask.classList.remove('opacity-0', 'pointer-events-none');
+                mask.classList.add('opacity-95');
+            } else {
+                mask.classList.add('opacity-0', 'pointer-events-none');
+                mask.classList.remove('opacity-95');
+            }
+        };
+        
+        app.BlindModule.updateControlsUI = () => {
+            const { isRecording, isSttReady } = app.STATE.blind;
+            document.getElementById('record-btn').disabled = isRecording;
+            document.getElementById('stop-btn').disabled = !isRecording;
+            document.getElementById('play-btn').disabled = !isSttReady;
+            
+            [document.getElementById('record-btn'), document.getElementById('stop-btn'), document.getElementById('play-btn')].forEach(btn => {
+                if (btn.disabled) {
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    btn.classList.remove('hover:bg-red-700', 'hover:bg-blue-600');
+                } else {
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    if (btn.id === 'record-btn') btn.classList.add('hover:bg-red-700');
+                    if (btn.id === 'play-btn') btn.classList.add('hover:bg-blue-600');
+                }
+            });
+        };
+
+        app.BlindModule.startRecording = () => {
+            app.STATE.blind.isRecording = true;
+            app.STATE.blind.isSttReady = false;
+            document.getElementById('stt-transcript-editor').value = '';
+            app.BlindModule.updateControlsUI();
+            app.UIHandler.toast('toast_recording_start', 'info');
+
+            // Simulate 3 second recording (T011)
+            setTimeout(() => {
+                app.BlindModule.stopRecording();
+            }, 3000);
+        };
+
+        app.BlindModule.stopRecording = () => {
+            if (!app.STATE.blind.isRecording) return;
+            
+            app.STATE.blind.isRecording = false;
+            app.BlindModule.processSTT();
+        };
+
+        app.BlindModule.processSTT = () => {
+            // Simulate STT service (T012)
+            document.getElementById('stt-transcript-editor').value = CONFIG.SIMULATED_STT_TRANSCRIPT;
+            app.STATE.blind.isSttReady = true;
+            app.BlindModule.toggleMask(false); // Reveal editor (T010)
+            app.BlindModule.updateControlsUI();
+            app.UIHandler.toast('toast_recording_complete', 'success');
+        };
+        
+        app.BlindModule.playRecording = () => {
+            app.UIHandler.toast('Info', 'info', { message: 'Simulating playback of STT transcript.' });
+        };
+
+        app.BlindModule.handleSubmitWriteBack = () => {
+            // Clean and normalize text for comparison (remove punctuation, lower case)
+            const normalize = (text) => text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").replace(/\s{2,}/g," ").trim();
+            
+            const original = normalize(CONFIG.ORIGINAL_TEXT);
+            const writeback = normalize(document.getElementById('writeback-editor').value);
+            
+            if (!writeback) {
+                throw new Error('Write-back text cannot be empty.');
+            }
+
+            // Calculate Levenshtein Distance (T014)
+            const distance = app.Utils.levenshteinDistance(original, writeback);
+            
+            // Calculate Miss Rate (T015)
+            const maxLen = original.length;
+            const missRate = maxLen > 0 ? distance / maxLen : 0;
+            app.STATE.blind.missRate = missRate;
+
+            // Record Data
+            app.STATE.history.writebacks.push({
+                originalText: original,
+                writebackText: writeback,
+                missRate: missRate,
+                distance: distance,
+                timestamp: Date.now()
+            });
+            app.LocalStorageHandler.saveState();
+
+            // Update Report UI
+            document.getElementById('lev-distance').textContent = distance;
+            document.getElementById('miss-rate').textContent = `${(missRate * 100).toFixed(2)}%`;
+            document.getElementById('accuracy-report').classList.remove('hidden');
+            
+            // Remedial Suggestion (T015)
+            const remedialBtn = document.getElementById('remedial-btn');
+            if (missRate > CONFIG.MISS_RATE_REMEDY_THRESHOLD) {
+                remedialBtn.disabled = false;
+                remedialBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                app.UIHandler.toast('toast_remedy_enabled', 'warning');
+            } else {
+                remedialBtn.disabled = true;
+                remedialBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            
+            // Update Dashboard
+            app.ReportModule.updateDashboard();
+            
+            app.UIHandler.toast('toast_writeback_submitted', 'success');
+        };
+        
+        app.BlindModule.handleRemedialPractice = () => {
+            app.UIHandler.toast('Info', 'info', { message: 'Simulating generation of personalized remedial practice based on high miss rate.' });
+        };
+
+
+        // --- REPORT MODULE (US-3) ---
+
+        app.ReportModule.calculateBIndex = () => {
+            const { sprints, writebacks } = app.STATE.history;
+
+            if (sprints.length === 0 && writebacks.length === 0) {
+                return { bIndex: 0.00, avgPassive: 0, avgMissRate: 0, avgVerbFailures: 0 };
+            }
+
+            // 1. Calculate Averages
+            const totalPassive = sprints.reduce((sum, s) => sum + s.passiveRatio, 0);
+            const totalVerbFailures = sprints.reduce((sum, s) => sum + s.verbFailures, 0);
+            const totalMissRate = writebacks.reduce((sum, w) => sum + w.missRate, 0);
+
+            const avgPassive = sprints.length > 0 ? totalPassive / sprints.length : 0;
+            const avgMissRate = writebacks.length > 0 ? totalMissRate / writebacks.length : 0;
+            const avgVerbFailures = sprints.length > 0 ? totalVerbFailures / sprints.length : 0;
+            
+            // Normalize Verb Failures (Max 6 failures -> 1.0)
+            const normalizedVerbFailures = avgVerbFailures / CONFIG.TARGET_VERBS.length;
+
+            // 2. Calculate B-Index (T016)
+            const bIndex = (
+                avgPassive * CONFIG.WEIGHT_PASSIVE +
+                avgMissRate * CONFIG.WEIGHT_MISS_RATE +
+                normalizedVerbFailures * CONFIG.WEIGHT_VERB_FAIL
+            );
+
+            return { bIndex, avgPassive, avgMissRate, avgVerbFailures };
+        };
+
+        app.ReportModule.estimateIELTSScore = (bIndex) => {
+            // Simple inverse correlation: B-Index 0 -> 8.5, B-Index 0.1 -> 6.0
+            let score = 8.5 - (bIndex * 25);
+            return Math.max(6.0, Math.min(9.0, score)).toFixed(1);
+        };
+        
+        app.ReportModule.renderProgressRing = (bIndex) => {
+            const circle = document.getElementById('b-index-progress');
+            if (!circle) return;
+
+            const radius = 50;
+            const circumference = 2 * Math.PI * radius;
+            
+            // Normalize B-Index (penalty score) to a visual completion percentage (0 to 1)
+            const maxBIndexVisual = 0.04; 
+            const normalizedBIndex = Math.min(bIndex, maxBIndexVisual);
+            
+            // Completion is 1 (perfect) - (normalizedBIndex / maxBIndexVisual)
+            const completionRatio = 1 - (normalizedBIndex / maxBIndexVisual);
+            
+            const offset = circumference * (1 - completionRatio);
+            
+            circle.style.strokeDashoffset = offset;
+            
+            // Color change based on risk (T016)
+            const color = bIndex > CONFIG.B_INDEX_HIGH_RISK ? 'var(--color-danger)' : 'var(--color-emerald-600)';
+            circle.style.stroke = color;
+        };
+
+        app.ReportModule.updateDashboard = () => {
+            const { bIndex, avgPassive, avgMissRate, avgVerbFailures } = app.ReportModule.calculateBIndex();
+            const estimatedScore = app.ReportModule.estimateIELTSScore(bIndex);
+
+            // Update Metrics
+            document.getElementById('b-index-value').textContent = bIndex.toFixed(3);
+            document.getElementById('estimated-score').textContent = estimatedScore;
+            document.getElementById('metric-passive').textContent = `${(avgPassive * 100).toFixed(1)}%`;
+            document.getElementById('metric-miss-rate').textContent = `${(avgMissRate * 100).toFixed(2)}%`;
+            document.getElementById('metric-verb-fail').textContent = avgVerbFailures.toFixed(1);
+            
+            // Update Score Color (T017)
+            const scoreEl = document.getElementById('estimated-score');
+            if (bIndex > CONFIG.B_INDEX_HIGH_RISK) {
+                scoreEl.classList.remove('text-emerald-600');
+                scoreEl.classList.add('text-red-600');
+            } else {
+                scoreEl.classList.add('text-emerald-600');
+                scoreEl.classList.remove('text-red-600');
+            }
+
+            // Render SVG Ring
+            app.ReportModule.renderProgressRing(bIndex);
+        };
+        
+        app.ReportModule.generateRecommendations = async () => {
+            const { bIndex } = app.ReportModule.calculateBIndex();
+            const recContainer = document.getElementById('review-recommendations');
+            
+            const action = async () => {
+                const apiResult = await app.Utils.mockApiCall('recommendations', { bIndex });
+                
+                // Clear previous recommendations
+                recContainer.innerHTML = '';
+                document.getElementById('initial-recommendation').classList.add('hidden');
+
+                let recommendations = [];
+                if (apiResult.success) {
+                    recommendations = apiResult.recommendations;
+                } else {
+                    // Local fallback recommendation
+                    recommendations = [{ 
+                        area: "System Fallback", 
+                        advice: `B-Index is ${bIndex.toFixed(3)}. Based on local data, focus on improving areas with the highest weighted score.` 
+                    }];
+                }
+
+                recommendations.forEach(rec => {
+                    const template = document.getElementById('recommendation-template').cloneNode(true);
+                    template.removeAttribute('id');
+                    template.classList.remove('hidden');
+                    
+                    const areaText = I18N[app.STATE.currentLang].recommendation_area.replace('{area}', rec.area);
+                    const adviceText = I18N[app.STATE.currentLang].recommendation_advice.replace('{advice}', rec.advice);
+
+                    template.querySelector('.font-semibold').textContent = areaText;
+                    template.querySelector('.text-sm').textContent = adviceText;
+                    
+                    recContainer.appendChild(template);
+                });
+                
+                app.UIHandler.toast('toast_recs_generated', 'success');
+            };
+            
+            await app.UIHandler.performAction(action, 'generate-recs-btn', 'toast_generating');
+        };
+
+
+        // --- INITIALIZATION & EVENT LISTENERS ---
+
+        app.Router.init = () => {
+            // 1. Load State and Language
+            app.LocalStorageHandler.loadState();
+            app.LocalStorageHandler.loadLanguage();
+            
+            // 2. Initial UI Render
+            app.UIHandler.translate(app.STATE.currentLang);
+            app.SprintModule.updateTimerDisplay();
+            app.SprintModule.updateTimerButtonUI();
+            app.BlindModule.toggleMask(true); 
+            app.BlindModule.updateControlsUI();
+            
+            // Display initial quota
+            document.getElementById('quota-display').textContent = `API Quota: ${CONFIG.MAX_API_QUOTA - app.STATE.apiQuotaUsed}/${CONFIG.MAX_API_QUOTA}`;
+
+            // Render Target Verbs
+            const verbContainer = document.getElementById('target-verbs-container');
+            CONFIG.TARGET_VERBS.forEach(verb => {
+                const span = document.createElement('span');
+                span.className = 'bg-gray-200 text-gray-700 text-sm font-mono px-3 py-1 rounded-full';
+                span.textContent = verb;
+                verbContainer.appendChild(span);
+            });
+            
+            // 3. Update Dashboard with historical data
+            app.ReportModule.updateDashboard();
+
+            // 4. Attach Event Listeners
+            
+            // Language Switcher
+            const langSwitcher = document.getElementById('lang-switcher');
+            langSwitcher.value = app.STATE.currentLang;
+            langSwitcher.addEventListener('change', (e) => {
+                const newLang = e.target.value;
+                app.LocalStorageHandler.saveLanguage(newLang);
+                app.UIHandler.translate(newLang);
+            });
+
+            // Sprint Module Listeners
+            document.getElementById('start-sprint-btn').addEventListener('click', app.SprintModule.startTimer);
+            document.getElementById('sprint-editor').addEventListener('input', app.SprintModule.handleEditorInput);
+            // Note: Submit button is only enabled by stopTimer(true) when time expires.
+            // When enabled, it triggers the submission logic wrapped in ActionGuard.
+            document.getElementById('submit-sprint-btn').addEventListener('click', () => {
+                // This is primarily for manual click after auto-enable, but the timer handles auto-submission too.
+                app.UIHandler.performAction(app.SprintModule.handleSubmitSprint, 'submit-sprint-btn', 'toast_submitting');
+            });
+            
+            // Blind Write-Back Listeners
+            document.getElementById('record-btn').addEventListener('click', app.BlindModule.startRecording);
+            document.getElementById('stop-btn').addEventListener('click', app.BlindModule.stopRecording);
+            document.getElementById('play-btn').addEventListener('click', app.BlindModule.playRecording);
+            document.getElementById('submit-writeback-btn').addEventListener('click', () => {
+                app.UIHandler.performAction(app.BlindModule.handleSubmitWriteBack, 'submit-writeback-btn', 'toast_calculating');
+            });
+            document.getElementById('remedial-btn').addEventListener('click', app.BlindModule.handleRemedialPractice);
+            
+            // Report Listeners
+            document.getElementById('generate-recs-btn').addEventListener('click', app.ReportModule.generateRecommendations);
+        };
+
+        // --- TEST HOOK (Standardized Test Hook) ---
+        window.injectTestRunner = function(runner) {
+            // Allow external tools to access the app instance
+            runner.app = app; 
+            console.log("🧪 Test Runner Hook Injected");
+        };
+
+        // --- APPLICATION START ---
+        document.addEventListener("DOMContentLoaded", app.Router.init);
+    </script>
+</body>
+</html>

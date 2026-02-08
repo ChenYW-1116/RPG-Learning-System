@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">IELTS Writing Conciseness Coach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap');
+
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        .editor-area {
+            font-family: 'Inter', sans-serif;
+            min-height: 250px;
+            resize: vertical;
+            transition: all 0.2s;
+        }
+
+        .editor-area:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .timer-badge {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* 視圖切換 */
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="glass-panel sticky top-0 z-40 mb-6">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">✍️</span>
+                <h1 class="font-bold text-xl tracking-tight hidden md:block" data-i18n="app_title">IELTS Conciseness
+                    Coach</h1>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <div class="flex bg-gray-100 p-1 rounded-lg text-sm font-medium">
+                    <button id="tab-dashboard" onclick="app.switchView('dashboard')"
+                        class="tab-btn active px-3 py-1.5 rounded-md transition" data-i18n="nav_dashboard">儀表板</button>
+                    <button id="tab-rewrite" onclick="app.switchView('rewrite')"
+                        class="tab-btn px-3 py-1.5 rounded-md transition" data-i18n="nav_rewrite">基礎練習</button>
+                    <button id="tab-gate" onclick="app.switchView('gate')"
+                        class="tab-btn px-3 py-1.5 rounded-md transition" data-i18n="nav_gate">晉級挑戰</button>
+                </div>
+
+                <button onclick="app.toggleLanguage()" class="p-2 hover:bg-gray-200 rounded-full transition"
+                    title="Switch Language">
+                    🌐 <span id="current-lang-label" class="text-xs font-bold">ZH</span>
+                </button>
+
+                <button onclick="app.showModal('settings-modal')" class="p-2 hover:bg-gray-200 rounded-full transition">
+                    ⚙️
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 pb-12">
+
+        <!-- View: Dashboard -->
+        <section id="view-dashboard" class="view-section active space-y-6">
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Quota Card -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4"
+                        data-i18n="card_quota_title">48小時訓練額度</h3>
+                    <div class="flex items-end justify-between">
+                        <div>
+                            <span id="stat-sessions-count" class="text-4xl font-bold">0</span>
+                            <span class="text-gray-400 font-medium text-lg">/ 5</span>
+                        </div>
+                        <div id="stat-quota-badge"
+                            class="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-bold">可用</div>
+                    </div>
+                    <div class="mt-4 bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div id="stat-quota-progress" class="bg-indigo-500 h-full transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                    <p id="stat-quota-timer" class="text-xs text-gray-400 mt-3 italic"></p>
+                </div>
+
+                <!-- Status Card -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4"
+                        data-i18n="card_status_title">學習階段狀態</h3>
+                    <div class="flex items-center space-x-3 mb-2">
+                        <div id="status-indicator" class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></div>
+                        <span id="status-text" class="font-bold text-lg" data-i18n="status_locked">Task 2 鎖定中</span>
+                    </div>
+                    <p class="text-sm text-gray-500" data-i18n="status_desc">完成 5 篇改寫或滿足模擬考條件後解鎖。</p>
+                </div>
+
+                <!-- Achievement Card -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4"
+                        data-i18n="card_history_title">最近表現</h3>
+                    <div id="history-mini-list" class="space-y-2">
+                        <!-- Mini history -->
+                        <div class="text-sm text-gray-400 italic" data-i18n="no_records">尚無記錄</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Promotion Engine (Mock Import) -->
+            <div class="glass-panel rounded-2xl p-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center space-x-2">
+                    <span>📊</span> <span data-i18n="section_mock_title">模擬成績晉級引擎</span>
+                </h2>
+                <div class="grid md:grid-cols-4 gap-4 items-end">
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-2 uppercase" data-i18n="label_band">Band
+                            Score (0-9)</label>
+                        <input type="number" id="input-mock-band" placeholder="8.0" step="0.5" min="0" max="9"
+                            class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="md:col-span-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-2 uppercase" data-i18n="label_sd">標準差 SD
+                            (0-1)</label>
+                        <input type="number" id="input-mock-sd" placeholder="0.35" step="0.01" min="0" max="1"
+                            class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="md:col-span-2 flex space-x-2">
+                        <button onclick="app.addMockRecord()"
+                            class="flex-grow bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-indigo-200"
+                            data-i18n="btn_add_mock">新增成績</button>
+                        <button onclick="app.clearHistory()"
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-600 font-bold py-3 px-4 rounded-xl transition"
+                            title="Clear History">🗑️</button>
+                    </div>
+                </div>
+                <div class="mt-8 border-t pt-6">
+                    <h3 class="text-sm font-bold text-gray-400 mb-4 uppercase" data-i18n="history_list_title">成績歷史記錄
+                        (需要連續兩次 Band >= 8 且 SD < 0.4 晉級)</h3>
+                            <div class="overflow-hidden rounded-xl border border-gray-100">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="bg-gray-50 text-gray-500">
+                                        <tr>
+                                            <th class="px-4 py-3">日期</th>
+                                            <th class="px-4 py-3">Band</th>
+                                            <th class="px-4 py-3">SD (Truncated)</th>
+                                            <th class="px-4 py-3">結果</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mock-history-table">
+                                        <!-- Table rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Rewrite Exercise -->
+        <section id="view-rewrite" class="view-section space-y-6">
+            <div
+                class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border-l-8 border-indigo-500">
+                <div>
+                    <h2 class="text-2xl font-bold" data-i18n="rewrite_title">任務一：基礎簡潔性重寫</h2>
+                    <p class="text-gray-500 text-sm mt-1" data-i18n="rewrite_desc">目標：減少冗餘詞彙，保持原意不變，字數降幅須超過 10%。</p>
+                </div>
+                <div class="flex items-center space-x-4 bg-white/50 p-2 rounded-xl border">
+                    <div class="text-right">
+                        <div class="text-xs font-bold text-gray-400 uppercase" data-i18n="timer_label">剩餘時間</div>
+                        <div id="timer-display" class="text-2xl font-mono font-bold text-indigo-600">15:00</div>
+                    </div>
+                    <button id="btn-timer-toggle" onclick="app.toggleTimer()"
+                        class="bg-indigo-100 text-indigo-600 p-3 rounded-lg hover:bg-indigo-200 transition">
+                        ⏸️
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Original Input -->
+                <div class="flex flex-col space-y-2">
+                    <div class="flex justify-between items-center px-1">
+                        <label class="text-sm font-bold text-gray-600 uppercase" data-i18n="label_original">原始文本
+                            (Source)</label>
+                        <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full font-bold text-gray-500"><span
+                                id="count-original">0</span> words</span>
+                    </div>
+                    <textarea id="input-original" oninput="app.calculateReduction()"
+                        class="editor-area w-full p-4 glass-panel rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+                        data-i18n-placeholder="placeholder_original"></textarea>
+                </div>
+
+                <!-- Rewrite Input -->
+                <div class="flex flex-col space-y-2">
+                    <div class="flex justify-between items-center px-1">
+                        <label class="text-sm font-bold text-indigo-600 uppercase" data-i18n="label_rewritten">重寫版本
+                            (Target)</label>
+                        <span class="text-xs bg-indigo-100 px-2 py-0.5 rounded-full font-bold text-indigo-600"><span
+                                id="count-rewritten">0</span> words</span>
+                    </div>
+                    <textarea id="input-rewritten" oninput="app.calculateReduction()"
+                        class="editor-area w-full p-4 glass-panel rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 shadow-inner border-indigo-200"
+                        data-i18n-placeholder="placeholder_rewrite"></textarea>
+                </div>
+            </div>
+
+            <!-- Submission Bar -->
+            <div class="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center space-x-8">
+                    <div>
+                        <div class="text-xs font-bold text-gray-400 uppercase mb-1" data-i18n="label_reduction">當前降幅
+                        </div>
+                        <div class="flex items-baseline space-x-1">
+                            <span id="reduction-percent" class="text-3xl font-extrabold text-gray-700">0.0%</span>
+                            <span id="reduction-status-icon" class="text-red-500">❌</span>
+                        </div>
+                    </div>
+                    <div class="hidden md:block w-px h-10 bg-gray-200"></div>
+                    <p id="reduction-feedback" class="text-sm text-gray-500 max-w-xs" data-i18n="feedback_low">降幅尚未達標 (需
+                        > 10%)。請嘗試使用更精確的動詞替代名詞化結構。</p>
+                </div>
+
+                <button id="btn-submit-rewrite" onclick="app.submitRewrite()" disabled
+                    class="w-full md:w-auto bg-gray-300 text-white font-bold py-4 px-10 rounded-2xl transition-all duration-300 disabled:cursor-not-allowed group relative overflow-hidden">
+                    <span class="relative z-10" data-i18n="btn_submit_rewrite">提交並記錄</span>
+                    <div class="absolute inset-0 bg-green-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- View: Gate/Task 2 -->
+        <section id="view-gate" class="view-section space-y-6">
+            <div
+                class="glass-panel p-12 rounded-3xl text-center flex flex-col items-center max-w-2xl mx-auto mt-12 bg-gradient-to-br from-white to-indigo-50/30">
+                <div id="gate-icon" class="text-6xl mb-6 grayscale pb-2 border-b-2">📝</div>
+                <h2 id="gate-title" class="text-3xl font-black mb-4 text-gray-400" data-i18n="gate_locked_title">Task 2
+                    核心練習 (鎖定)</h2>
+                <p id="gate-message" class="text-gray-500 mb-8 leading-relaxed" data-i18n="gate_locked_desc">
+                    您需要先在「基礎練習」中完成最近 48 小時內的 5 次高品質重寫，或通過「模擬成績引擎」晉級，方可解鎖此雙欄範本分析功能。
+                </p>
+
+                <div id="gate-progress-box"
+                    class="w-full bg-gray-100 rounded-2xl p-6 mb-8 border border-dashed border-gray-300">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-bold text-gray-500" data-i18n="gate_progress_label">解鎖進度</span>
+                        <span id="gate-progress-text" class="text-sm font-bold text-gray-700">0 / 5</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="gate-progress-bar"
+                            class="bg-indigo-500 h-full rounded-full transition-all duration-1000" style="width: 0%">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="unlocked-content" class="hidden w-full space-y-6">
+                    <div class="p-8 border-2 border-dashed border-indigo-300 rounded-3xl bg-indigo-50/50 hover:bg-indigo-100/50 transition cursor-pointer group"
+                        onclick="app.simulateFileUpload()">
+                        <div class="text-4xl mb-4 group-hover:scale-110 transition">📎</div>
+                        <h4 class="font-bold text-lg text-indigo-700" data-i18n="btn_upload">點擊上傳雙欄範本 (.docx)</h4>
+                        <p class="text-xs text-indigo-400 mt-2">系統將分析 "Process Verbs" 欄位的多樣性與精準度</p>
+                    </div>
+                    <button
+                        class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition"
+                        data-i18n="btn_start_task2">開始 Task 2 會話</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: Settings -->
+    <div id="settings-modal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-3xl p-8 shadow-2xl scale-in transform transition">
+            <h3 class="text-2xl font-black mb-6 flex items-center space-x-2">
+                <span>⚙️</span> <span data-i18n="settings_title">偏好設定</span>
+            </h3>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Gemini API Key</label>
+                    <input type="password" id="input-api-key" placeholder="AI-generated scores require an API key"
+                        class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2" data-i18n="label_timezone">參考時區
+                        (UTC Anchor)</label>
+                    <select id="select-timezone"
+                        class="w-full p-3 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500">
+                        <option value="UTC">UTC (推薦)</option>
+                        <option value="Asia/Taipei">Asia/Taipei (UTC+8)</option>
+                        <option value="America/New_York">New York (UTC-5)</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 flex space-x-3">
+                    <button onclick="app.hideModal('settings-modal')"
+                        class="flex-grow bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition"
+                        data-i18n="btn_cancel">取消</button>
+                    <button onclick="app.saveSettings()"
+                        class="flex-grow bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-100"
+                        data-i18n="btn_save">儲存變更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Block -->
+    <script>
+        // --- 1. Internationalization Repository ---
+        const translations = {
+            zh: {
+                app_title: "IELTS 寫作簡潔教練",
+                nav_dashboard: "儀表板",
+                nav_rewrite: "基礎練習",
+                nav_gate: "晉級挑戰",
+                card_quota_title: "48小時訓練額度",
+                card_status_title: "學習階段狀態",
+                card_history_title: "最近表現",
+                status_locked: "Task 2 鎖定中",
+                status_unlocked: "Task 2 已解鎖",
+                status_desc: "完成 5 篇改寫或滿足模擬考條件後解鎖。",
+                no_records: "尚無記錄",
+                section_mock_title: "模擬成績晉級引擎",
+                label_band: "Band Score (0-9)",
+                label_sd: "標準差 SD (0-1)",
+                btn_add_mock: "新增成績",
+                history_list_title: "成績歷史記錄",
+                settings_title: "偏好設定",
+                label_timezone: "參考時區 (UTC Anchor)",
+                btn_cancel: "取消",
+                btn_save: "儲存變更",
+                rewrite_title: "任務一：基礎簡潔性重寫",
+                rewrite_desc: "目標：減少冗餘詞彙，保持原意不變，字數降幅須超過 10%。",
+                timer_label: "剩餘時間",
+                label_original: "原始文本 (Source)",
+                label_rewritten: "重寫版本 (Target)",
+                label_reduction: "當前降幅",
+                btn_submit_rewrite: "提交並記錄",
+                gate_locked_title: "Task 2 核心練習 (鎖定)",
+                gate_locked_desc: "您需要先在大基礎練習中完成最近 48 小時內的 5 次高品質重寫，方可解鎖。",
+                gate_progress_label: "解鎖進度",
+                btn_upload: "點擊上傳雙欄範本 (.docx)",
+                btn_start_task2: "開始 Task 2 會話",
+                placeholder_original: "請貼上您的原始文章（例如：The reason why it happened is...）",
+                placeholder_rewrite: "請進行重寫（例如：It happened because...）",
+                feedback_low: "降幅尚未達標 (需 > 10%)。請嘗試使用更精確的動詞替代名詞化結構。",
+                feedback_ok: "目標達成！請點擊右側按鈕提交記錄。",
+                alert_success: "記錄成功！",
+                alert_failure: "未達標準，請繼續修改。"
+            },
+            en: {
+                app_title: "IELTS Writing Conciseness Coach",
+                nav_dashboard: "Dashboard",
+                nav_rewrite: "Basic Practice",
+                nav_gate: "Promotion Gate",
+                card_quota_title: "48h Training Quota",
+                card_status_title: "Learning Phase",
+                card_history_title: "Recent Performance",
+                status_locked: "Task 2 Locked",
+                status_unlocked: "Task 2 Unlocked",
+                status_desc: "Complete 5 rewrites or meet mock score criteria to unlock.",
+                no_records: "No records yet",
+                section_mock_title: "Mock Promotion Engine",
+                label_band: "Band Score (0-9)",
+                label_sd: "SD (0-1)",
+                btn_add_mock: "Add Score",
+                history_list_title: "Score History",
+                settings_title: "Settings",
+                label_timezone: "Timezone (UTC Anchor)",
+                btn_cancel: "Cancel",
+                btn_save: "Save Changes",
+                rewrite_title: "Task 1: Basic Conciseness Rewrite",
+                rewrite_desc: "Goal: Reduce wordiness while maintaining meaning. Targeted reduction > 10%.",
+                timer_label: "Remaining",
+                label_original: "Original Text",
+                label_rewritten: "Rewritten Text",
+                label_reduction: "Current Reduction",
+                btn_submit_rewrite: "Submit & Log",
+                gate_locked_title: "Task 2 Core (Locked)",
+                gate_locked_desc: "Complete 5 high-quality rewrites in Basic Practice within 48h to unlock.",
+                gate_progress_label: "Unlock Progress",
+                btn_upload: "Upload Dual-column Template (.docx)",
+                btn_start_task2: "Start Task 2 Session",
+                placeholder_original: "Paste original text here (e.g., The reason why it happened is...)",
+                placeholder_rewrite: "Rewrite here (e.g., It happened because...)",
+                feedback_low: "Reduction target not met (> 10%). Try using precise verbs instead of nominalization.",
+                feedback_ok: "Target achieved! Click the button to submit.",
+                alert_success: "Record saved!",
+                alert_failure: "Target not met. Please revise."
+            }
+        };
+
+        // --- 2. Application Core Class ---
+        class ConcisenessCoach {
+            constructor() {
+                this.state = this.loadState();
+                this.timerInterval = null;
+                this.timerRemaining = 15 * 60; // 15:00
+                this.isTimerPaused = false;
+            }
+
+            // Data Management
+            loadState() {
+                const defaults = {
+                    settings: { lang: 'zh', timezone: 'UTC', apiKey: '' },
+                    history: { rewrites: [], mockScores: [] }
+                };
+                const saved = localStorage.getItem('conciseness_coach_v1');
+                if (!saved) return defaults;
+
+                try {
+                    const parsed = JSON.parse(saved);
+                    return {
+                        settings: { ...defaults.settings, ...(parsed.settings || {}) },
+                        history: { ...defaults.history, ...(parsed.history || {}) }
+                    };
+                } catch (e) {
+                    console.error("State load error:", e);
+                    return defaults;
+                }
+            }
+
+            saveState() {
+                localStorage.setItem('conciseness_coach_v1', JSON.stringify(this.state));
+                this.updateUI();
+            }
+
+            // UI Manipulation
+            init() {
+                try {
+                    this.applyTranslations();
+                    this.updateUI();
+                    this.startTimer();
+
+                    // Set initial values in settings
+                    const apiKeyEl = document.getElementById('input-api-key');
+                    const tzEl = document.getElementById('select-timezone');
+                    if (apiKeyEl) apiKeyEl.value = this.state.settings.apiKey || '';
+                    if (tzEl) tzEl.value = this.state.settings.timezone || 'UTC';
+
+                    console.log("Coach App Initialized Successfully");
+                } catch (e) {
+                    console.error("Coach App Init Error:", e);
+                }
+            }
+
+            applyTranslations() {
+                const lang = this.state.settings.lang;
+                const dict = translations[lang];
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (dict[key]) el.textContent = dict[key];
+                });
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (dict[key]) el.placeholder = dict[key];
+                });
+                document.getElementById('current-lang-label').textContent = lang.toUpperCase();
+                document.title = dict.app_title;
+
+                // Feedback text needs dynamic update
+                this.calculateReduction();
+            }
+
+            updateUI() {
+                const now = Date.now();
+                const window48h = 48 * 60 * 60 * 1000;
+
+                // Filter sessions in last 48h
+                const recentRewrites = this.state.history.rewrites.filter(s => (now - s.timestamp) < window48h);
+                const count = recentRewrites.length;
+
+                // Update Dashboard Cards
+                const countEl = document.getElementById('stat-sessions-count');
+                const progressEl = document.getElementById('stat-quota-progress');
+                if (countEl) countEl.textContent = count;
+                if (progressEl) progressEl.style.width = `${(count / 5) * 100}%`;
+
+                // Logic for Gate
+                const promotionAwarded = this.checkPromotion();
+                const isUnlocked = count >= 5 || promotionAwarded;
+
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('status-text');
+                const gateTitle = document.getElementById('gate-title');
+                const gateIcon = document.getElementById('gate-icon');
+                const gateMsg = document.getElementById('gate-message');
+                const gateProgBox = document.getElementById('gate-progress-box');
+                const unlockedContent = document.getElementById('unlocked-content');
+
+                if (isUnlocked) {
+                    if (statusIndicator) {
+                        statusIndicator.classList.replace('bg-amber-500', 'bg-green-500');
+                        statusIndicator.classList.remove('animate-pulse');
+                    }
+                    if (statusText) statusText.textContent = translations[this.state.settings.lang].status_unlocked;
+                    if (gateTitle) {
+                        gateTitle.textContent = translations[this.state.settings.lang].nav_gate;
+                        gateTitle.classList.remove('text-gray-400');
+                        gateTitle.classList.add('text-indigo-600');
+                    }
+                    if (gateIcon) {
+                        gateIcon.textContent = "🏆";
+                        gateIcon.classList.remove('grayscale');
+                    }
+                    if (gateMsg) gateMsg.classList.add('hidden');
+                    if (gateProgBox) gateProgBox.classList.add('hidden');
+                    if (unlockedContent) unlockedContent.classList.remove('hidden');
+                } else {
+                    if (statusIndicator) {
+                        statusIndicator.classList.add('bg-amber-500');
+                        statusIndicator.classList.add('animate-pulse');
+                    }
+                    // Keep locked state
+                    if (gateProgBox) {
+                        const progText = document.getElementById('gate-progress-text');
+                        const progBar = document.getElementById('gate-progress-bar');
+                        if (progText) progText.textContent = `${count} / 5`;
+                        if (progBar) progBar.style.width = `${(count / 5) * 100}%`;
+                    }
+                }
+
+                // Update History Table
+                const table = document.getElementById('mock-history-table');
+                if (table) {
+                    table.innerHTML = this.state.history.mockScores.slice().reverse().map(s => {
+                        const date = new Date(s.timestamp).toLocaleDateString();
+                        const passed = (s.band >= 8 && s.sd < 0.4);
+                        return `
+                            <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                                <td class="px-4 py-3 text-gray-500">${date}</td>
+                                <td class="px-4 py-3 font-bold">${s.band.toFixed(1)}</td>
+                                <td class="px-4 py-3 font-mono text-xs">${s.sd.toFixed(2)}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                        ${passed ? 'PASS' : 'FAIL'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('') || '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400">尚無記錄</td></tr>';
+                }
+            }
+
+            // View Switching
+            switchView(viewId) {
+                document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+                document.getElementById(`view-${viewId}`).classList.add('active');
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById(`tab-${viewId}`).classList.add('active');
+            }
+
+            // Timer Logic
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    if (this.isTimerPaused) return;
+
+                    if (this.timerRemaining > 0) {
+                        this.timerRemaining--;
+                        this.updateTimerDisplay();
+                    } else {
+                        clearInterval(this.timerInterval);
+                    }
+                }, 1000);
+            }
+
+            toggleTimer() {
+                this.isTimerPaused = !this.isTimerPaused;
+                document.getElementById('btn-timer-toggle').textContent = this.isTimerPaused ? '▶️' : '⏸️';
+            }
+
+            updateTimerDisplay() {
+                const el = document.getElementById('timer-display');
+                if (!el) return;
+                const m = Math.floor(this.timerRemaining / 60);
+                const s = this.timerRemaining % 60;
+                el.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            // Task 1 Logic: Word Count & Reduction
+            calculateReduction() {
+                const original = document.getElementById('input-original').value.trim();
+                const rewritten = document.getElementById('input-rewritten').value.trim();
+
+                const countOrig = original ? original.split(/\s+/).filter(x => x).length : 0;
+                const countRewr = rewritten ? rewritten.split(/\s+/).filter(x => x).length : 0;
+
+                document.getElementById('count-original').textContent = countOrig;
+                document.getElementById('count-rewritten').textContent = countRewr;
+
+                let reduction = 0;
+                if (countOrig > 0) {
+                    reduction = (countOrig - countRewr) / countOrig;
+                }
+
+                const percent = (reduction * 100).toFixed(1);
+                const percentEl = document.getElementById('reduction-percent');
+                const iconEl = document.getElementById('reduction-status-icon');
+                const feedbackEl = document.getElementById('reduction-feedback');
+                const submitBtn = document.getElementById('btn-submit-rewrite');
+
+                if (percentEl) percentEl.textContent = `${percent}%`;
+
+                const isOk = reduction > 0.10 && countOrig > 0;
+
+                if (iconEl) {
+                    iconEl.textContent = isOk ? '✅' : '❌';
+                    iconEl.className = isOk ? 'text-green-500' : 'text-red-500';
+                }
+
+                if (feedbackEl) {
+                    feedbackEl.textContent = isOk ? translations[this.state.settings.lang].feedback_ok : translations[this.state.settings.lang].feedback_low;
+                }
+
+                if (submitBtn) {
+                    submitBtn.disabled = !isOk;
+                    submitBtn.classList.toggle('bg-green-500', isOk);
+                    submitBtn.classList.toggle('bg-gray-300', !isOk);
+                }
+            }
+
+            submitRewrite() {
+                const origCount = parseInt(document.getElementById('count-original').textContent);
+                const rewrCount = parseInt(document.getElementById('count-rewritten').textContent);
+
+                const session = {
+                    orig: origCount,
+                    rewr: rewrCount,
+                    reduction: (origCount - rewrCount) / origCount,
+                    timestamp: Date.now()
+                };
+
+                this.state.history.rewrites.push(session);
+                this.saveState();
+
+                alert(translations[this.state.settings.lang].alert_success);
+
+                // Clear and reset
+                document.getElementById('input-original').value = '';
+                document.getElementById('input-rewritten').value = '';
+                this.timerRemaining = 15 * 60;
+                this.calculateReduction();
+            }
+
+            // Task 3: Mock Engine Logic
+            addMockRecord() {
+                const bandEl = document.getElementById('input-mock-band');
+                const sdEl = document.getElementById('input-mock-sd');
+                const band = parseFloat(bandEl.value);
+                const sd = parseFloat(sdEl.value);
+
+                if (isNaN(band) || isNaN(sd) || band < 0 || band > 9 || sd < 0 || sd > 1) {
+                    alert("Invalid input parameters.");
+                    return;
+                }
+
+                // A2 Fix: SD Truncation to 2 decimal places
+                const truncatedSD = Math.floor(sd * 100) / 100;
+
+                this.state.history.mockScores.push({
+                    band,
+                    sd: truncatedSD,
+                    timestamp: Date.now()
+                });
+
+                this.saveState();
+                bandEl.value = '';
+                sdEl.value = '';
+            }
+
+            checkPromotion() {
+                const scores = this.state.history.mockScores;
+                if (scores.length < 2) return false;
+
+                // Sort by timestamp and get last 2
+                const sorted = scores.slice().sort((a, b) => a.timestamp - b.timestamp);
+                const lastTwo = sorted.slice(-2);
+
+                return lastTwo.every(s => s.band >= 8 && s.sd < 0.4);
+            }
+
+            clearHistory() {
+                if (confirm("Clear all history?")) {
+                    this.state.history = { rewrites: [], mockScores: [] };
+                    this.saveState();
+                }
+            }
+
+            // Settings
+            showModal(id) {
+                document.getElementById(id).style.display = 'flex';
+            }
+            hideModal(id) {
+                document.getElementById(id).style.display = 'none';
+            }
+            saveSettings() {
+                this.state.settings.apiKey = document.getElementById('input-api-key').value;
+                this.state.settings.timezone = document.getElementById('select-timezone').value;
+                this.saveState();
+                this.hideModal('settings-modal');
+            }
+            toggleLanguage() {
+                this.state.settings.lang = this.state.settings.lang === 'zh' ? 'en' : 'zh';
+                this.saveState();
+                this.applyTranslations();
+            }
+
+            simulateFileUpload() {
+                alert("DOCX Parser required. In simulation mode, score is auto-generated.");
+            }
+        }
+
+        // --- 3. Interaction with SDD System ---
+        function injectTestRunner(runner) {
+            // API: click, type, assert, waitFor, getValue, getText, isVisible, count, log, checkStorage, setStorage, mockAIResponse
+
+            runner.defineTests([
+                {
+                    id: 'TC-001',
+                    name: 'E2E Happy Path: US-1 Word Reduction Logic',
+                    steps: async () => {
+                        await runner.log('Starting Task 1 verification...');
+                        await runner.click('#tab-rewrite');
+
+                        const source = "The reason for the problem is that we implemented it incorrectly."; // 11 words
+                        const target = "Incorrect implementation caused the problem."; // 6 words -> ~45% reduction
+
+                        await runner.type('#input-original', source);
+                        await runner.type('#input-rewritten', target);
+
+                        await runner.waitFor(500);
+
+                        const reductionText = await runner.getText('#reduction-percent');
+                        await runner.log(`Captured reduction: ${reductionText}`);
+
+                        // Using BOTH function and object style to verify fix
+                        runner.assert(parseFloat(reductionText) > 10, "Reduction should be > 10%");
+                        runner.assert.ok(!document.getElementById('btn-submit-rewrite').disabled, "Submit button should be enabled");
+                    }
+                },
+                {
+                    id: 'TC-002',
+                    name: 'US-3 Promotion Engine Logic (Truncation Fix)',
+                    steps: async () => {
+                        await runner.log('Testing SD Truncation logic (A2 Fix)...');
+                        await runner.click('#tab-dashboard');
+
+                        // Input SD = 0.399 (should truncate to 0.39, which is < 0.4)
+                        await runner.type('#input-mock-band', "8.5");
+                        await runner.type('#input-mock-sd', "0.399");
+                        await runner.click('button[onclick="app.addMockRecord()"]');
+
+                        // Record 2
+                        await runner.type('#input-mock-band', "8.0");
+                        await runner.type('#input-mock-sd', "0.20");
+                        await runner.click('button[onclick="app.addMockRecord()"]');
+
+                        await runner.waitFor(200);
+
+                        const statusText = await runner.getText('#status-text');
+                        // Expect Unlocked since both are Band >= 8 and SD < 0.4
+                        runner.assert(statusText.includes('解鎖') || statusText.includes('Unlocked'), "Task 2 should be unlocked by 2 mock scores");
+                    }
+                }
+            ]);
+        }
+
+        // --- 4. Boot ---
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new ConcisenessCoach();
+            window.app.init();
+        });
+    </script>
+</body>
+
+</html>

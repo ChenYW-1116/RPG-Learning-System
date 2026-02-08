@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語言切換測試</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1A202C, #2D3748);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+    </style>
+</head>
+
+<body class="text-white">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold" data-i18n="pageTitle">語言切換測試頁面</h1>
+            <button id="langToggleBtn" onclick="toggleLanguage()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                EN
+            </button>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl mb-6">
+            <h2 class="text-xl font-semibold mb-4" data-i18n="staticSection">靜態內容區域</h2>
+            <p data-i18n="staticContent">這是一段靜態的測試內容，應該可以即時切換語言。</p>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold" data-i18n="dynamicSection">動態內容區域</h2>
+                <button onclick="addBlock()"
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
+                    data-i18n="addButton">
+                    + 新增區塊
+                </button>
+            </div>
+            <div id="dynamicContainer" class="space-y-4">
+                <!-- 動態區塊將在這裡生成 -->
+            </div>
+        </div>
+
+        <div class="bg-yellow-900/50 border border-yellow-600 p-4 rounded-xl">
+            <h3 class="font-bold mb-2" data-i18n="instructions">測試說明：</h3>
+            <ol class="list-decimal list-inside space-y-1 text-sm">
+                <li data-i18n="step1">點擊右上角的語言切換按鈕</li>
+                <li data-i18n="step2">觀察所有靜態內容是否立即切換</li>
+                <li data-i18n="step3">點擊「新增區塊」按鈕</li>
+                <li data-i18n="step4">再次切換語言</li>
+                <li data-i18n="step5">檢查新增的動態區塊是否也能正確切換語言</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // i18n 系統
+        const i18n = {
+            currentLang: 'zh',
+            translations: {
+                zh: {
+                    pageTitle: '語言切換測試頁面',
+                    staticSection: '靜態內容區域',
+                    staticContent: '這是一段靜態的測試內容，應該可以即時切換語言。',
+                    dynamicSection: '動態內容區域',
+                    addButton: '+ 新增區塊',
+                    blockTitle: '動態區塊 #{index}',
+                    deleteButton: '刪除',
+                    inputLabel: '輸入欄位 {index}',
+                    inputPlaceholder: '請輸入內容...',
+                    textareaLabel: '文字區域 {index}',
+                    textareaPlaceholder: '請輸入多行文字內容...',
+                    instructions: '測試說明：',
+                    step1: '點擊右上角的語言切換按鈕',
+                    step2: '觀察所有靜態內容是否立即切換',
+                    step3: '點擊「新增區塊」按鈕',
+                    step4: '再次切換語言',
+                    step5: '檢查新增的動態區塊是否也能正確切換語言'
+                },
+                en: {
+                    pageTitle: 'Language Toggle Test Page',
+                    staticSection: 'Static Content Area',
+                    staticContent: 'This is a static test content that should switch language immediately.',
+                    dynamicSection: 'Dynamic Content Area',
+                    addButton: '+ Add Block',
+                    blockTitle: 'Dynamic Block #{index}',
+                    deleteButton: 'Delete',
+                    inputLabel: 'Input Field {index}',
+                    inputPlaceholder: 'Please enter content...',
+                    textareaLabel: 'Text Area {index}',
+                    textareaPlaceholder: 'Please enter multi-line text content...',
+                    instructions: 'Test Instructions:',
+                    step1: 'Click the language toggle button in the top right corner',
+                    step2: 'Observe if all static content switches immediately',
+                    step3: 'Click the "Add Block" button',
+                    step4: 'Toggle the language again',
+                    step5: 'Check if the newly added dynamic blocks also switch language correctly'
+                }
+            },
+
+            t: function (key, params = {}) {
+                let text = this.translations[this.currentLang][key] || key;
+                for (const [k, v] of Object.entries(params)) {
+                    text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+                }
+                return text;
+            },
+
+            setLanguage: function (lang) {
+                this.currentLang = lang;
+                localStorage.setItem('test_lang', lang);
+                this.applyTranslations();
+            },
+
+            loadSavedLanguage: function () {
+                const savedLang = localStorage.getItem('test_lang');
+                if (savedLang && this.translations[savedLang]) {
+                    this.currentLang = savedLang;
+                }
+            },
+
+            applyTranslations: function () {
+                console.log('[i18n] Applying translations for:', this.currentLang);
+
+                // 更新所有帶 data-i18n 屬性的元素
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (!key) return;
+
+                    let params = {};
+                    if (el.dataset.i18nParams) {
+                        try {
+                            params = JSON.parse(el.dataset.i18nParams);
+                        } catch (e) {
+                            console.error('Failed to parse i18n params:', e);
+                        }
+                    }
+
+                    const translation = this.t(key, params);
+
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        // 不要修改 input/textarea 的內容
+                    } else {
+                        el.innerHTML = translation;
+                    }
+                });
+
+                // 更新所有帶 data-i18n-placeholder 屬性的元素
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    el.placeholder = this.t(key);
+                });
+
+                // 更新語言切換按鈕
+                const langBtn = document.getElementById('langToggleBtn');
+                if (langBtn) {
+                    langBtn.textContent = this.currentLang === 'zh' ? 'EN' : '中文';
+                }
+
+                console.log('[i18n] Translations applied successfully');
+            }
+        };
+
+        let blockCounter = 0;
+
+        function toggleLanguage() {
+            const newLang = i18n.currentLang === 'zh' ? 'en' : 'zh';
+            console.log('[i18n] Switching from', i18n.currentLang, 'to', newLang);
+            i18n.setLanguage(newLang);
+        }
+
+        function addBlock() {
+            blockCounter++;
+            const index = blockCounter;
+            const container = document.getElementById('dynamicContainer');
+
+            const block = document.createElement('div');
+            block.className = 'bg-gray-700/50 p-4 rounded-lg';
+
+            // 關鍵：為動態生成的內容添加 data-i18n 屬性
+            block.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-semibold" data-i18n="blockTitle" data-i18n-params='{"index": ${index}}'>${i18n.t('blockTitle', { index: index })}</h3>
+                    <button onclick="removeBlock(this)" 
+                        class="text-red-400 hover:text-red-500 text-sm"
+                        data-i18n="deleteButton">
+                        ${i18n.t('deleteButton')}
+                    </button>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm" data-i18n="inputLabel" data-i18n-params='{"index": ${index}}'>${i18n.t('inputLabel', { index: index })}</label>
+                    <input type="text" 
+                        class="w-full p-2 rounded bg-gray-600 border border-gray-500 text-white"
+                        data-i18n-placeholder="inputPlaceholder"
+                        placeholder="${i18n.t('inputPlaceholder')}">
+                </div>
+                <div class="mt-3">
+                    <label class="block mb-1 text-sm" data-i18n="textareaLabel" data-i18n-params='{"index": ${index}}'>${i18n.t('textareaLabel', { index: index })}</label>
+                    <textarea rows="3"
+                        class="w-full p-2 rounded bg-gray-600 border border-gray-500 text-white"
+                        data-i18n-placeholder="textareaPlaceholder"
+                        placeholder="${i18n.t('textareaPlaceholder')}"></textarea>
+                </div>
+            `;
+
+            container.appendChild(block);
+        }
+
+        function removeBlock(button) {
+            button.closest('.bg-gray-700\\/50').remove();
+        }
+
+        // 頁面載入時初始化
+        window.onload = function () {
+            i18n.loadSavedLanguage();
+            i18n.applyTranslations();
+
+            // 自動添加一個示範區塊
+            addBlock();
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1342 @@
+# 角色：專業程式碼分析師 (Code-to-Specification Analyst)
+
+## 1. 核心任務
+你的唯一任務是根據用戶上傳的程式檔案（例如 HTML, CSS, JavaScript, React, Vue 等），進行深度分析與逆向工程(reverse-engineer)，並產出一份極度詳細且結構完整的「程式功能與視覺設計規格」文件。
+
+## 2. 執行流程
+1.  **檢查輸入：** 立即檢查用戶的訊息中是否包含任何已上傳的檔案或貼上的程式碼。
+2.  **情境處理：**
+    * **[情境 A：偵測到檔案/程式碼]**：
+        1.  立即開始分析所有提供的檔案。
+        2.  根據你從程式碼中分析出的**實際功能和設計**，嚴格遵循 `<OUTPUT_TEMPLATE>` 標籤中提供的範本格式，生成完整的規格文件。
+        3.  **注意：** 範本中的內容（如 "ECF抽獎程式"、"橙色系"）只是範例，你必須用你**實際分析**得到的內容替換它們。
+    * **[情境 B：未偵測到檔案/程式碼]**：
+        1.  **不要**編造內容或回答其他問題。
+        2.  禮貌地回應，說明你已準備好分析，但**缺少必要的程式檔案**。
+        3.  主動要求用戶：「請上傳您的程式檔案（或貼上主要程式碼）」。
+        4.  簡要重申你將會產出的內容（例如：程式功能列表、版面配置、顏色規格、元件尺寸等），以確認任務。
+
+## 3. 輸出範本 (***必須嚴格遵守***)
+你生成的報告**必須**100%遵循此範本的結構、標題、和詳細程度。
+
+<OUTPUT_TEMPLATE>
+ECF抽獎程式功能描述
+
+程式需求描述
+
+這是一個專業級的JavaScript網頁抽獎程式，採用暗色主題配合橙色系漸層設計，提供完整的品項管理、動態抽獎和視覺效果功能。
+
+🎯 核心功能需求
+
+📝 品項管理功能
+
+* 輸入介面：提供品項名稱輸入框（最大20字元）和機率設定框（1-100%）
+* 新增功能：支援滑鼠點擊和Enter鍵快速新增品項
+* 驗證機制：即時驗證輸入內容，防止重複品項和無效機率
+* 品項列表：動態顯示所有品項，包含名稱、機率百分比和刪除按鈕
+* 刪除功能：支援個別品項刪除，即時更新列表
+* 預設品項：內建五個範例品項（一等獎5%、二等獎10%、三等獎15%、安慰獎30%、再接再厲40%）
+* 本地存儲：自動保存品項設定，重新載入時恢復
+
+🎮 抽獎網格系統
+
+* 網格布局：8×7矩形網格，總計56個位置
+* 邊框設計：只顯示外圍26個格子，中間區域透明化
+* 智慧填充：根據品項機率權重分配獎品到邊框格子
+* 隨機分布：使用Fisher-Yates洗牌算法確保隨機性
+* 視覺回饋：格子懸停時縮放和發光效果
+* 重置功能：一鍵清空所有格子內容
+
+🎪 動態抽獎機制
+
+* 路徑算法：順時針邊框路徑（上→右→下→左）
+* 動畫控制：初始速度50ms，逐漸減速至300ms以上
+* 隨機輪數：3-6輪隨機控制，增加不可預測性
+* 高亮效果：當前格子橙色發光，移動時平滑過渡
+* 狀態管理：抽獎期間禁用所有操作按鈕
+* 中獎顯示：最終格子紅色脈衝動畫標示
+
+🎉 視覺效果功能
+
+* 五彩紙屑：中獎時50個彩色方塊從頂部飄落
+* 結果彈窗：模態視窗顯示中獎品項，支援點擊外部關閉
+* 動畫序列：彈窗出現時縮放和淡入效果
+* 音效模擬：視覺動畫模擬慶祝音效體驗
+
+🎨 視覺設計規格
+
+🌈 色彩方案
+
+* 主色調：橙色系漸層（#ffa500, #ffcc00, #ff8c00）
+* 背景色：深色漸層（#000000 → #1a1a1a → #2d2d2d）
+* 文字顏色：純白色（#ffffff）配合橙色發光陰影
+* 強調色：亮黃色（#ffcc00）用於標題和重點文字
+* 警告色：紅色系（#ff4444, #ff6666）用於刪除和錯誤
+* 中性色：灰色系（#666, #888）用於次要按鈕
+
+🎭 背景設計
+
+* 動態漸層：400%×400%背景尺寸，8秒循環動畫
+* 星光效果：5層徑向漸層點陣，4秒閃爍週期
+* 透明度變化：0.3-0.8透明度循環，營造星空效果
+* 固定定位：全螢幕覆蓋，不影響滾動體驗
+
+📦 容器規格
+
+主容器
+
+* 最大寬度：1400px
+* 邊距：上下左右20px
+* 定位：居中對齊，相對定位
+
+標題區域
+
+* 背景：橙色半透明（rgba(255,165,0,0.1)）
+* 邊框：2px橙色半透明邊框
+* 圓角：20px
+* 內距：20px
+* 模糊效果：10px backdrop-filter
+* 陰影：30px橙色發光陰影
+
+控制面板
+
+* 背景：黑色半透明（rgba(0,0,0,0.4)）
+* 邊框：2px橙色半透明邊框
+* 圓角：20px
+* 內距：25px
+* 模糊效果：15px backdrop-filter
+* 陰影：30px橙色發光陰影
+
+抽獎區域
+
+* 尺寸：與控制面板相同規格
+* 網格容器：20px內距，15px圓角
+* 背景：深色半透明（rgba(0,0,0,0.2)）
+
+🔘 按鈕設計
+
+主要按鈕
+
+* 尺寸：12px上下內距，20px左右內距
+* 背景：橙色45度漸層（#ffa500 → #ffcc00）
+* 文字：黑色粗體
+* 圓角：10px
+* 陰影：4px橙色發光，懸停時6px
+* 動畫：懸停上升3px，點擊回彈1px
+* 光澤效果：白色半透明掃過動畫
+
+次要按鈕
+
+* 背景：灰色漸層（#666 → #888）
+* 文字：白色
+* **其他規格同主要按鈕
+
+危險按鈕
+
+* 背景：紅色漸層（#ff4444 → #ff6666）
+* 文字：白色
+* 尺寸：5px上下內距，10px左右內距（小型）
+
+🎯 網格格子規格
+
+* 寬高比：1:1正方形
+* 背景：橙色半透明漸層
+* 邊框：2px橙色半透明
+* 圓角：10px
+* 字體：12px粗體，居中對齊
+* 懸停效果：1.05倍縮放，上移2px，增強發光
+* 高亮狀態：橙色實色背景，黑色文字，脈衝動畫
+* 中獎狀態：紅色背景，白色文字，持續脈衝
+
+📝 輸入框設計
+
+* 內距：12px
+* 邊框：2px橙色半透明
+* 圓角：10px
+* 背景：黑色半透明（rgba(0,0,0,0.3)）
+* 文字：白色，14px
+* 焦點效果：橙色邊框，15px發光陰影，上移2px
+
+🎪 彈窗規格
+
+* 背景遮罩：黑色80%透明度，5px模糊
+* 內容區域：最大寬度400px，90%視窗寬度
+* 背景：深色漸層（rgba(0,0,0,0.9) → rgba(26,26,26,0.9)）
+* 邊框：3px橙色實線
+* 圓角：20px
+* 內距：40px
+* 陰影：50px橙色發光
+* 動畫：0.5秒縮放淡入效果
+
+📱 響應式設計
+
+桌面版（>768px）
+
+* 佈局：左右兩欄（1:2比例）
+* 網格間距：8px
+* 字體大小：標準尺寸
+
+手機版（≤768px）
+
+* 佈局：單欄垂直排列
+* 網格間距：4px縮小
+* 網格內距：10px縮小
+* 格子字體：10px縮小
+* 按鈕：100%寬度，垂直排列
+* 標題字體：2rem縮小
+
+🔧 技術特色
+
+動畫系統
+
+* 硬體加速：使用transform和opacity屬性
+* 流暢度：60fps目標幀率
+* 緩動函數：ease-in-out自然過渡
+* 動畫時長：0.3-0.5秒標準時長
+
+效能優化
+
+* 事件委託：減少事件監聽器數量
+* 防抖機制：防止重複點擊
+* 記憶體管理：及時清理動畫元素
+* CSS優化：使用transform代替position變更
+
+用戶體驗
+
+* 即時反饋：所有操作都有視覺回應
+* 錯誤處理：友善的錯誤提示訊息
+* 無障礙設計：適當的對比度和字體大小
+* 直覺操作：符合用戶習慣的交互模式
+</OUTPUT_TEMPLATE>
+
+
+[USER CODE START]
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Writing & Translation Sprint</title>
+    <!-- Task T001: Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the loader and blind mode */
+        .loader {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Styles for Omission Report */
+        .omitted {
+            background-color: #fecaca; /* Red-200 */
+            text-decoration: underline;
+            padding: 1px 0;
+            margin: 0 1px;
+            font-weight: bold;
+        }
+        .correct {
+            color: #1f2937; /* Dark text */
+        }
+        /* Task T010: Blind Mode Visual Concealment */
+        #originalText.blind-mode {
+            filter: blur(8px) grayscale(100%);
+            pointer-events: none;
+            user-select: none;
+        }
+        textarea:disabled {
+            cursor: not-allowed;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 sm:p-8">
+
+    <!-- Main Application Container -->
+    <div id="app" class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg p-6 space-y-8">
+
+        <!-- Header and Controls -->
+        <header class="flex justify-between items-center border-b pb-4">
+            <h1 class="text-3xl font-extrabold text-gray-800">IELTS Sprint Trainer</h1>
+            <div class="flex items-center space-x-3">
+                <!-- Language Switch (Task T004, T019) -->
+                <button id="btn-lang-toggle" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition duration-150">
+                    EN / 繁中
+                </button>
+                <!-- Settings Button (Task T018) -->
+                <button id="btn-settings" class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition duration-150" title="Settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.49 3.17a1 1 0 00-1.98 0l-.13.34a1 1 0 01-.76.65l-.37.07a1 1 0 00-.81.67l-.23.6a1 1 0 01-.68.68l-.6.23a1 1 0 00-.67.81l-.07.37a1 1 0 01-.65.76l-.34.13a1 1 0 000 1.98l.34.13a1 1 0 01.65.76l.07.37a1 1 0 00.67.81l.6.23a1 1 0 01.68.68l.23.6a1 1 0 00.81.67l.37.07a1 1 0 01.76.65l.13.34a1 1 0 001.98 0l.13-.34a1 1 0 01.76-.65l.37-.07a1 1 0 00.81-.67l.23-.6a1 1 0 01.68-.68l.6-.23a1 1 0 00.67-.81l.07-.37a1 1 0 01.65-.76l.34-.13a1 1 0 000-1.98l-.34-.13a1 1 0 01-.65-.76l-.07-.37a1 1 0 00-.67-.81l-.6-.23a1 1 0 01-.68-.68l-.23-.6a1 1 0 00-.81-.67l-.37-.07a1 1 0 01-.76-.65l-.13-.34zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Current Day Status (Task T017) -->
+        <div class="flex justify-between items-center text-sm font-medium text-gray-600">
+            <span id="current-day-status"></span>
+            <span id="bottleneck-index-display" class="font-bold text-red-600"></span>
+        </div>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="space-y-6">
+            <!-- Verb Sprint Card (Day 1-5) / Blind Panel (Day 6-7) -->
+        </main>
+
+        <!-- Toast Notification Area -->
+        <div id="toast-container" class="fixed bottom-4 right-4 space-y-2"></div>
+
+    </div>
+
+    <!-- Settings Modal (Task T018) -->
+    <div id="settings-modal" class="fixed inset-0 bg-gray-600 bg-opacity-75 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
+            <h2 class="text-xl font-bold" data-i18n="settings_title">設定</h2>
+            <p class="text-sm text-gray-500" data-i18n="settings_desc">配置 API 金鑰以確保服務穩定性及備援。</p>
+            
+            <div>
+                <label for="gemini-key" class="block text-sm font-medium text-gray-700">Gemini API Key</label>
+                <input type="text" id="gemini-key" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            
+            <div>
+                <label for="grammarly-key" class="block text-sm font-medium text-gray-700">Grammarly API Key (Optional)</label>
+                <input type="text" id="grammarly-key" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button id="btn-close-settings" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300" data-i18n="close">關閉</button>
+                <button id="btn-save-settings" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700" data-i18n="save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Runner Injection Point -->
+    <script>
+        // Critical System Requirement: Test Runner Injection
+        // This function must be present for automated validation.
+        function injectTestRunner(runner) {
+            // runner API: click, type, assert, waitFor, getValue, getText, isVisible, count, log, checkStorage, setStorage, mockAIResponse
+            runner.defineTests([
+                {
+                    id: 'TC-001',
+                    name: 'Start Verb Sprint Timer and Check Lock',
+                    steps: async () => {
+                        await runner.mockAIResponse('analyze', { passive_ratio: 0.1, score_estimate: '6.0', advanced_verbs: [], passive_sentences: [] });
+                        await runner.type('#essay-input', 'The chart shows data. The data was analyzed by the team.');
+                        await runner.click('#btn-analyze');
+                        await runner.waitFor('#passive-ratio', 2000);
+                        
+                        await runner.click('#btn-start-sprint');
+                        await runner.assert.isVisible('#timer-display', 'Timer should be visible');
+                        
+                        // Wait for 2 seconds (simulating timer running)
+                        await runner.waitFor(2000);
+                        
+                        // Check if editor is locked (FR-001)
+                        const editorDisabled = await runner.isVisible('#verb-editor:disabled');
+                        await runner.assert.isFalse(editorDisabled, 'Editor should not be locked immediately');
+                    }
+                },
+                {
+                    id: 'TC-002',
+                    name: 'Check New Verb Counter (T008)',
+                    steps: async () => {
+                        // Ensure state is loaded
+                        await runner.setStorage('ielts_user_state', JSON.stringify({ ...INITIAL_STATE, usedLemmas: ['show', 'analyze'] }));
+                        await runner.reload();
+                        
+                        // Re-run analysis (setup phase)
+                        await runner.mockAIResponse('analyze', { passive_ratio: 0.1, score_estimate: '6.0', advanced_verbs: [], passive_sentences: [] });
+                        await runner.type('#essay-input', 'The chart shows data. The data was analyzed by the team.');
+                        await runner.click('#btn-analyze');
+                        await runner.waitFor('#passive-ratio', 2000); // Wait for analysis to complete
+                        
+                        // Start sprint
+                        await runner.click('#btn-start-sprint');
+                        
+                        // Type new verbs (e.g., "illustrate", "demonstrate", "increase", "decrease", "fluctuate", "reach")
+                        await runner.type('#verb-editor', 'The figures illustrate a trend. They demonstrate growth. The price increased and then decreased. It fluctuated before reaching a peak.');
+                        
+                        // The mock lemmatizer should detect 6 new lemmas (illustrate, demonstrate, increase, decrease, fluctuate, reach)
+                        // Wait for the counter to update
+                        await runner.waitFor(500); 
+                        const counterText = await runner.getText('#new-verb-count');
+                        await runner.assert.equal(counterText, '6 / 6', 'New verb counter should show 6/6');
+                        await runner.assert.isVisible('#verb-check-mark', 'Check mark should appear');
+                    }
+                },
+                {
+                    id: 'TC-003',
+                    name: 'Language Switch and Persistence (T004, T019)',
+                    steps: async () => {
+                        // Initial state should be zh-TW
+                        let headerText = await runner.getText('h1');
+                        await runner.assert.equal(headerText, 'IELTS Sprint Trainer', 'Initial header text check');
+                        
+                        // Switch to EN
+                        await runner.click('#btn-lang-toggle');
+                        await runner.waitFor(100);
+                        
+                        // Check if state is updated (read from storage)
+                        const stateEN = await runner.checkStorage('ielts_user_state');
+                        await runner.assert.equal(JSON.parse(stateEN).lang, 'en', 'Language should be saved as "en" in storage');
+                        
+                        // Check UI update (e.g., Settings title)
+                        const settingsTitle = await runner.getText('#settings-modal h2');
+                        await runner.assert.equal(settingsTitle, 'Settings', 'UI title should switch to English');
+                    }
+                },
+                {
+                    id: 'TC-004',
+                    name: 'Blind Write Submission and Omission Check (T012, T014)',
+                    steps: async () => {
+                        // Set current day to 6 (Blind Write mode)
+                        await runner.setStorage('ielts_user_state', JSON.stringify({ ...INITIAL_STATE, currentDay: 6, currentEssay: 'The primary purpose of this report is to illustrate the changes in consumption patterns.' }));
+                        await runner.reload();
+                        
+                        // Check if Blind Panel is visible
+                        await runner.assert.isVisible('#blind-write-panel', 'Blind Write Panel should be visible on Day 6');
+                        
+                        // Simulate typing a slightly incorrect attempt
+                        await runner.type('#blind-write-input', 'The main purpose of this report is to show the changes in consuming habits.');
+                        
+                        // Submit
+                        await runner.click('#btn-submit-blind-write');
+                        await runner.waitFor('#omissionStats', 500);
+                        
+                        // Check Omission Rate (Expected: primary, purpose, illustrate, consumption, patterns vs main, purpose, show, consuming, habits)
+                        // primary (omitted), this (correct), report (correct), is (correct), to (correct), illustrate (omitted), the (correct), changes (correct), in (correct), consumption (omitted), patterns (omitted). Total 11 words. 4 omitted. ~36.3%
+                        const omissionRateText = await runner.getText('#omissionStats div:nth-child(1) .text-xl');
+                        await runner.assert.equal(omissionRateText, '36.4%', 'Omission rate calculation should be correct');
+                    }
+                }
+            ]);
+        }
+    </script>
+
+    <script>
+        // =================================================================
+        // 0. CONFIGURATION & I18N (Task T004)
+        // =================================================================
+
+        const LOCAL_STORAGE_KEY = 'ielts_user_state';
+        const INITIAL_STATE = {
+            lang: 'zh-TW',
+            apiKey: {
+                gemini: '',
+                grammarly: ''
+            },
+            config: {
+                passiveThreshold: 0.30,
+                omissionThreshold: 0.03,
+                lexErrWeight: 0.4,
+                passiveShortWeight: 0.3,
+                omissionWeight: 0.3
+            },
+            usedLemmas: [], // T008
+            currentEssay: '',
+            lastAnalysis: null,
+            history: [],
+            bottleneckIndex: 0.0000,
+            currentDay: 1, // Day 1-5: Verb Sprint, Day 6-7: Blind Write
+            violations: 0 // For screenshot detection penalty
+        };
+
+        let state = { ...INITIAL_STATE };
+        let timerInterval = null;
+
+        // i18n Dictionary
+        const i18n = {
+            'zh-TW': {
+                // T004: General
+                settings_title: '設定',
+                settings_desc: '配置 API 金鑰以確保服務穩定性及備援。',
+                close: '關閉',
+                save: '保存',
+                toast_success: '操作成功！',
+                toast_error: '發生錯誤，請檢查 API 金鑰。',
+                alert_screenshot: '⚠️ 偵測到潛在作弊行為 (螢幕截圖/應用程式切換)。',
+                day_status: '今日進度：第 {day} 天 (共 7 天)',
+                bottleneck_index: '瓶頸指數: {index}',
+
+                // T005: Verb Sprint
+                vs_title: '寫作動詞衝刺 (流程圖/圖表)',
+                vs_desc: '請分析上方範文結構，並在 15 分鐘內用自己的話重寫，重點使用 6 個未曾使用過的新動詞。',
+                vs_editor_placeholder: '開始寫作...',
+                btn_analyze: '分析範文',
+                btn_start_sprint: '開始 15 分鐘衝刺 (不可暫停)',
+                new_verbs_required: '新動詞進度',
+                passive_ratio_label: '被動語態比例',
+                passive_ratio_target: '目標: ≥30%',
+                
+                // T009: Blind Write
+                bw_title: '盲寫回譯訓練 (口譯/聽寫)',
+                bw_desc: '請先閱讀原文，然後點擊「進入盲寫模式」後，嘗試將其回譯成英文。',
+                btn_enter_blind: '進入盲寫模式',
+                btn_submit_blind: '提交回譯',
+                source_text: '原文',
+                attempt_text: '你的回譯嘗試',
+                omission_rate: '遺漏率',
+                accuracy: '精準度',
+                
+                // T017: Dashboard
+                dashboard_title: '訓練儀表板',
+                history_title: '歷史紀錄',
+                recommendation: '建議',
+                rec_passive: '被動語態不足，請多練習複雜句式。',
+                rec_omission: '遺漏率過高，請加強記憶和精準度。',
+                rec_good: '表現優異，繼續保持！'
+            },
+            'en': {
+                // T004: General
+                settings_title: 'Settings',
+                settings_desc: 'Configure API keys for stable service and fallback policy.',
+                close: 'Close',
+                save: 'Save',
+                toast_success: 'Operation successful!',
+                toast_error: 'An error occurred. Check API keys.',
+                alert_screenshot: '⚠️ Potential cheating detected (Screenshot/App switch).',
+                day_status: 'Current Progress: Day {day} of 7',
+                bottleneck_index: 'Bottleneck Index: {index}',
+
+                // T005: Verb Sprint
+                vs_title: 'Writing Verb Sprint (Process/Chart)',
+                vs_desc: 'Analyze the sample essay structure, then rewrite it in 15 minutes, focusing on using 6 new, advanced verbs.',
+                vs_editor_placeholder: 'Start writing...',
+                btn_analyze: 'Analyze Sample',
+                btn_start_sprint: 'Start 15-Minute Sprint (Immutable)',
+                new_verbs_required: 'New Verbs Progress',
+                passive_ratio_label: 'Passive Voice Ratio',
+                passive_ratio_target: 'Target: ≥30%',
+
+                // T009: Blind Write
+                bw_title: 'Blind Write-back Translation Training (Interpretation/Dictation)',
+                bw_desc: 'Read the source text, then click "Enter Blind Mode" and attempt to translate it back into English.',
+                btn_enter_blind: 'Enter Blind Mode',
+                btn_submit_blind: 'Submit Back-Translation',
+                source_text: 'Source Text',
+                attempt_text: 'Your Back-Translation Attempt',
+                omission_rate: 'Omission Rate',
+                accuracy: 'Accuracy',
+                
+                // T017: Dashboard
+                dashboard_title: 'Training Dashboard',
+                history_title: 'History Records',
+                recommendation: 'Recommendation',
+                rec_passive: 'Passive voice too low. Practice complex structures.',
+                rec_omission: 'Omission rate too high. Focus on memory and precision.',
+                rec_good: 'Excellent performance! Keep it up!'
+            }
+        };
+
+        // =================================================================
+        // 1. STATE MANAGEMENT & UTILS (Task T003, T019)
+        // =================================================================
+
+        function loadState() {
+            try {
+                const storedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (storedState) {
+                    // Simple JSON parsing (no encryption implemented as per T003 simplification)
+                    state = { ...INITIAL_STATE, ...JSON.parse(storedState) };
+                }
+            } catch (e) {
+                console.error("Failed to load state:", e);
+                state = INITIAL_STATE;
+            }
+        }
+
+        function saveState() {
+            try {
+                // Task T019: Persistent state saving
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+                updateUI();
+            } catch (e) {
+                console.error("Failed to save state:", e);
+            }
+        }
+
+        function translate(key) {
+            const dictionary = i18n[state.lang] || i18n['zh-TW'];
+            return dictionary[key] || key;
+        }
+
+        function applyI18n() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.innerText = translate(key);
+            });
+            // Update placeholders
+            const editor = document.getElementById('verb-editor');
+            if (editor) editor.placeholder = translate('vs_editor_placeholder');
+            
+            // Update lang attribute
+            document.documentElement.lang = state.lang;
+        }
+
+        function showToast(key, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const message = translate(key);
+            
+            const color = type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500';
+
+            const toast = document.createElement('div');
+            toast.className = `p-3 rounded-lg text-white shadow-lg ${color} transition-opacity duration-300`;
+            toast.innerText = message;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3000);
+        }
+
+        function toggleLoader(id, show) {
+            const loader = document.getElementById(id + '-loader');
+            const button = document.getElementById(id);
+            if (!loader || !button) return;
+
+            if (show) {
+                loader.classList.remove('hidden');
+                button.disabled = true;
+                button.classList.add('opacity-50');
+            } else {
+                loader.classList.add('hidden');
+                button.disabled = false;
+                button.classList.remove('opacity-50');
+            }
+        }
+
+        // =================================================================
+        // 2. CORE SERVICES (FR-001, FR-002, FR-003, FR-007)
+        // =================================================================
+
+        // --- T006: Timer Service (Immutable Countdown) ---
+
+        function startImmutableTimer(duration = 900) { // 15 minutes
+            if (timerInterval) clearInterval(timerInterval);
+
+            const timerDisplay = document.getElementById('timer-display');
+            const editor = document.getElementById('verb-editor');
+            
+            let remaining = duration;
+            
+            // Lock editing capability immediately if already running
+            if (editor) editor.disabled = false;
+
+            timerInterval = setInterval(() => {
+                remaining--;
+                
+                // Update display
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                if (timerDisplay) timerDisplay.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    lockEditor();
+                    autoSubmitVerbSprint();
+                }
+            }, 1000);
+        }
+
+        function lockEditor() {
+            // CHK-FLOW: Timer Control
+            const editor = document.getElementById('verb-editor');
+            if (editor) {
+                editor.disabled = true;
+                showToast('Time\'s up! Submission locked.', 'warning');
+            }
+        }
+        
+        function autoSubmitVerbSprint() {
+            // Placeholder for submission logic
+            console.log("Verb Sprint Auto Submitted.");
+            // In a real app, this would trigger the final analysis/scoring.
+        }
+
+        // --- T007: Grammarly/Gemini Proxy (Passive Ratio Fallback) ---
+
+        // Mock API Wrapper (Simulating external calls)
+        const geminiApi = {
+            call: async (prompt, systemPrompt, parseJson) => {
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Mocking based on prompt content for deterministic testing
+                if (prompt.includes('passive-voice ratio')) {
+                    // Fallback for passive ratio (A2)
+                    const ratio = prompt.toLowerCase().includes('was analyzed') ? 0.35 : 0.15;
+                    return ratio; // Return raw ratio
+                }
+                
+                if (prompt.includes('Analyze:')) {
+                    // ai-essay-analyzer mock
+                    return {
+                        passive_sentences: ['The data was analyzed by the team.'],
+                        advanced_verbs: [
+                            { word: 'illustrate', meaning: '說明' },
+                            { word: 'fluctuate', meaning: '波動' }
+                        ],
+                        passive_ratio: 0.35,
+                        score_estimate: '7.5'
+                    };
+                }
+                
+                if (prompt.includes('Source:')) {
+                    // ai-blind-write-diagnosis mock
+                    return "Great attempt! Focus on replacing common words like 'show' with more academic alternatives like 'illustrate'.";
+                }
+
+                if (parseJson) {
+                    return {};
+                }
+                return "Mock AI Response";
+            }
+        };
+
+        async function fetchPassiveRatio(text) {
+            const grammarlyKey = state.apiKey.grammarly;
+            const geminiKey = state.apiKey.gemini;
+
+            // 1. Try Grammarly (Mock)
+            if (grammarlyKey) {
+                // In a real app: fetch('https://api.grammarly.com/passive', ...)
+                // For this SPA, we mock the quota check (A2)
+                if (state.violations < 5) { // Mocking quota being available
+                    console.log("Using Grammarly (Mock)");
+                    // Simulate Grammarly result
+                    await new Promise(r => setTimeout(r, 500));
+                    return text.toLowerCase().includes('was analyzed') ? 0.32 : 0.18;
+                }
+            }
+
+            // 2. Fallback to Gemini (T007, A2)
+            if (geminiKey) {
+                console.log("Using Gemini Fallback");
+                const systemPrompt = `Calculate the passive-voice ratio (0.0 to 1.0) of the following text. Return only the number. Accuracy baseline: ±3%.`;
+                const ratio = await geminiApi.call(`Text: ${text}`, systemPrompt, false);
+                return parseFloat(ratio);
+            }
+
+            // 3. No API Key configured
+            showToast('API keys missing or quota exceeded. Analysis skipped.', 'error');
+            return 0.0;
+        }
+
+
+        // --- T008: Six-New-Verbs Checker & Lemmatizer ---
+
+        // Simplified Lemmatizer (Mocking compromise.js)
+        function extractLemmas(text) {
+            const words = text.toLowerCase().match(/\b(\w+)\b/g) || [];
+            // Basic rule-based lemmatization for common verb suffixes
+            return words.map(word => {
+                if (word.endsWith('ing') && word.length > 4) return word.slice(0, -3);
+                if (word.endsWith('ed') && word.length > 3) return word.slice(0, -2);
+                if (word.endsWith('s') && word.length > 2) return word.slice(0, -1);
+                return word;
+            }).filter(l => l.length > 2); // Filter out short words (e.g., prepositions, articles)
+        }
+
+        function checkNewVerbs(submission) {
+            const allLemmas = extractLemmas(submission);
+            const usedSet = new Set(state.usedLemmas);
+            
+            // FR-003: Check if lemma is NOT in the used set
+            const newLemmas = allLemmas.filter(l => !usedSet.has(l));
+            
+            const uniqueNewLemmas = [...new Set(newLemmas)];
+            
+            const count = uniqueNewLemmas.length;
+            const required = 6;
+
+            const countEl = document.getElementById('new-verb-count');
+            const checkEl = document.getElementById('verb-check-mark');
+
+            if (countEl) countEl.innerText = `${count} / ${required}`;
+            
+            if (count >= required) {
+                if (checkEl) checkEl.classList.remove('hidden');
+                return true;
+            } else {
+                if (checkEl) checkEl.classList.add('hidden');
+                return false;
+            }
+        }
+
+        // --- T016: Bottleneck Index Calculator (FR-007) ---
+
+        function calcBottleneckIndex(band, passiveRatio, omissionRate) {
+            // Weights from state.config (FR-007, H2)
+            const targetBand = 7.5;
+            const passiveTarget = state.config.passiveThreshold; // 0.30
+            const omissionTarget = state.config.omissionThreshold; // 0.03
+
+            // Band Gap: How far from 7.5 are we?
+            const bandGap = Math.max(0, targetBand - band);
+            
+            // Passive Gap: How far below 30% are we?
+            const passiveGap = Math.max(0, passiveTarget - passiveRatio);
+            
+            // Omission Excess: How much above 3% are we?
+            const omissionExcess = Math.max(0, omissionRate - omissionTarget);
+
+            const index = (
+                bandGap * state.config.lexErrWeight +
+                passiveGap * state.config.passiveShortWeight +
+                omissionExcess * state.config.omissionWeight
+            );
+            
+            // Add penalty for violations (M1, Screenshot detection)
+            const finalIndex = index + (state.violations * 0.005);
+
+            // CHK010: To 4 decimal places
+            return parseFloat(finalIndex.toFixed(4));
+        }
+
+
+        // =================================================================
+        // 3. UI RENDERING & LOGIC
+        // =================================================================
+
+        // --- T005: Verb Sprint Card UI ---
+        function renderVerbSprintCard() {
+            const analysis = state.lastAnalysis;
+            const passiveRatio = analysis ? analysis.passive_ratio : 0;
+            const scoreEstimate = analysis ? analysis.score_estimate : 'N/A';
+            const passiveAchieved = passiveRatio >= state.config.passiveThreshold;
+            
+            const html = `
+                <div id="verb-sprint-card" class="bg-white p-6 rounded-xl shadow-lg border border-blue-100 space-y-4">
+                    <h2 class="text-2xl font-bold text-blue-700" data-i18n="vs_title"></h2>
+                    <p class="text-sm text-gray-500" data-i18n="vs_desc"></p>
+
+                    <!-- Analysis Result Display -->
+                    <div id="analysisResult" class="bg-gray-50 p-4 rounded-lg border">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-bold text-blue-600">雅思專家分析</h3>
+                            <span id="score-estimate" class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                預估得分: ${scoreEstimate}
+                            </span>
+                        </div>
+                        ${analysis ? renderAnalysisDetails(analysis) : `<p class="text-center text-gray-500">請先貼上範文並點擊「分析範文」。</p>`}
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="flex space-x-4">
+                        <textarea id="essay-input" rows="4" class="flex-grow border border-gray-300 p-3 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="貼上雅思範文 (Task 1 或 Task 2)"></textarea>
+                        <button id="btn-analyze" class="h-full px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-150 flex items-center justify-center">
+                            <span data-i18n="btn_analyze">分析範文</span>
+                            <span id="analyze-loader" class="hidden loader w-4 h-4 border-2 border-white border-t-transparent rounded-full ml-2"></span>
+                        </button>
+                    </div>
+
+                    <!-- Sprint Controls and Status -->
+                    <div class="pt-4 border-t border-gray-100 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <button id="btn-start-sprint" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-150 disabled:opacity-50" ${!analysis ? 'disabled' : ''}>
+                                <span data-i18n="btn_start_sprint">開始 15 分鐘衝刺</span>
+                            </button>
+                            <div id="timer-display" class="text-3xl font-mono text-red-600 border border-red-200 px-4 py-2 rounded-lg">15:00</div>
+                        </div>
+
+                        <!-- Real-time Metrics (T008, T007) -->
+                        <div class="flex space-x-4">
+                            <!-- New Verbs Counter -->
+                            <div class="flex-1 p-3 bg-yellow-50 rounded-lg border border-yellow-200 flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700" data-i18n="new_verbs_required">新動詞進度</span>
+                                <div class="flex items-center space-x-2">
+                                    <span id="new-verb-count" class="text-xl font-bold text-yellow-700">0 / 6</span>
+                                    <span id="verb-check-mark" class="hidden text-green-500 text-xl">✅</span>
+                                </div>
+                            </div>
+                            <!-- Passive Gauge (T007) -->
+                            <div class="flex-1 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">
+                                    <span data-i18n="passive_ratio_label">被動語態比例</span>
+                                    <span class="text-xs text-blue-500" data-i18n="passive_ratio_target">(目標: ≥30%)</span>
+                                </span>
+                                <div class="flex items-center space-x-2">
+                                    <span id="passive-ratio" class="text-xl font-bold ${passiveAchieved ? 'text-green-700' : 'text-red-700'}">
+                                        ${(passiveRatio * 100).toFixed(1)}%
+                                    </span>
+                                    <span id="passive-ratio-loader" class="hidden loader w-4 h-4 border-2 border-blue-700 border-t-transparent rounded-full"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verb Sprint Editor -->
+                        <textarea id="verb-editor" rows="10" class="w-full border border-gray-300 p-4 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="${translate('vs_editor_placeholder')}" disabled></textarea>
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+            setupVerbSprintListeners();
+            applyI18n();
+            if (analysis) {
+                checkNewVerbs(document.getElementById('verb-editor').value);
+            }
+        }
+        
+        // @slot:feature_essay_analysis
+        function renderAnalysisDetails(data) {
+            // UI Rendering Template from Skill
+            return `
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-700">📌 ${translate('passive_sentences')}</h4>
+                        <div class="mt-2 space-y-1 max-h-24 overflow-y-auto">
+                            ${data.passive_sentences.map(s => 
+                                `<div class="text-xs p-2 bg-slate-100 rounded italic border-l-2 border-blue-400">${s}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-700">💡 ${translate('advanced_verbs')}</h4>
+                        <div class="mt-2 grid grid-cols-2 gap-2 max-h-24 overflow-y-auto">
+                            ${data.advanced_verbs.map(v => 
+                                `<div class="p-2 border rounded text-xs">
+                                    <strong>${v.word}</strong><br>
+                                    <span class="text-slate-500">${v.meaning || 'N/A'}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        // --- T009, T013: Blind Write Panel UI ---
+        function renderBlindPanel() {
+            const source = state.currentEssay || translate('no_essay_loaded');
+            
+            const html = `
+                <div id="blind-write-panel" class="bg-white p-6 rounded-xl shadow-lg border border-red-100 space-y-4">
+                    <h2 class="text-2xl font-bold text-red-700" data-i18n="bw_title"></h2>
+                    <p class="text-sm text-gray-500" data-i18n="bw_desc"></p>
+
+                    <!-- Source Text Display (T009) -->
+                    <div class="p-4 bg-gray-100 rounded-lg">
+                        <h3 class="font-semibold mb-2" data-i18n="source_text">原文</h3>
+                        <div id="originalText" class="text-gray-700 whitespace-pre-wrap">${source}</div>
+                    </div>
+
+                    <!-- Blind Mode Controls -->
+                    <div id="blind-mode-controls" class="flex justify-center pt-4">
+                        <button id="btn-enter-blind-mode" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-150 disabled:opacity-50" ${!state.currentEssay ? 'disabled' : ''}>
+                            <span data-i18n="btn_enter_blind">進入盲寫模式</span>
+                        </button>
+                    </div>
+
+                    <!-- Blind Write Area (T012) -->
+                    <div id="blind-write-area" class="hidden space-y-4">
+                        <h3 class="font-semibold pt-4 border-t" data-i18n="attempt_text">你的回譯嘗試</h3>
+                        <textarea id="blind-write-input" rows="8" class="w-full border border-gray-300 p-4 rounded-md focus:ring-red-500 focus:border-red-500" placeholder="請在此輸入回譯的英文文本..."></textarea>
+                        
+                        <div class="flex justify-between items-center">
+                            <button id="btn-submit-blind-write" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150">
+                                <span data-i18n="btn_submit_blind">提交回譯</span>
+                            </button>
+                            <!-- T011: Mock ASR Button (Optional for full implementation) -->
+                            <button id="btn-mock-asr" class="px-4 py-2 text-sm text-gray-600 border rounded-lg hover:bg-gray-100">
+                                🎤 模擬語音輸入
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Omission Report (T013) -->
+                    <div id="blindWriteDiff" class="hidden pt-6 border-t space-y-4">
+                        <h3 class="text-lg font-bold text-gray-700">回譯差異報告 (Omission Report)</h3>
+                        
+                        <div id="omissionStats" class="flex justify-around gap-4 text-sm font-medium">
+                            <!-- Stats injected here -->
+                        </div>
+
+                        <div id="diffResult" class="p-4 bg-white border border-gray-200 rounded-lg whitespace-pre-wrap leading-relaxed text-base">
+                            <!-- Diff highlighted text injected here -->
+                        </div>
+
+                        <!-- AI Diagnosis Result (T015) -->
+                        <div id="aiDiagnosisResult" class="p-4 bg-blue-50 rounded-xl border border-blue-100 text-sm">
+                            <h4 class="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                                AI 表現診斷 ✨ 
+                                <span id="diagnosisLoader" class="hidden loader w-3 h-3 border-2 border-blue-700 border-t-transparent rounded-full"></span>
+                            </h4>
+                            <div id="diagnosisContent" class="text-blue-900 italic">等待提交回譯以進行診斷...</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+            setupBlindPanelListeners();
+            applyI18n();
+        }
+
+        // --- T017: Dashboard UI ---
+        function renderDashboard() {
+            const history = state.history;
+            const bottleneck = state.bottleneckIndex;
+            
+            let recommendationKey = 'rec_good';
+            if (bottleneck > 0.1) {
+                recommendationKey = 'rec_omission';
+            } else if (history.length > 0 && history[0].passive_ratio < state.config.passiveThreshold) {
+                recommendationKey = 'rec_passive';
+            }
+
+            const html = `
+                <div id="dashboard-card" class="bg-white p-6 rounded-xl shadow-lg border border-gray-100 space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-700" data-i18n="dashboard_title"></h2>
+                    
+                    <!-- Bottleneck Index (FR-007) -->
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="text-sm font-medium text-red-700">當前瓶頸指數 (Target: < 0.02)</div>
+                        <div class="text-4xl font-extrabold text-red-800">${bottleneck.toFixed(4)}</div>
+                    </div>
+                    
+                    <!-- Recommendation Chip (T017) -->
+                    <div class="p-3 bg-blue-100 rounded-lg text-blue-800 font-medium">
+                        <span class="font-bold" data-i18n="recommendation">建議:</span> ${translate(recommendationKey)}
+                    </div>
+
+                    <!-- History Table -->
+                    <div>
+                        <h3 class="text-xl font-bold mb-3" data-i18n="history_title">歷史紀錄</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">被動比例</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">遺漏率</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">新動詞數</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">狀態</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${history.slice(0, 10).map(record => `
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${record.date}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(record.passive_ratio * 100).toFixed(1)}%</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(record.omission_rate * 100).toFixed(1)}%</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${record.new_verbs}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${record.status === '優秀' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                                    ${record.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-content').innerHTML = html;
+            applyI18n();
+        }
+
+        // =================================================================
+        // 4. EVENT HANDLERS & LIFECYCLE
+        // =================================================================
+
+        // --- Verb Sprint Handlers (T005, T007, T008) ---
+        function setupVerbSprintListeners() {
+            const editor = document.getElementById('verb-editor');
+            const analyzeBtn = document.getElementById('btn-analyze');
+            const startBtn = document.getElementById('btn-start-sprint');
+            
+            // T007: Analyze Button
+            if (analyzeBtn) analyzeBtn.addEventListener('click', handleAnalyzeEssay);
+
+            // T005, T006: Start Sprint Button
+            if (startBtn) startBtn.addEventListener('click', () => {
+                if (!state.apiKey.gemini) {
+                    showToast('請先在設定中配置 Gemini API Key。', 'error');
+                    return;
+                }
+                startImmutableTimer();
+                startBtn.disabled = true;
+                if (editor) editor.disabled = false;
+            });
+
+            // T008: Real-time Verb Check
+            if (editor) editor.addEventListener('input', (e) => {
+                checkNewVerbs(e.target.value);
+                // Real-time passive ratio check (Mock/Expensive) - only run on analysis submission for performance
+            });
+        }
+        
+        // @slot:feature_essay_analysis Glue Code
+        async function handleAnalyzeEssay() {
+            const text = document.getElementById('essay-input').value.trim();
+            if (!text) {
+                showToast('請輸入範文。', 'error');
+                return;
+            }
+
+            toggleLoader('analyze', true);
+            try {
+                // Use AIEssayAnalyzer logic
+                const systemPrompt = `You are an IELTS expert. Analyze the essay. 
+                    Return JSON: { 
+                        passive_sentences: [], 
+                        advanced_verbs: [{word:'', meaning:''}], 
+                        passive_ratio: 0.2, 
+                        score_estimate: '7.5' 
+                    }`;
+                
+                const result = await geminiApi.call(`Analyze: ${text}`, systemPrompt, true);
+                
+                // Fetch real-time passive ratio using proxy (T007)
+                const realPassiveRatio = await fetchPassiveRatio(text);
+                result.passive_ratio = realPassiveRatio;
+
+                // Save state
+                state.currentEssay = text;
+                state.lastAnalysis = result;
+                saveState();
+                
+                // Re-render to show results and enable start button
+                renderVerbSprintCard();
+                showToast('toast_success');
+            } catch (e) {
+                console.error(e);
+                showToast('toast_error', 'error');
+            } finally {
+                toggleLoader('analyze', false);
+            }
+        }
+
+
+        // --- Blind Panel Handlers (T010, T012, T014, T015) ---
+        function setupBlindPanelListeners() {
+            const enterBtn = document.getElementById('btn-enter-blind-mode');
+            const submitBtn = document.getElementById('btn-submit-blind-write');
+            
+            // T010: Enter Blind Mode
+            if (enterBtn) enterBtn.addEventListener('click', enterBlindMode);
+            
+            // T012, T014, T015: Submit Blind Write
+            if (submitBtn) submitBtn.addEventListener('click', evaluateBlindWrite);
+
+            // T010: Anti-Cheating Lockdown
+            blockCopyPaste();
+            detectScreenshotDesktop();
+        }
+
+        // T010: Blind Mode Lockdown Logic (FR-004)
+        function preventDefault(e) { e.preventDefault(); }
+
+        function enterBlindMode() {
+            const originalTextEl = document.getElementById('originalText');
+            const controlsEl = document.getElementById('blind-mode-controls');
+            const writeAreaEl = document.getElementById('blind-write-area');
+
+            if (originalTextEl) originalTextEl.classList.add('blind-mode');
+            if (controlsEl) controlsEl.classList.add('hidden');
+            if (writeAreaEl) writeAreaEl.classList.remove('hidden');
+
+            // Block copy/paste/context menu globally while in blind mode
+            document.addEventListener('copy', preventDefault);
+            document.addEventListener('paste', preventDefault);
+            document.addEventListener('contextmenu', preventDefault);
+            
+            showToast('已進入盲寫模式，原文已模糊化。', 'warning');
+        }
+
+        function exitBlindMode() {
+            const originalTextEl = document.getElementById('originalText');
+            if (originalTextEl) originalTextEl.classList.remove('blind-mode');
+            
+            document.removeEventListener('copy', preventDefault);
+            document.removeEventListener('paste', preventDefault);
+            document.removeEventListener('contextmenu', preventDefault);
+        }
+
+        // T010: Screenshot Detection (M1)
+        function detectScreenshotDesktop() {
+            let blurCount = 0;
+            window.addEventListener('blur', () => {
+                blurCount++;
+                if (blurCount > 2) {
+                    showToast('alert_screenshot', 'warning');
+                    state.violations += 1;
+                    saveState();
+                }
+            });
+            window.addEventListener('focus', () => {
+                blurCount = 0; // Reset count upon return
+            });
+        }
+
+        // T014, T015: Evaluate Blind Write
+        function evaluateBlindWrite() {
+            const attempt = document.getElementById('blind-write-input').value.trim();
+            const source = state.currentEssay;
+            
+            if (!source) return showToast('no_essay', 'error');
+            if (!attempt) return showToast('請輸入回譯內容。', 'error');
+
+            exitBlindMode();
+
+            // 1. Calculate Omission Rate (T014)
+            const sourceWords = source.toLowerCase().match(/\b(\w+)\b/g) || [];
+            const attemptWords = attempt.toLowerCase().match(/\b(\w+)\b/g) || [];
+            
+            let diffHtml = "";
+            let omitted = 0;
+            
+            // Simple word matching based diff
+            sourceWords.forEach(w => {
+                if (attemptWords.includes(w)) {
+                    diffHtml += `<span class="correct">${w} </span>`;
+                } else {
+                    diffHtml += `<span class="omitted">${w}</span> `;
+                    omitted++;
+                }
+            });
+
+            const omissionRate = sourceWords.length > 0 ? omitted / sourceWords.length : 0;
+            
+            // 2. Display Difference Result (T013)
+            document.getElementById('blindWriteDiff').classList.remove('hidden');
+            document.getElementById('diffResult').innerHTML = diffHtml;
+            
+            document.getElementById('omissionStats').innerHTML = `
+                <div class="p-3 bg-red-100 rounded-lg text-center">
+                    <div class="text-xs" data-i18n="omission_rate">${translate('omission_rate')}</div>
+                    <div class="text-xl font-bold">${(omissionRate * 100).toFixed(1)}%</div>
+                </div>
+                <div class="p-3 bg-green-100 rounded-lg text-center">
+                    <div class="text-xs" data-i18n="accuracy">${translate('accuracy')}</div>
+                    <div class="text-xl font-bold">${(100 - omissionRate * 100).toFixed(1)}%</div>
+                </div>
+            `;
+
+            // 3. Save History Record
+            addHistoryRecord(omissionRate);
+            
+            // 4. @slot:blind_write_diagnosis - AI Diagnosis (T015)
+            diagnoseBlindWrite(source, attempt);
+            
+            // 5. Update Bottleneck Index (T016)
+            updateBottleneckIndex(omissionRate);
+        }
+
+        // T015: AI Diagnosis (Skill Integration)
+        async function diagnoseBlindWrite(source, attempt) {
+            const diagLoader = document.getElementById('diagnosisLoader');
+            const diagContent = document.getElementById('diagnosisContent');
+            
+            if (diagLoader) diagLoader.classList.remove('hidden');
+            if (diagContent) diagContent.innerText = "正在獲取 AI 反饋...";
+
+            try {
+                const systemPrompt = `Compare the source and user attempt. 
+                    Briefly point out the most critical grammar or vocabulary mistake. 
+                    Keep it under 50 words. Be encouraging.`;
+                
+                const result = await geminiApi.call(
+                    `Source: ${source}\nAttempt: ${attempt}`, 
+                    systemPrompt, 
+                    false
+                );
+                
+                if (diagContent) diagContent.innerText = result;
+            } catch (e) {
+                if (diagContent) diagContent.innerText = "暫時無法連接 AI 診斷，請稍後再試。";
+            } finally {
+                if (diagLoader) diagLoader.classList.add('hidden');
+            }
+        }
+
+        function addHistoryRecord(omissionRate) {
+            const rec = {
+                date: new Date().toLocaleDateString(),
+                passive_ratio: state.lastAnalysis?.passive_ratio || 0,
+                omission_rate: omissionRate,
+                new_verbs: state.lastAnalysis?.advanced_verbs?.length || 0,
+                status: omissionRate < 0.2 ? translate('優秀') : translate('待改進')
+            };
+            state.history.unshift(rec);
+            saveState();
+        }
+        
+        // T016: Update Bottleneck Index
+        function updateBottleneckIndex(omissionRate) {
+            const band = parseFloat(state.lastAnalysis?.score_estimate) || 6.0;
+            const passiveRatio = state.lastAnalysis?.passive_ratio || 0.1;
+            
+            state.bottleneckIndex = calcBottleneckIndex(band, passiveRatio, omissionRate);
+            state.currentDay = Math.min(7, state.currentDay + 1); // Move to next day
+            saveState();
+        }
+
+
+        // --- Settings Modal Handlers (T018) ---
+        function setupSettingsListeners() {
+            document.getElementById('btn-settings').addEventListener('click', () => {
+                document.getElementById('gemini-key').value = state.apiKey.gemini;
+                document.getElementById('grammarly-key').value = state.apiKey.grammarly;
+                document.getElementById('settings-modal').classList.remove('hidden');
+            });
+
+            document.getElementById('btn-close-settings').addEventListener('click', () => {
+                document.getElementById('settings-modal').classList.add('hidden');
+            });
+
+            document.getElementById('btn-save-settings').addEventListener('click', () => {
+                state.apiKey.gemini = document.getElementById('gemini-key').value.trim();
+                state.apiKey.grammarly = document.getElementById('grammarly-key').value.trim();
+                saveState();
+                document.getElementById('settings-modal').classList.add('hidden');
+                showToast('API Keys Saved.');
+            });
+        }
+        
+        // --- Language Toggle (T004) ---
+        function setupLanguageToggle() {
+            document.getElementById('btn-lang-toggle').addEventListener('click', () => {
+                state.lang = state.lang === 'zh-TW' ? 'en' : 'zh-TW';
+                saveState();
+                updateUI();
+            });
+        }
+
+
+        // --- Main UI Update ---
+        function updateUI() {
+            // Update Header Status (T017)
+            document.getElementById('current-day-status').innerText = translate('day_status').replace('{day}', state.currentDay);
+            document.getElementById('bottleneck-index-display').innerText = translate('bottleneck_index').replace('{index}', state.bottleneckIndex.toFixed(4));
+
+            // Render main component based on current day
+            if (state.currentDay >= 1 && state.currentDay <= 5) {
+                renderVerbSprintCard();
+            } else if (state.currentDay >= 6 && state.currentDay <= 7) {
+                renderBlindPanel();
+            } else {
+                renderDashboard();
+            }
+            applyI18n();
+        }
+
+        // --- Initialization (T001, T002, T003, T019) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            setupSettingsListeners();
+            setupLanguageToggle();
+            updateUI();
+        });
+    </script>
+
+</body>
+</html>
+[USER CODE END]

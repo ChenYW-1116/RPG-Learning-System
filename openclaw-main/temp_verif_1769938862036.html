@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="appTitle">IELTS Writing Conciseness Coach</title>
+    <!-- T001: 引入 TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CONSTITUTION.md: 確保 UI 簡潔 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+        }
+        .container {
+            max-width: 1024px;
+        }
+        .editor-area {
+            min-height: 200px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Application Container -->
+    <div id="app" class="container mx-auto p-4 md:p-8">
+        
+        <!-- Header and Settings (T001, T003) -->
+        <header class="flex justify-between items-center mb-6 border-b pb-4">
+            <h1 class="text-3xl font-bold text-gray-800" data-i18n="headerTitle">IELTS Conciseness Coach</h1>
+            <div class="flex space-x-3">
+                <button id="lang-toggle" class="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition" onclick="app.toggleLanguage()">
+                    <span data-i18n="langSwitch">EN/ZH</span>
+                </button>
+                <button id="settings-btn" class="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition" onclick="app.showModal('settings-modal')">
+                    ⚙️
+                </button>
+            </div>
+        </header>
+
+        <!-- Progress Dashboard (T007) -->
+        <section id="progress-dashboard" class="bg-white shadow-lg rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4" data-i18n="progressTitle">訓練進度儀表板</h2>
+            
+            <!-- US-1 Progress: 5 rewrites / 48h -->
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-2" data-i18n="conciseProgress">簡潔改寫任務 (48小時窗口)</h3>
+                <div class="flex items-center space-x-4">
+                    <div id="progress-bar-concise" class="flex-grow bg-gray-200 rounded-full h-4 relative">
+                        <!-- Bar will be filled dynamically -->
+                    </div>
+                    <span id="concise-count" class="text-sm font-bold text-gray-700">0/5</span>
+                </div>
+                <p id="concise-status" class="text-sm mt-2 text-gray-500"></p>
+            </div>
+
+            <!-- US-3 Decision Status -->
+            <div class="mb-4">
+                <h3 class="text-lg font-medium mb-2" data-i18n="mockStatusTitle">模擬成績與 Task 2 晉級狀態</h3>
+                <p id="decision-status" class="text-base font-semibold text-red-600" data-i18n="statusLocked">
+                    狀態：Task 2 鎖定中
+                </p>
+                <p id="task-2-unlocked-message" class="hidden text-base font-semibold text-green-600 mt-2" data-i18n="statusUnlocked">
+                    恭喜！Task 2 已解鎖！
+                </p>
+            </div>
+        </section>
+
+        <!-- Task 1: Conciseness Coach (US-1) -->
+        <section id="task-1-section" class="bg-white shadow-lg rounded-lg p-6 mb-8 border-t-4 border-blue-500">
+            <h2 class="text-2xl font-bold mb-4" data-i18n="task1Title">任務一：文章簡潔改寫</h2>
+            
+            <!-- Timer Display (T004) -->
+            <div class="flex justify-between items-center mb-4 p-3 bg-yellow-100 rounded-lg">
+                <span class="font-medium" data-i18n="timerLabel">剩餘時間 (15分鐘)：</span>
+                <span id="timer-display" class="text-2xl font-mono text-red-600">15:00</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Original Text -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="originalTextLabel">原始文章 (貼上)</label>
+                    <textarea id="editor-original" class="editor-area w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" data-i18n-placeholder="originalPlaceholder"></textarea>
+                    <p class="text-sm text-gray-500 mt-1">
+                        <span data-i18n="wordCount">字數:</span> 
+                        <span id="word-count-original" class="font-bold">0</span>
+                    </p>
+                </div>
+
+                <!-- Rewritten Text -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="rewrittenTextLabel">改寫文章 (目標降幅 > 10%)</label>
+                    <textarea id="editor-rewritten" class="editor-area w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" data-i18n-placeholder="rewrittenPlaceholder"></textarea>
+                    <p class="text-sm text-gray-500 mt-1">
+                        <span data-i18n="wordCount">字數:</span> 
+                        <span id="word-count-rewritten" class="font-bold">0</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Reduction Display & Submit -->
+            <div class="mt-6 flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+                <p class="text-lg font-semibold">
+                    <span data-i18n="reductionLabel">字數降幅:</span> 
+                    <span id="reduction-display" class="text-blue-700 font-extrabold">0.00%</span>
+                </p>
+                <button id="submit-concise-btn" class="px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition disabled:bg-gray-400" disabled data-i18n="submitBtn">
+                    提交改寫 (需 > 10% 降幅)
+                </button>
+            </div>
+        </section>
+
+        <!-- Task 2: Dual-column Template Uploader (US-2) -->
+        <section id="task-2-section" class="bg-white shadow-lg rounded-lg p-6 mb-8 border-t-4 border-gray-400 opacity-50 pointer-events-none" data-task-locked="true">
+            <h2 class="text-2xl font-bold mb-4" data-i18n="task2Title">任務二：雙欄範本上傳與 AI 評分 (7天窗口)</h2>
+            <p class="text-red-500 mb-4 font-semibold" data-i18n="task2LockMessage">
+                此任務已鎖定。請先完成 Task 1 的 5 次簡潔改寫。
+            </p>
+
+            <!-- DualColUploader (T008) -->
+            <div id="upload-docx-area" class="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer">
+                <p class="text-gray-600" data-i18n="uploadPrompt">
+                    拖曳或點擊上傳您的雙欄 DOCX 範本。
+                </p>
+                <p class="text-sm text-gray-400 mt-2" data-i18n="uploadRequirement">
+                    (必須包含 "Process Verbs" 和 "Linkers" 欄位)
+                </p>
+                <input type="file" id="docx-input" accept=".docx" class="hidden" onchange="app.handleDocxUpload(event)">
+            </div>
+
+            <div id="dual-col-results" class="mt-4 hidden">
+                <h3 class="font-semibold text-lg" data-i18n="scoreResult">AI 評分結果 (模擬)</h3>
+                <p id="conciseness-score" class="text-green-600 font-bold">簡潔度分數: N/A</p>
+                <p id="process-verb-score" class="text-green-600 font-bold">動詞使用分數: N/A</p>
+                <button id="submit-dual-col-btn" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" data-i18n="submitScoreBtn">
+                    儲存本次評分
+                </button>
+            </div>
+        </section>
+
+        <!-- Task 3: Mock Result Ingestion (US-3) -->
+        <section id="task-3-section" class="bg-white shadow-lg rounded-lg p-6 border-t-4 border-purple-500">
+            <h2 class="text-2xl font-bold mb-4" data-i18n="task3Title">任務三：模擬成績輸入與分流</h2>
+            <p class="text-sm text-gray-600 mb-4" data-i18n="task3Desc">
+                請輸入您最近的模擬考試成績，系統將自動判斷是否晉級 Task 2。
+            </p>
+
+            <!-- MockInputForm (T011) -->
+            <div class="grid md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label for="mock-band-input" class="block text-sm font-medium text-gray-700" data-i18n="bandLabel">寫作 Band Score</label>
+                    <input type="number" id="mock-band-input" class="w-full p-2 border rounded-lg" min="1" max="9" step="0.5" placeholder="例如: 8.0">
+                </div>
+                <div>
+                    <label for="mock-sd-input" class="block text-sm font-medium text-gray-700" data-i18n="sdLabel">內部標準差 (SD)</label>
+                    <input type="number" id="mock-sd-input" class="w-full p-2 border rounded-lg" min="0" max="1" step="0.01" placeholder="例如: 0.35">
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="sdPrecisionTip">
+                        (A2 Fix: SD 取至小數點後兩位，無條件捨去)
+                    </p>
+                </div>
+                <button id="submit-mock-btn" class="px-4 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition" onclick="app.submitMockScore()" data-i18n="submitMockBtn">
+                    提交模擬成績
+                </button>
+            </div>
+            
+            <div id="mock-history" class="mt-6">
+                <h3 class="font-semibold text-md mb-2" data-i18n="historyTitle">成績歷史記錄</h3>
+                <ul id="mock-list" class="space-y-1 text-sm text-gray-700">
+                    <!-- History items will be injected here -->
+                </ul>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Settings Modal (T003) -->
+    <div id="settings-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4" data-i18n="settingsTitle">設定</h3>
+            
+            <div class="mb-4">
+                <label for="api-key-input" class="block text-sm font-medium text-gray-700">Gemini API Key</label>
+                <input type="text" id="api-key-input" class="w-full p-2 border rounded-lg mt-1" placeholder="輸入您的 Gemini API Key">
+            </div>
+
+            <div class="mb-4">
+                <label for="timezone-select" class="block text-sm font-medium text-gray-700" data-i18n="timezoneLabel">參考時區 (B1 Fix: UTC Anchor)</label>
+                <select id="timezone-select" class="w-full p-2 border rounded-lg mt-1">
+                    <option value="UTC" data-i18n="utcOption">UTC (推薦)</option>
+                    <option value="Asia/Taipei" data-i18n="taipeiOption">Asia/Taipei</option>
+                    <option value="America/New_York" data-i18n="nyOption">America/New York</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400" onclick="app.hideModal('settings-modal')" data-i18n="cancelBtn">取消</button>
+                <button id="save-settings-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" onclick="app.saveSettings()" data-i18n="saveBtn">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Implementation -->
+    <script>
+        // =================================================================
+        // 專案憲章 (CONSTITUTION.md) 規範: SRP, i18n, 註釋, 函數長度限制
+        // =================================================================
+
+        // Task T002: i18n bootstrap
+        const translations = {
+            'zh': {
+                appTitle: 'IELTS 寫作簡潔教練',
+                headerTitle: 'IELTS 簡潔教練',
+                langSwitch: 'EN/ZH',
+                progressTitle: '訓練進度儀表板',
+                conciseProgress: '簡潔改寫任務 (48小時窗口)',
+                statusLocked: '狀態：Task 2 鎖定中',
+                statusUnlocked: '恭喜！Task 2 已解鎖！',
+                task1Title: '任務一：文章簡潔改寫',
+                timerLabel: '剩餘時間 (15分鐘)：',
+                originalTextLabel: '原始文章 (貼上)',
+                rewrittenTextLabel: '改寫文章 (目標降幅 > 10%)',
+                wordCount: '字數:',
+                reductionLabel: '字數降幅:',
+                submitBtn: '提交改寫 (需 > 10% 降幅)',
+                task2Title: '任務二：雙欄範本上傳與 AI 評分 (7天窗口)',
+                task2LockMessage: '此任務已鎖定。請先完成 Task 1 的 5 次簡潔改寫。',
+                uploadPrompt: '拖曳或點擊上傳您的雙欄 DOCX 範本。',
+                uploadRequirement: '(必須包含 "Process Verbs" 和 "Linkers" 欄位)',
+                scoreResult: 'AI 評分結果 (模擬)',
+                submitScoreBtn: '儲存本次評分',
+                task3Title: '任務三：模擬成績輸入與分流',
+                task3Desc: '請輸入您最近的模擬考試成績，系統將自動判斷是否晉級 Task 2。',
+                bandLabel: '寫作 Band Score',
+                sdLabel: '內部標準差 (SD)',
+                sdPrecisionTip: '(A2 Fix: SD 取至小數點後兩位，無條件捨去)',
+                submitMockBtn: '提交模擬成績',
+                historyTitle: '成績歷史記錄',
+                settingsTitle: '設定',
+                timezoneLabel: '參考時區 (B1 Fix: UTC Anchor)',
+                utcOption: 'UTC (推薦)',
+                taipeiOption: 'Asia/Taipei',
+                nyOption: 'America/New York',
+                cancelBtn: '取消',
+                saveBtn: '儲存',
+                quotaMet: '今日額度已滿，請等待 48 小時窗口結束。',
+                quotaRemaining: (count) => `已完成 ${count}/5 篇。`,
+                reductionFail: '降幅不足 10%，請繼續修改。',
+                reductionSuccess: '提交成功！降幅已記錄。',
+                mockPass: '恭喜！您已滿足 Task 2 晉級條件！',
+                mockFail: '未滿足 Task 2 晉級條件。請繼續努力，目標：連續兩次 Band ≥ 8 且 SD < 0.4。',
+                // 修正 i18n 邏輯，新增 placeholder 鍵
+                originalPlaceholder: '請貼上您的原始文章...',
+                rewrittenPlaceholder: '請貼上您的改寫文章...',
+            },
+            'en': {
+                appTitle: 'IELTS Writing Conciseness Coach',
+                headerTitle: 'IELTS Conciseness Coach',
+                langSwitch: 'EN/ZH',
+                progressTitle: 'Training Progress Dashboard',
+                conciseProgress: 'Conciseness Rewrites (48h Window)',
+                statusLocked: 'Status: Task 2 Locked',
+                statusUnlocked: 'Congratulations! Task 2 Unlocked!',
+                task1Title: 'Task 1: Article Conciseness Rewrite',
+                timerLabel: 'Time Remaining (15 minutes):',
+                originalTextLabel: 'Original Text (Paste)',
+                rewrittenTextLabel: 'Rewritten Text (Target Reduction > 10%)',
+                wordCount: 'Word Count:',
+                reductionLabel: 'Word Reduction:',
+                submitBtn: 'Submit Rewrite (Requires > 10% Reduction)',
+                task2Title: 'Task 2: Dual-column Template Upload & AI Score (7-Day Window)',
+                task2LockMessage: 'This task is locked. Please complete 5 concise rewrites in Task 1 first.',
+                uploadPrompt: 'Drag or click to upload your dual-column DOCX template.',
+                uploadRequirement: '(Must contain "Process Verbs" and "Linkers" headers)',
+                scoreResult: 'AI Scoring Results (Mock)',
+                submitScoreBtn: 'Save Score',
+                task3Title: 'Task 3: Mock Result Ingestion & Decision Engine',
+                task3Desc: 'Enter your recent mock exam scores. The system will automatically determine Task 2 eligibility.',
+                bandLabel: 'Writing Band Score',
+                sdLabel: 'Internal Standard Deviation (SD)',
+                sdPrecisionTip: '(A2 Fix: SD truncated to two decimal places)',
+                submitMockBtn: 'Submit Mock Score',
+                historyTitle: 'Score History',
+                settingsTitle: 'Settings',
+                timezoneLabel: 'Reference Timezone (B1 Fix: UTC Anchor)',
+                utcOption: 'UTC (Recommended)',
+                taipeiOption: 'Asia/Taipei',
+                nyOption: 'America/New York',
+                cancelBtn: 'Cancel',
+                saveBtn: 'Save',
+                quotaMet: 'Quota met for the current 48-hour window.',
+                quotaRemaining: (count) => `Completed ${count}/5 sessions.`,
+                reductionFail: 'Reduction less than 10%. Please revise.',
+                reductionSuccess: 'Submission successful! Reduction recorded.',
+                mockPass: 'Congratulations! You meet the Task 2 promotion criteria!',
+                mockFail: 'Task 2 criteria not met. Goal: Two consecutive Band ≥ 8 AND SD < 0.4.',
+                // 修正 i18n 邏輯，新增 placeholder 鍵
+                originalPlaceholder: 'Please paste your original article...',
+                rewrittenPlaceholder: 'Please paste your rewritten article...',
+            }
+        };
+
+        // Task T002: i18n function
+        function translate(key, ...args) {
+            const lang = app.state.settings.language;
+            const dict = translations[lang] || translations['zh'];
+            const text = dict[key] || translations['en'][key] || key;
+            
+            if (typeof text === 'function') {
+                return text(...args);
+            }
+            return text;
+        }
+
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (key) {
+                    el.textContent = translate(key);
+                }
+            });
+            // Handle placeholders (Robust Fix)
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (key) {
+                    el.setAttribute('placeholder', translate(key));
+                }
+            });
+            document.title = translate('appTitle');
+        }
+
+        // =================================================================
+        // Service Layer: Storage, Counting, Scoring, Decision
+        // =================================================================
+
+        // Task T006, T010, T011: LocalStorage Key Definition (plan.md structure)
+        const STORAGE_KEY = 'IELTS_STATE_V1';
+        const QUOTA_LIMIT = 5;
+        const QUOTA_WINDOW_MS = 48 * 60 * 60 * 1000; // 48 hours
+
+        const StorageService = {
+            // Task T006: Load state from LocalStorage
+            loadState: () => {
+                const savedState = localStorage.getItem(STORAGE_KEY);
+                if (savedState) {
+                    return JSON.parse(savedState);
+                }
+                // Task T003: Default state initialization
+                return {
+                    settings: {
+                        apiKey: '',
+                        language: 'zh',
+                        timezone: 'UTC'
+                    },
+                    sessions: {
+                        concise: [], // { originalWords, rewrittenWords, reductionRatio, timestamp }
+                        dual: [],    // { score, timestamp }
+                        mock: []     // { band, sd, timestamp }
+                    }
+                };
+            },
+
+            // Task T006: Save state to LocalStorage
+            saveState: (state) => {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            },
+
+            // Task T006, T016: Check 48h TTL enforcement using UTC anchor
+            getConciseQuota: (sessions) => {
+                const now = Date.now();
+                
+                // Filter sessions within the last 48 hours
+                const recentSessions = sessions.filter(s => {
+                    return now - s.timestamp < QUOTA_WINDOW_MS;
+                });
+
+                const count = recentSessions.length;
+                const remaining = Math.max(0, QUOTA_LIMIT - count);
+                
+                let nextResetTime = null;
+                if (count >= QUOTA_LIMIT) {
+                    // Find the oldest session in the current window to determine reset time
+                    const oldestSession = recentSessions.reduce((min, s) => s.timestamp < min.timestamp ? s : min, recentSessions[0]);
+                    nextResetTime = oldestSession.timestamp + QUOTA_WINDOW_MS;
+                }
+
+                return { count, remaining, nextResetTime };
+            }
+        };
+
+        // Task T005: CountService (A1 Fix: MS Word compatible local backup algorithm)
+        const CountService = {
+            getWordCount: (text) => {
+                if (!text) return 0;
+                // A1 Fix: Simple space-separated tokenization, filtering out empty strings
+                // This is the required local backup pseudo-code.
+                const tokens = text.trim().split(/\s+/);
+                return tokens.filter(token => token.length > 0).length;
+            }
+        };
+
+        // Task T009: ScoringService (B2 Fix: Offline fallback/Mock AI)
+        const ScoringService = {
+            // Mock function for AI scoring
+            getMockScore: (text) => {
+                // If API key is present, mock a slightly better score
+                const hasApiKey = !!app.state.settings.apiKey;
+                
+                // Mock Conciseness Score (e.g., 0.85 threshold)
+                const conciseness = hasApiKey ? 0.92 : 0.88;
+                
+                // Mock Process Verbs Score
+                const processVerbs = hasApiKey ? 0.95 : 0.80;
+
+                return { conciseness, processVerbs };
+            }
+        };
+
+        // Task T012: DecisionEngine (A2 Fix: SD precision)
+        const DecisionEngine = {
+            evaluate: (mockScores) => {
+                if (mockScores.length < 2) {
+                    return false; // Need at least two scores
+                }
+
+                // Get the last two scores chronologically
+                const lastTwo = mockScores.slice(-2);
+                
+                let passedCount = 0;
+                for (const score of lastTwo) {
+                    // A2 Fix: SD must be truncated (unconditional floor) to two decimal places
+                    const truncatedSD = Math.floor(score.sd * 100) / 100;
+                    
+                    // Rule: (SD < 0.40) AND (Band >= 8)
+                    if (truncatedSD < 0.40 && score.band >= 8) {
+                        passedCount++;
+                    }
+                }
+
+                // Task T012: Decision rule: two consecutive passes
+                return passedCount === 2;
+            }
+        };
+
+
+        // =================================================================
+        // Application Core (app object)
+        // =================================================================
+
+        const app = {
+            state: StorageService.loadState(),
+            timer: null,
+            timerDuration: 15 * 60, // 15 minutes in seconds
+
+            // Task T003: Show/Hide Modal
+            showModal: (id) => {
+                const modal = document.getElementById(id);
+                if (modal) modal.style.display = 'flex';
+            },
+            hideModal: (id) => {
+                const modal = document.getElementById(id);
+                if (modal) modal.style.display = 'none';
+            },
+
+            // Task T003: Save Settings
+            saveSettings: () => {
+                const apiKey = document.getElementById('api-key-input').value;
+                const timezone = document.getElementById('timezone-select').value;
+                
+                app.state.settings.apiKey = apiKey;
+                app.state.settings.timezone = timezone;
+                
+                StorageService.saveState(app.state);
+                app.hideModal('settings-modal');
+                app.updateDashboard();
+            },
+
+            // Task T002: Toggle Language
+            toggleLanguage: () => {
+                const currentLang = app.state.settings.language;
+                app.state.settings.language = currentLang === 'zh' ? 'en' : 'zh';
+                StorageService.saveState(app.state);
+                applyTranslations();
+            },
+
+            // Task T004: Start/Update Timer
+            startTimer: () => {
+                if (app.timer) clearInterval(app.timer);
+                
+                let remaining = app.timerDuration;
+                
+                const updateDisplay = () => {
+                    const minutes = Math.floor(remaining / 60);
+                    const seconds = remaining % 60;
+                    const display = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    const timerEl = document.getElementById('timer-display');
+                    if (timerEl) timerEl.textContent = display;
+
+                    if (remaining <= 0) {
+                        clearInterval(app.timer);
+                        // Auto submit logic (if needed, but here we just stop)
+                        console.log("Time's up! Session ended.");
+                        // Optionally disable submission button
+                        document.getElementById('submit-concise-btn').disabled = true;
+                    }
+                    remaining--;
+                };
+
+                updateDisplay();
+                app.timer = setInterval(updateDisplay, 1000);
+            },
+
+            // Task T004: Handle input changes and calculate reduction
+            handleInput: () => {
+                const originalText = document.getElementById('editor-original').value;
+                const rewrittenText = document.getElementById('editor-rewritten').value;
+                
+                const originalWords = CountService.getWordCount(originalText);
+                const rewrittenWords = CountService.getWordCount(rewrittenText);
+
+                const originalEl = document.getElementById('word-count-original');
+                const rewrittenEl = document.getElementById('word-count-rewritten');
+                const reductionEl = document.getElementById('reduction-display');
+                const submitBtn = document.getElementById('submit-concise-btn');
+
+                if (originalEl) originalEl.textContent = originalWords;
+                if (rewrittenEl) rewrittenEl.textContent = rewrittenWords;
+
+                let reductionRatio = 0;
+                if (originalWords > 0) {
+                    reductionRatio = (originalWords - rewrittenWords) / originalWords;
+                }
+
+                const reductionPercent = (reductionRatio * 100).toFixed(2);
+                if (reductionEl) reductionEl.textContent = `${reductionPercent}%`;
+                
+                // Enable submit button only if reduction > 10%
+                const canSubmit = reductionRatio >= 0.10 && originalWords > 0 && rewrittenWords > 0;
+                if (submitBtn) submitBtn.disabled = !canSubmit;
+            },
+
+            // Task T006: Submit Conciseness Session
+            submitConciseSession: () => {
+                const originalText = document.getElementById('editor-original').value;
+                const rewrittenText = document.getElementById('editor-rewritten').value;
+                
+                const originalWords = CountService.getWordCount(originalText);
+                const rewrittenWords = CountService.getWordCount(rewrittenText);
+                const reductionRatio = (originalWords - rewrittenWords) / originalWords;
+
+                if (reductionRatio < 0.10) {
+                    alert(translate('reductionFail'));
+                    return;
+                }
+
+                const session = {
+                    originalWords,
+                    rewrittenWords,
+                    reductionRatio: reductionRatio.toFixed(4),
+                    timestamp: Date.now() // UTC anchor for TTL
+                };
+
+                app.state.sessions.concise.push(session);
+                StorageService.saveState(app.state);
+                
+                alert(translate('reductionSuccess'));
+                
+                // Reset editor and timer
+                document.getElementById('editor-original').value = '';
+                document.getElementById('editor-rewritten').value = '';
+                app.handleInput(); 
+                app.startTimer(); // Restart timer for next session
+                app.updateDashboard();
+            },
+
+            // Task T008: Mock Docx Upload Handler (Simulated)
+            handleDocxUpload: (event) => {
+                // In a real app, we'd use OfficeOpenXML.js here.
+                // Since external libraries are forbidden, we simulate the parsing.
+                const file = event.target.files[0];
+                if (!file || !file.name.endsWith('.docx')) {
+                    alert("Please upload a DOCX file.");
+                    return;
+                }
+
+                // Mock parsing logic: Assume success and required headers are present
+                console.log(`Simulating DOCX parsing for: ${file.name}`);
+                
+                // Task T009: Get Mock Score
+                const scores = ScoringService.getMockScore();
+
+                const resultsEl = document.getElementById('dual-col-results');
+                const conciseScoreEl = document.getElementById('conciseness-score');
+                const verbScoreEl = document.getElementById('process-verb-score');
+
+                if (resultsEl) resultsEl.classList.remove('hidden');
+                if (conciseScoreEl) conciseScoreEl.textContent = `簡潔度分數 (Conciseness): ${scores.conciseness.toFixed(2)}`;
+                if (verbScoreEl) verbScoreEl.textContent = `動詞使用分數 (Process Verbs): ${scores.processVerbs.toFixed(2)}`;
+                
+                // Attach event listener to submit button for US-2
+                document.getElementById('submit-dual-col-btn').onclick = () => {
+                    app.submitDualColScore(scores);
+                };
+            },
+
+            // Task T010: Submit Dual Column Score
+            submitDualColScore: (scores) => {
+                const session = {
+                    score: scores.conciseness,
+                    timestamp: Date.now() // 7-day rolling window meta
+                };
+                app.state.sessions.dual.push(session);
+                StorageService.saveState(app.state);
+                alert("Dual-column score saved successfully.");
+            },
+
+            // Task T011, T012: Submit Mock Score and Evaluate
+            submitMockScore: () => {
+                const bandInput = document.getElementById('mock-band-input');
+                const sdInput = document.getElementById('mock-sd-input');
+                
+                const band = parseFloat(bandInput.value);
+                const sd = parseFloat(sdInput.value);
+
+                if (isNaN(band) || isNaN(sd) || band < 1 || band > 9 || sd < 0 || sd > 1) {
+                    alert("請輸入有效的 Band Score (1-9) 和 SD (0-1)。");
+                    return;
+                }
+
+                // A2 Fix: Truncate SD to two decimal places before saving
+                const truncatedSD = Math.floor(sd * 100) / 100;
+
+                const mockSession = {
+                    band: band,
+                    sd: truncatedSD,
+                    timestamp: Date.now()
+                };
+
+                app.state.sessions.mock.push(mockSession);
+                StorageService.saveState(app.state);
+
+                bandInput.value = '';
+                sdInput.value = '';
+
+                app.updateDashboard();
+            },
+
+            // Task T007, T012: Update Dashboard UI
+            updateDashboard: () => {
+                const { count, remaining, nextResetTime } = StorageService.getConciseQuota(app.state.sessions.concise);
+                const conciseStatusEl = document.getElementById('concise-status');
+                const conciseCountEl = document.getElementById('concise-count');
+                const progressBarEl = document.getElementById('progress-bar-concise');
+                const task2Section = document.getElementById('task-2-section');
+                const decisionStatusEl = document.getElementById('decision-status');
+                const task2UnlockEl = document.getElementById('task-2-unlocked-message');
+                const mockListEl = document.getElementById('mock-list');
+
+                // 1. Update Concise Progress (T007)
+                if (conciseCountEl) conciseCountEl.textContent = `${count}/${QUOTA_LIMIT}`;
+                
+                if (progressBarEl) {
+                    const percentage = (count / QUOTA_LIMIT) * 100;
+                    progressBarEl.innerHTML = `<div class="h-4 bg-blue-500 rounded-full" style="width: ${percentage}%;"></div>`;
+                }
+
+                if (count >= QUOTA_LIMIT) {
+                    if (conciseStatusEl) {
+                        const resetDate = new Date(nextResetTime).toLocaleTimeString(app.state.settings.language === 'zh' ? 'zh-TW' : 'en-US');
+                        conciseStatusEl.textContent = translate('quotaMet') + ` (下次重置時間: ${resetDate})`;
+                    }
+                    // Lock Task 1 submission if quota met
+                    document.getElementById('submit-concise-btn').disabled = true;
+                } else {
+                    if (conciseStatusEl) conciseStatusEl.textContent = translate('quotaRemaining', count);
+                    // Re-enable submission if quota available (handled by handleInput for reduction check)
+                    app.handleInput(); 
+                }
+
+                // 2. Update Mock History (T011)
+                if (mockListEl) {
+                    mockListEl.innerHTML = app.state.sessions.mock.map(s => {
+                        const date = new Date(s.timestamp).toLocaleDateString();
+                        return `<li>[${date}] Band: ${s.band.toFixed(1)}, SD: ${s.sd.toFixed(2)}</li>`;
+                    }).reverse().join('');
+                }
+
+                // 3. Decision Engine Evaluation (T012)
+                const isTask2Unlocked = DecisionEngine.evaluate(app.state.sessions.mock);
+
+                if (isTask2Unlocked) {
+                    // Unlock Task 2
+                    if (task2Section) {
+                        task2Section.classList.remove('opacity-50', 'pointer-events-none');
+                        task2Section.classList.add('border-green-500');
+                        task2Section.removeAttribute('data-task-locked');
+                    }
+                    if (decisionStatusEl) decisionStatusEl.classList.add('hidden');
+                    if (task2UnlockEl) task2UnlockEl.classList.remove('hidden');
+                    
+                    // Update Task 3 status message
+                    const statusMsg = translate('mockPass');
+                    if (decisionStatusEl) decisionStatusEl.textContent = statusMsg;
+
+                } else {
+                    // Lock Task 2
+                    if (task2Section) {
+                        task2Section.classList.add('opacity-50', 'pointer-events-none');
+                        task2Section.classList.remove('border-green-500');
+                        task2Section.setAttribute('data-task-locked', 'true');
+                    }
+                    if (decisionStatusEl) {
+                        decisionStatusEl.classList.remove('hidden', 'text-green-600');
+                        decisionStatusEl.classList.add('text-red-600');
+                        decisionStatusEl.textContent = translate('mockFail');
+                    }
+                    if (task2UnlockEl) task2UnlockEl.classList.add('hidden');
+                }
+            },
+
+            // Task T001: Initialization
+            init: () => {
+                // Load settings (T003)
+                const { settings } = app.state;
+                document.getElementById('api-key-input').value = settings.apiKey;
+                document.getElementById('timezone-select').value = settings.timezone;
+                
+                // Apply initial language (T002)
+                applyTranslations();
+
+                // Set up event listeners (T004)
+                document.getElementById('editor-original').addEventListener('input', app.handleInput);
+                document.getElementById('editor-rewritten').addEventListener('input', app.handleInput);
+                document.getElementById('submit-concise-btn').addEventListener('click', app.submitConciseSession);
+                
+                // Set up Task 2 upload area (T008)
+                const uploadArea = document.getElementById('upload-docx-area');
+                const docxInput = document.getElementById('docx-input');
+                if (uploadArea) {
+                    uploadArea.addEventListener('click', () => docxInput.click());
+                    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('border-blue-500'); });
+                    uploadArea.addEventListener('dragleave', (e) => { e.preventDefault(); uploadArea.classList.remove('border-blue-500'); });
+                    uploadArea.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        uploadArea.classList.remove('border-blue-500');
+                        if (e.dataTransfer.files.length) {
+                            docxInput.files = e.dataTransfer.files;
+                            app.handleDocxUpload({ target: docxInput });
+                        }
+                    });
+                }
+
+                // Start timer and update dashboard (T004, T007)
+                app.startTimer();
+                app.updateDashboard();
+            }
+        };
+
+        // Initialize the application when the DOM is ready
+        document.addEventListener('DOMContentLoaded', app.init);
+
+        // =================================================================
+        // Critical System Requirement: Test Runner Injection (T014)
+        // =================================================================
+        
+        // Note: Strict adherence to 'robust-test-runner' skill: NO DESTRUCTURING.
+        function injectTestRunner(runner) {
+            // runner API: click, type, assert, waitFor, getValue, getText, isVisible, count, log, checkStorage, setStorage, mockAIResponse
+            
+            // Helper function to simulate time travel for 48h window test
+            const advanceTime = async (ms) => {
+                const currentState = StorageService.loadState();
+                // We only need to adjust the timestamp of the last session to simulate time passing
+                if (currentState.sessions.concise.length > 0) {
+                    const lastSession = currentState.sessions.concise[currentState.sessions.concise.length - 1];
+                    lastSession.timestamp -= ms; // Move the past session further back
+                    await runner.setStorage(STORAGE_KEY, JSON.stringify(currentState));
+                }
+            };
+
+            runner.defineTests([
+                {
+                    id: 'TC-001',
+                    name: 'E2E Happy Path: US-1 -> US-3 Promotion Check',
+                    steps: async () => {
+                        // 1. Setup: Ensure clean state and set API key (T003)
+                        await runner.log('TC-001: Starting E2E flow...');
+                        await runner.setStorage(STORAGE_KEY, null);
+                        await runner.waitFor('#settings-btn');
+                        await runner.click('#settings-btn');
+                        await runner.waitFor('#api-key-input');
+                        await runner.type('#api-key-input', 'MOCK_API_KEY_123');
+                        await runner.click('#save-settings-btn');
+                        
+                        // 2. US-1: Complete 5 Conciseness Sessions (T006, T007)
+                        const originalText = "The primary reason for the increase in global temperatures is due to the excessive emission of greenhouse gases by human activities.";
+                        const rewrittenText = "Excessive human greenhouse gas emissions primarily cause global temperatures to rise."; 
+                        // Original: 20 words. Rewritten: 9 words. Reduction: 55% (>10%)
+
+                        for (let i = 1; i <= 5; i++) {
+                            await runner.log(`--- Running Session ${i}/5 ---`);
+                            await runner.type('#editor-original', originalText);
+                            await runner.type('#editor-rewritten', rewrittenText);
+                            
+                            // Wait for calculation and button activation
+                            await runner.waitFor('#reduction-display');
+                            const reduction = await runner.getText('#reduction-display');
+                            runner.assert(reduction.startsWith('55.'), `Reduction check failed: Expected ~55%, got ${reduction}`);
+                            
+                            await runner.click('#submit-concise-btn');
+                            await runner.waitFor(100); // Wait for alert and state update
+                            
+                            // Check progress update
+                            const countText = await runner.getText('#concise-count');
+                            runner.assert(countText.startsWith(`${i}/5`), `Progress count failed for session ${i}`);
+
+                            // Clear for next loop
+                            await runner.type('#editor-original', '');
+                            await runner.type('#editor-rewritten', '');
+                        }
+
+                        // Check quota lock (T007)
+                        const status = await runner.getText('#concise-status');
+                        runner.assert(status.includes('額度已滿') || status.includes('Quota met'), 'Quota lock failed.');
+                        const submitDisabled = await runner.getValue('#submit-concise-btn', 'disabled');
+                        runner.assert(submitDisabled === 'true', 'Submit button should be disabled after 5 sessions.');
+
+                        // 3. US-3: Submit Mock Scores to trigger Decision Engine (T011, T012)
+                        
+                        // Score 1: Fail (Band 7.5)
+                        await runner.type('#mock-band-input', '7.5');
+                        await runner.type('#mock-sd-input', '0.30');
+                        await runner.click('#submit-mock-btn');
+                        await runner.waitFor(100);
+                        
+                        // Check status remains locked
+                        const statusLocked = await runner.getText('#decision-status');
+                        runner.assert(statusLocked.includes('未滿足') || statusLocked.includes('not met'), 'Decision Engine failed: Should be locked after first fail.');
+
+                        // Score 2: Pass (Band 8.0, SD 0.399 -> A2 Fix: Truncated to 0.39)
+                        await runner.type('#mock-band-input', '8.0');
+                        await runner.type('#mock-sd-input', '0.399'); // Should pass due to truncation
+                        await runner.click('#submit-mock-btn');
+                        await runner.waitFor(100);
+
+                        // Check status remains locked (needs two consecutive)
+                        const statusLocked2 = await runner.getText('#decision-status');
+                        runner.assert(statusLocked2.includes('未滿足') || statusLocked2.includes('not met'), 'Decision Engine failed: Should be locked after one pass.');
+
+                        // Score 3: Pass (Band 8.5, SD 0.35)
+                        await runner.type('#mock-band-input', '8.5');
+                        await runner.type('#mock-sd-input', '0.35');
+                        await runner.click('#submit-mock-btn');
+                        await runner.waitFor(100);
+
+                        // Check Task 2 Unlock (T012)
+                        const statusUnlocked = await runner.getText('#task-2-unlocked-message');
+                        runner.assert(statusUnlocked.includes('已解鎖') || statusUnlocked.includes('Unlocked'), 'Decision Engine failed: Task 2 should be unlocked.');
+                        const task2Opacity = await runner.getValue('#task-2-section', 'data-task-locked');
+                        runner.assert(task2Opacity === null, 'Task 2 section should be visually unlocked.');
+
+                        // 4. US-1 Quota Reset Check (T016)
+                        await runner.log('Simulating 48 hours time travel...');
+                        await advanceTime(QUOTA_WINDOW_MS + 1000); // Advance time past 48h + 1s
+                        await runner.click('#lang-toggle'); // Trigger re-render/re-init to refresh dashboard
+                        await runner.click('#lang-toggle'); 
+
+                        await runner.waitFor(100);
+                        const newCountText = await runner.getText('#concise-count');
+                        runner.assert(newCountText.startsWith('0/5'), '48h TTL reset failed. Count should be 0/5.');
+                        const submitEnabled = await runner.getValue('#submit-concise-btn', 'disabled');
+                        runner.assert(submitEnabled === 'false', 'Submit button should be re-enabled after TTL reset.');
+                    }
+                }
+            ]);
+        }
+    </script>
+</body>
+</html>

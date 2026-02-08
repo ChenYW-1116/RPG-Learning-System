@@ -1,0 +1,9 @@
+The diagram illustrates the process by which [waste materials] are {recycled}, showing the various steps through which they {are converted into} {end-products} [in a continuous loop].
+
+Overall, the process consists of a [circular] sequence of [9] engineered steps: [collecting, sorting-and-shredding, cleaning-and-purifying, filtering, mixing-and-blending, pelletizing, molding, inspecting, and distributing]. 
+
+                
+[In the initial four steps], {those waste materials} {are transformed into} {the secondary raw material}; during this process, {these items} are {collected and transferred to} a {specialized apparatus} to be [sorted and shredded]. After this, they are {channelled to} {a vessel} and {subjected to} [heat application] {for cleaning and purification}. Once they have been [purified], {the filtration of unwanted elements} and {the elimination of the residual substance} are conducted, resulting in the production of [recycled materials]. 
+
+Following this, [the recovered materials] {are poured into} {a container}, {mixed with} {a specialized solution}, and {incorporated} with {additives} during [blending]. Subsequently, {the resulting substance} {passes through multiple steps}: it is [pelletized and molded].
+At this point, {the completed product} {takes its appropriate form}. Once the {final process step} is finalized, it is then {inspected} and {made ready for distribution}, {marking the completion of the current cycle}, and {the process reverts to the initial steps when the product reaches the end of its lifecycle}.

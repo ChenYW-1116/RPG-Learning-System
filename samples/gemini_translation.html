@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS 寫作與翻譯衝刺訓練</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    animation: {
+                        'pulse-red': 'pulse-red 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        'pulse-red': {
+                            '0%, 100%': { opacity: 1, color: '#ef4444' },
+                            '50%': { opacity: .5, color: '#991b1b' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .dark .glass-card { background: rgba(31, 41, 55, 0.9); }
+        .toast-enter { transform: translateY(100%); opacity: 0; }
+        .toast-visible { transform: translateY(0); opacity: 1; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">I</div>
+            <h1 class="text-xl font-bold tracking-tight hidden sm:block" id="ui-title">IELTS 寫作與翻譯衝刺</h1>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-4">
+            <button id="btn-lang" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm font-medium">EN</button>
+            <button id="btn-theme" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.636 7.636l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+                <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+            <button id="btn-settings" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main id="main-view" class="flex-grow container mx-auto p-4 sm:p-6 overflow-x-hidden">
+        <!-- Dashboard View -->
+        <div id="view-dashboard" class="space-y-8 animate-in fade-in duration-500">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white" id="txt-welcome">歡迎回來，練習者</h2>
+                    <p class="text-gray-500 dark:text-gray-400" id="txt-subtitle">今天你想挑戰哪一個任務？</p>
+                </div>
+                <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 flex items-center gap-4">
+                    <div class="text-indigo-600 dark:text-indigo-400 font-bold text-2xl" id="stat-progress">0%</div>
+                    <div class="text-sm">
+                        <p class="font-semibold text-gray-700 dark:text-gray-300" id="txt-total-progress">總體進度</p>
+                        <div class="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-1">
+                            <div id="progress-bar" class="h-full bg-indigo-600 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="task-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Task cards dynamically injected -->
+            </div>
+        </div>
+
+        <!-- Verb Sprint View -->
+        <div id="view-sprint" class="hidden space-y-6 animate-in slide-in-from-right duration-300">
+            <button onclick="router.go('dashboard')" class="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <span id="btn-back">返回儀表板</span>
+            </button>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Editor Area -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold flex items-center gap-2">
+                                <span id="sprint-title">動詞衝刺任務</span>
+                                <span id="sprint-tag" class="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full">Day 1</span>
+                            </h3>
+                            <div id="timer-display" class="text-2xl font-mono font-bold text-gray-700 dark:text-gray-300">15:00</div>
+                        </div>
+
+                        <div class="relative">
+                            <textarea id="editor" class="w-full h-96 p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all" placeholder="在此開始您的雅思寫作練習..."></textarea>
+                            <div id="editor-overlay" class="hidden absolute inset-0 bg-gray-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                <p class="text-white font-bold text-xl" id="txt-time-up">時間到！編輯器已鎖定。</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex flex-wrap gap-4 justify-between items-center">
+                            <div class="flex gap-2">
+                                <button id="btn-timer-start" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold active:scale-95 transition-all">開始計時</button>
+                                <button id="btn-timer-reset" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg font-semibold active:scale-95 transition-all">重設</button>
+                            </div>
+                            <button id="btn-submit-sprint" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-semibold active:scale-95 transition-all">提交任務</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Info Area -->
+                <div class="space-y-6">
+                    <!-- Verb List -->
+                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                        <h4 class="font-bold mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5S19.832 5.477 21 6.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            <span id="txt-verb-pool">必須使用的學術動詞</span>
+                        </h4>
+                        <ul id="verb-list" class="space-y-3">
+                            <!-- Verbs injected here -->
+                        </ul>
+                    </div>
+
+                    <!-- Metrics -->
+                    <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-6 border border-indigo-100 dark:border-indigo-800">
+                        <h4 class="font-bold mb-4 text-indigo-900 dark:text-indigo-200" id="txt-writing-analysis">寫作即時分析</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium" id="txt-passive-ratio">被動語態比例</span>
+                                <span id="passive-badge" class="px-2 py-1 bg-white dark:bg-gray-800 rounded-md text-sm font-bold shadow-sm">0%</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium" id="txt-grammarly-status">Grammarly 狀態</span>
+                                <span id="grammarly-badge" class="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold">啟用中</span>
+                            </div>
+                            <p id="grammarly-notice" class="text-[10px] text-gray-500 hidden leading-tight">配額超限，使用本地被動語態檢查 (精度較低)</p>
+                        </div>
+                    </div>
+
+                    <!-- Flow Image -->
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-xl p-4 flex items-center justify-center aspect-video border-2 border-dashed border-gray-300 dark:border-gray-500">
+                        <div class="text-center">
+                            <svg class="w-10 h-10 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <p class="text-xs mt-2 text-gray-500">衝刺任務流程參考圖</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blind Translate View -->
+        <div id="view-translate" class="hidden space-y-6 animate-in slide-in-from-right duration-300">
+            <button onclick="router.go('dashboard')" class="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <span>返回儀表板</span>
+            </button>
+
+            <!-- Stage 1: Input -->
+            <div id="translate-stage-1" class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-100 dark:border-gray-700 text-center space-y-6">
+                <h3 class="text-2xl font-bold" id="txt-trans-s1-title">階段 1：輸入原始文本</h3>
+                <textarea id="trans-source" class="w-full h-48 p-4 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="貼上您要練習盲譯的英文段落..."></textarea>
+                <button id="btn-start-trans" class="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 dark:shadow-none">開始盲譯</button>
+            </div>
+
+            <!-- Stage 2: Audio (Overlayed) -->
+            <div id="translate-stage-2" class="hidden fixed inset-0 z-50 bg-gray-900/95 flex flex-col items-center justify-center p-6 text-white text-center">
+                <div class="mb-8">
+                    <h3 class="text-4xl font-black mb-4" id="txt-trans-s2-title">說出你的翻譯</h3>
+                    <p class="text-gray-400 max-w-md mx-auto" id="txt-trans-s2-desc">請勿查看原始文本。嘗試流暢地口頭翻譯出來，我們會將其轉錄為文字。</p>
+                </div>
+
+                <div class="w-64 h-64 rounded-full border-8 border-indigo-500/30 flex items-center justify-center relative mb-12">
+                    <div id="record-ring" class="absolute inset-0 rounded-full border-8 border-indigo-500 opacity-0 scale-90"></div>
+                    <button id="btn-record" class="w-48 h-48 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all">
+                        <svg id="mic-icon" class="w-20 h-20" fill="currentColor" viewBox="0 0 20 20"><path d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 005.93 6.93V17H7a1 1 0 100 2h6a1 1 0 100-2h-1.07v-2.07z"></path></svg>
+                    </button>
+                </div>
+
+                <div class="w-full max-w-xl space-y-4">
+                    <div class="flex justify-between text-sm font-bold mb-1">
+                        <span id="record-status">閒置</span>
+                        <span id="record-timer">00:00 / 10:00</span>
+                    </div>
+                    <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                        <div id="record-progress" class="h-full bg-red-600 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mt-12 flex gap-4">
+                    <button id="btn-force-stop" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-6 py-3 rounded-lg hidden">強制停止並繼續</button>
+                    <button id="btn-finish-audio" class="bg-white text-black font-bold px-10 py-3 rounded-lg opacity-50 cursor-not-allowed">停止錄音</button>
+                </div>
+            </div>
+
+            <!-- Stage 3: Review -->
+            <div id="translate-stage-3" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+                    <h4 class="font-bold text-lg">您的翻譯內容 (AI 轉錄)</h4>
+                    <textarea id="trans-user" class="w-full h-64 p-4 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <button id="btn-calc-omit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold">計算省略率</button>
+                </div>
+                <div id="omit-report" class="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-6 border border-indigo-100 dark:border-indigo-800 space-y-6 hidden">
+                    <div class="text-center">
+                        <p class="text-gray-600 dark:text-gray-400 text-sm font-bold uppercase tracking-wider">省略率 (Omission Rate)</p>
+                        <h2 id="omit-value" class="text-6xl font-black text-indigo-600 dark:text-indigo-400 my-2">0.0%</h2>
+                        <p id="omit-status" class="text-sm font-semibold"></p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                            <h5 class="text-xs font-bold text-gray-400 mb-1">原始文本關鍵詞</h5>
+                            <p id="diff-source" class="text-sm"></p>
+                        </div>
+                        <div class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                            <h5 class="text-xs font-bold text-gray-400 mb-1">漏失或差異</h5>
+                            <p id="diff-result" class="text-sm text-red-500"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottleneck Index View -->
+        <div id="view-bottleneck" class="hidden space-y-8 animate-in slide-in-from-right duration-300">
+            <button onclick="router.go('dashboard')" class="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <span>返回儀表板</span>
+            </button>
+
+            <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+                    <h3 class="text-xl font-bold">資料輸入</h3>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-500 mb-2">上傳雅思成績單 (PDF)</label>
+                        <div id="drop-zone" class="border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg p-8 text-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer relative">
+                            <input type="file" id="file-upload" class="absolute inset-0 opacity-0 cursor-pointer" accept="application/pdf">
+                            <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <p class="text-sm font-medium" id="txt-upload-hint">拖放文件或點擊上傳</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">TA (Task Achievement)</label>
+                            <input type="number" step="0.5" class="score-input w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600" data-key="ta">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">CC (Cohesion)</label>
+                            <input type="number" step="0.5" class="score-input w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600" data-key="cc">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">LR (Vocabulary)</label>
+                            <input type="number" step="0.5" class="score-input w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600" data-key="lr">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">GRA (Grammar)</label>
+                            <input type="number" step="0.5" class="score-input w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600" data-key="gra">
+                        </div>
+                    </div>
+
+                    <button id="btn-calc-bottleneck" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-lg shadow-lg active:scale-95 transition-all">計算瓶頸指數</button>
+                </div>
+
+                <div id="bottleneck-result-area" class="space-y-6 hidden">
+                    <div class="bg-indigo-600 rounded-xl p-8 text-white text-center shadow-xl">
+                        <p class="text-indigo-100 text-sm font-bold uppercase tracking-widest">Bottleneck Index</p>
+                        <h2 id="bottleneck-value" class="text-7xl font-black my-4">0.00</h2>
+                        <div id="bottleneck-status-badge" class="inline-block px-4 py-1 bg-white/20 rounded-full text-sm font-bold backdrop-blur-md">良好</div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <h4 class="font-bold flex items-center gap-2 mb-4">
+                            <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                            AI 生成改善方案
+                        </h4>
+                        <div id="bottleneck-plan" class="text-sm space-y-4 text-gray-600 dark:text-gray-400">
+                            <!-- Injected plan -->
+                        </div>
+                        <button id="btn-recalc" class="mt-6 text-indigo-600 text-xs font-bold hover:underline">重新計算</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Settings -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm" onclick="ui.toggleModal('settings', false)"></div>
+        <div class="relative bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-8 animate-in zoom-in duration-200">
+            <h3 class="text-2xl font-bold mb-6 text-indigo-600 dark:text-indigo-400" id="txt-modal-settings">應用程式設定</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Grammarly API Key (模擬)</label>
+                    <input type="password" id="key-grammarly" class="w-full p-3 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="輸入 API 金鑰...">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Gemini API Key (模擬)</label>
+                    <input type="password" id="key-gemini" class="w-full p-3 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="輸入 API 金鑰...">
+                </div>
+            </div>
+            <div class="mt-8 flex gap-3">
+                <button onclick="ui.saveSettings()" class="flex-grow bg-indigo-600 text-white py-3 rounded-xl font-bold">儲存並關閉</button>
+                <button onclick="ui.toggleModal('settings', false)" class="px-6 py-3 bg-gray-100 dark:bg-gray-700 rounded-xl font-bold">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        /**
+         * GLOBAL CONSTANTS & CONFIG
+         */
+        const APP_ID = 'ielts-sprint-v1';
+        const VERB_POOL = [
+            'acknowledge', 'advocate', 'alleviate', 'attribute', 'collaborate', 'comprise',
+            'constitute', 'contradict', 'corroborate', 'differentiate', 'diminish', 'eliminate',
+            'emphasize', 'enhance', 'evaluate', 'exacerbate', 'facilitate', 'fluctuate',
+            'generate', 'illustrate', 'implement', 'incorporate', 'indicate', 'interpret',
+            'justify', 'manipulate', 'modify', 'negate', 'observe', 'obtain', 'perceive',
+            'predict', 'quantify', 'reinforce', 'simulate', 'specify', 'sustain', 'validate'
+        ];
+
+        const I18N = {
+            'zh-TW': {
+                title: 'IELTS 寫作與翻譯衝刺',
+                welcome: '歡迎回來，練習者',
+                subtitle: '今天你想挑戰哪一個任務？',
+                totalProgress: '總體進度',
+                timer: '15:00',
+                btnBack: '返回儀表板',
+                btnStart: '開始任務',
+                btnContinue: '繼續任務',
+                btnCompleted: '已完成',
+                toastProcessing: '處理中...',
+                toastSuccess: '任務已完成！',
+                toastSaved: '設定已儲存',
+                modalSettings: '應用程式設定',
+                verbPool: '必須使用的學術動詞',
+                analysis: '寫作即時分析',
+                passive: '被動語態比例',
+                timeUp: '時間到！編輯器已鎖定。',
+                warningNoKey: '未檢測到 API Key，使用基礎模型。'
+            },
+            'en-US': {
+                title: 'IELTS Writing & Translation Sprint',
+                welcome: 'Welcome back, Learner',
+                subtitle: 'Which task will you conquer today?',
+                totalProgress: 'Overall Progress',
+                timer: '15:00',
+                btnBack: 'Back to Dashboard',
+                btnStart: 'Start Task',
+                btnContinue: 'Continue Task',
+                btnCompleted: 'Completed',
+                toastProcessing: 'Processing...',
+                toastSuccess: 'Task Finished!',
+                toastSaved: 'Settings Saved',
+                modalSettings: 'App Settings',
+                verbPool: 'Mandatory Academic Verbs',
+                analysis: 'Real-time Analysis',
+                passive: 'Passive Voice Ratio',
+                timeUp: 'Time Up! Editor Locked.',
+                warningNoKey: 'No API Key detected, using base model.'
+            }
+        };
+
+        /**
+         * STATE MANAGEMENT
+         */
+        let state = {
+            lang: 'zh-TW',
+            dark: false,
+            keys: { grammarly: '', gemini: '' },
+            tasks: Array.from({length: 8}, (_, i) => ({
+                id: i + 1,
+                type: i < 5 ? 'sprint' : (i === 5 || i === 6 ? 'translate' : 'bottleneck'),
+                day: i < 5 ? i + 1 : null,
+                status: 'todo', // todo, doing, done
+                data: {}
+            })),
+            history: {
+                verbs: [], // { verb: string, usedAt: timestamp }
+                weakness: { ta: 0, cc: 0, lr: 0, gra: 0 }
+            }
+        };
+
+        /**
+         * UTILITIES
+         */
+        const $ = (id) => document.getElementById(id);
+        const storage = {
+            save: () => localStorage.setItem(APP_ID, JSON.stringify(state)),
+            load: () => {
+                const data = localStorage.getItem(APP_ID);
+                if (data) state = { ...state, ...JSON.parse(data) };
+            }
+        };
+
+        const toast = {
+            show: (msg, type = 'info') => {
+                const container = $('toast-container');
+                const div = document.createElement('div');
+                const colors = {
+                    success: 'bg-green-600',
+                    error: 'bg-red-600',
+                    info: 'bg-blue-600',
+                    warning: 'bg-yellow-500'
+                };
+                div.className = `${colors[type]} text-white px-6 py-3 rounded-xl shadow-xl font-bold flex items-center gap-3 transition-all duration-300 toast-enter pointer-events-auto`;
+                div.innerHTML = `<span>${msg}</span>`;
+                container.appendChild(div);
+                setTimeout(() => div.classList.add('toast-visible'), 10);
+                setTimeout(() => {
+                    div.classList.remove('toast-visible');
+                    setTimeout(() => div.remove(), 300);
+                }, 3000);
+            }
+        };
+
+        /**
+         * CORE LOGIC: ROUTER
+         */
+        const router = {
+            current: 'dashboard',
+            go: (view) => {
+                ['dashboard', 'sprint', 'translate', 'bottleneck'].forEach(v => $(`view-${v}`).classList.add('hidden'));
+                $(`view-${view}`).classList.remove('hidden');
+                router.current = view;
+                window.scrollTo(0, 0);
+            }
+        };
+
+        /**
+         * CORE LOGIC: UI HANDLER
+         */
+        const ui = {
+            init: () => {
+                storage.load();
+                ui.applyTheme();
+                ui.applyLang();
+                ui.renderDashboard();
+                ui.setupListeners();
+                ui.checkDailyReminder();
+            },
+            applyTheme: () => {
+                if (state.dark) {
+                    document.documentElement.classList.add('dark');
+                    $('sun-icon').classList.remove('hidden');
+                    $('moon-icon').classList.add('hidden');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    $('sun-icon').classList.add('hidden');
+                    $('moon-icon').classList.remove('hidden');
+                }
+            },
+            toggleTheme: () => {
+                state.dark = !state.dark;
+                ui.applyTheme();
+                storage.save();
+            },
+            applyLang: () => {
+                const dict = I18N[state.lang];
+                $('ui-title').innerText = dict.title;
+                $('txt-welcome').innerText = dict.welcome;
+                $('txt-subtitle').innerText = dict.subtitle;
+                $('txt-total-progress').innerText = dict.totalProgress;
+                $('btn-lang').innerText = state.lang === 'zh-TW' ? 'EN' : '中';
+                // Update more titles...
+                storage.save();
+            },
+            toggleLang: () => {
+                state.lang = state.lang === 'zh-TW' ? 'en-US' : 'zh-TW';
+                ui.applyLang();
+                ui.renderDashboard();
+            },
+            toggleModal: (id, show) => {
+                $(`modal-${id}`).classList.toggle('hidden', !show);
+                if (show) {
+                    $('key-grammarly').value = state.keys.grammarly;
+                    $('key-gemini').value = state.keys.gemini;
+                }
+            },
+            saveSettings: () => {
+                state.keys.grammarly = $('key-grammarly').value;
+                state.keys.gemini = $('key-gemini').value;
+                ui.toggleModal('settings', false);
+                toast.show(I18N[state.lang].toastSaved, 'success');
+                storage.save();
+            },
+            renderDashboard: () => {
+                const grid = $('task-grid');
+                grid.innerHTML = '';
+                let completedCount = 0;
+
+                state.tasks.forEach(task => {
+                    const card = document.createElement('div');
+                    const statusColors = {
+                        todo: 'border-gray-100 dark:border-gray-700',
+                        doing: 'border-blue-400 dark:border-blue-500 shadow-lg shadow-blue-100 dark:shadow-none',
+                        done: 'border-green-400 dark:border-green-500 bg-green-50/30 dark:bg-green-900/10'
+                    };
+
+                    const typeLabels = {
+                        sprint: state.lang === 'zh-TW' ? `動詞衝刺 (Day ${task.day})` : `Verb Sprint (Day ${task.day})`,
+                        translate: state.lang === 'zh-TW' ? '盲譯回寫' : 'Blind Translate',
+                        bottleneck: state.lang === 'zh-TW' ? '瓶頸指數報告' : 'Bottleneck Index'
+                    };
+
+                    if (task.status === 'done') completedCount++;
+
+                    card.className = `bg-white dark:bg-gray-800 rounded-xl border p-6 flex flex-col justify-between transition-all ${statusColors[task.status]}`;
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-xs font-black text-indigo-500 uppercase">#TASK ${task.id.toString().padStart(2, '0')}</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${task.status === 'done' ? 'bg-green-100 text-green-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'}">
+                                    ${task.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <h4 class="text-xl font-bold mb-2">${typeLabels[task.type]}</h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                                ${task.type === 'sprint' ? '15 分鐘極速寫作，運用指定學術動詞與被動語態。' : 
+                                  task.type === 'translate' ? '遮罩式聽寫翻譯練習，挑戰 3% 以下的省略率。' : 
+                                  '深度分析雅思寫作弱點，AI 自動生成改善策略計畫。'}
+                            </p>
+                        </div>
+                        <button onclick="ui.startTask(${task.id})" class="mt-6 w-full ${task.status === 'done' ? 'bg-gray-100 dark:bg-gray-700 text-gray-400' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} font-bold py-2.5 rounded-lg active:scale-95 transition-all">
+                            ${task.status === 'done' ? I18N[state.lang].btnCompleted : (task.status === 'doing' ? I18N[state.lang].btnContinue : I18N[state.lang].btnStart)}
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                const progress = Math.round((completedCount / state.tasks.length) * 100);
+                $('stat-progress').innerText = progress + '%';
+                $('progress-bar').style.width = progress + '%';
+            },
+            startTask: (id) => {
+                const task = state.tasks.find(t => t.id === id);
+                if (!task) return;
+                
+                if (task.status === 'todo') task.status = 'doing';
+                storage.save();
+                ui.renderDashboard();
+
+                if (task.type === 'sprint') {
+                    router.go('sprint');
+                    sprint.init(task);
+                } else if (task.type === 'translate') {
+                    router.go('translate');
+                    translate.init(task);
+                } else if (task.type === 'bottleneck') {
+                    router.go('bottleneck');
+                    bottleneck.init(task);
+                }
+            },
+            checkDailyReminder: () => {
+                const lastRemind = localStorage.getItem('last_remind');
+                const now = new Date();
+                const todayStr = now.toDateString();
+                
+                if (lastRemind !== todayStr && now.getHours() >= 8) {
+                    const unfinished = state.tasks.some(t => t.status !== 'done');
+                    if (unfinished) {
+                        toast.show('早安！今天還有寫作任務尚未完成，記得抽空練習。', 'warning');
+                        localStorage.setItem('last_remind', todayStr);
+                    }
+                }
+            },
+            setupListeners: () => {
+                $('btn-lang').onclick = ui.toggleLang;
+                $('btn-theme').onclick = ui.toggleTheme;
+                $('btn-settings').onclick = () => ui.toggleModal('settings', true);
+            }
+        };
+
+        /**
+         * MODULE: VERB SPRINT
+         */
+        const sprint = {
+            activeTask: null,
+            timer: null,
+            timeLeft: 900, // 15 mins
+            init: (task) => {
+                sprint.activeTask = task;
+                sprint.timeLeft = 900;
+                sprint.updateTimerDisplay();
+                sprint.resetUI();
+                sprint.pickVerbs();
+                sprint.setupListeners();
+            },
+            resetUI: () => {
+                $('editor').value = sprint.activeTask.data.content || '';
+                $('editor').disabled = false;
+                $('editor-overlay').classList.add('hidden');
+                $('btn-timer-start').disabled = false;
+                $('btn-timer-start').innerText = '開始計時';
+                $('timer-display').classList.remove('animate-pulse-red', 'text-red-600');
+                sprint.checkVerbs();
+                sprint.checkPassive();
+            },
+            pickVerbs: () => {
+                // Logic: 6 verbs not used in last 90 days
+                const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
+                const history = state.history.verbs || [];
+                
+                const available = VERB_POOL.filter(v => {
+                    const usage = history.find(h => h.verb === v);
+                    return !usage || usage.usedAt < ninetyDaysAgo;
+                });
+
+                // If not enough, pick oldest
+                let picked = available.sort(() => Math.random() - 0.5).slice(0, 6);
+                if (picked.length < 6) {
+                    const extra = history.sort((a,b) => a.usedAt - b.usedAt).map(h => h.verb);
+                    picked = [...picked, ...extra].slice(0, 6);
+                }
+
+                sprint.activeVerbs = picked;
+                sprint.renderVerbs();
+            },
+            renderVerbs: () => {
+                const list = $('verb-list');
+                list.innerHTML = '';
+                sprint.activeVerbs.forEach(verb => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors";
+                    li.innerHTML = `<span class="font-mono font-medium">${verb}</span><span id="vcheck-${verb}" class="text-gray-300">❌</span>`;
+                    list.appendChild(li);
+                });
+                sprint.checkVerbs();
+            },
+            checkVerbs: () => {
+                const text = $('editor').value.toLowerCase();
+                sprint.activeVerbs.forEach(verb => {
+                    const check = $(`vcheck-${verb}`);
+                    if (text.includes(verb.toLowerCase())) {
+                        check.innerText = '✅';
+                        check.className = 'text-green-500';
+                    } else {
+                        check.innerText = '❌';
+                        check.className = 'text-gray-300';
+                    }
+                });
+            },
+            checkPassive: () => {
+                const text = $('editor').value;
+                if (!text.trim()) return;
+
+                // Simple Regex for passive voice: be/am/is/are/was/were/been/being + [word endings in ed]
+                const words = text.split(/\s+/).length;
+                const passiveRegex = /\b(am|is|are|was|were|be|been|being)\b\s+(\w+ed|given|taken|shown|written|made|known|found)\b/gi;
+                const matches = text.match(passiveRegex) || [];
+                const ratio = Math.round((matches.length / (words / 10)) * 10) / 10; // Normalized estimate
+                const ratioDisplay = Math.min(Math.round((matches.length / Math.max(1, words)) * 500), 100); // UI representation
+
+                const badge = $('passive-badge');
+                badge.innerText = ratioDisplay + '%';
+                if (ratioDisplay >= 30) {
+                    badge.classList.add('text-red-600', 'animate-pulse');
+                } else {
+                    badge.classList.remove('text-red-600', 'animate-pulse');
+                }
+            },
+            updateTimerDisplay: () => {
+                const m = Math.floor(sprint.timeLeft / 60);
+                const s = sprint.timeLeft % 60;
+                $('timer-display').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                
+                if (sprint.timeLeft < 300) {
+                    $('timer-display').classList.add('animate-pulse-red', 'text-red-600');
+                }
+            },
+            startTimer: () => {
+                if (sprint.timer) return;
+                $('btn-timer-start').disabled = true;
+                $('btn-timer-start').innerText = '計時中...';
+                
+                sprint.timer = setInterval(() => {
+                    sprint.timeLeft--;
+                    sprint.updateTimerDisplay();
+                    if (sprint.timeLeft <= 0) {
+                        clearInterval(sprint.timer);
+                        sprint.timer = null;
+                        sprint.lockEditor();
+                    }
+                }, 1000);
+            },
+            lockEditor: () => {
+                $('editor').disabled = true;
+                $('editor-overlay').classList.remove('hidden');
+            },
+            setupListeners: () => {
+                $('editor').oninput = () => {
+                    sprint.checkVerbs();
+                    sprint.checkPassive();
+                    sprint.activeTask.data.content = $('editor').value;
+                    storage.save();
+                };
+                $('btn-timer-start').onclick = sprint.startTimer;
+                $('btn-timer-reset').onclick = () => {
+                    clearInterval(sprint.timer);
+                    sprint.timer = null;
+                    sprint.init(sprint.activeTask);
+                };
+                $('btn-submit-sprint').onclick = () => {
+                    sprint.activeTask.status = 'done';
+                    // Record used verbs
+                    const text = $('editor').value.toLowerCase();
+                    sprint.activeVerbs.forEach(v => {
+                        if (text.includes(v)) {
+                            state.history.verbs = state.history.verbs.filter(h => h.verb !== v);
+                            state.history.verbs.push({ verb: v, usedAt: Date.now() });
+                        }
+                    });
+                    storage.save();
+                    toast.show(I18N[state.lang].toastSuccess, 'success');
+                    router.go('dashboard');
+                    ui.renderDashboard();
+                };
+            }
+        };
+
+        /**
+         * MODULE: BLIND TRANSLATE
+         */
+        const translate = {
+            activeTask: null,
+            recordTimer: null,
+            recordSeconds: 0,
+            init: (task) => {
+                translate.activeTask = task;
+                translate.reset();
+            },
+            reset: () => {
+                $('translate-stage-1').classList.remove('hidden');
+                $('translate-stage-2').classList.add('hidden');
+                $('translate-stage-3').classList.add('hidden');
+                $('trans-source').value = '';
+                $('trans-user').value = '';
+                $('omit-report').classList.add('hidden');
+                $('btn-force-stop').classList.add('hidden');
+                translate.recordSeconds = 0;
+            },
+            startAudio: () => {
+                $('translate-stage-1').classList.add('hidden');
+                $('translate-stage-2').classList.remove('hidden');
+                translate.recordSeconds = 0;
+                $('record-status').innerText = '錄音中...';
+                $('record-ring').classList.add('animate-ping', 'opacity-50');
+                
+                translate.recordTimer = setInterval(() => {
+                    translate.recordSeconds++;
+                    const m = Math.floor(translate.recordSeconds / 60);
+                    const s = translate.recordSeconds % 60;
+                    $('record-timer').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} / 10:00`;
+                    $('record-progress').style.width = (translate.recordSeconds / 600) * 100 + '%';
+
+                    if (translate.recordSeconds >= 10) { // Show force stop after 10s for demo
+                        $('btn-force-stop').classList.remove('hidden');
+                        $('btn-finish-audio').classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                    if (translate.recordSeconds >= 600) translate.stopAudio();
+                }, 1000);
+            },
+            stopAudio: () => {
+                clearInterval(translate.recordTimer);
+                $('record-ring').classList.remove('animate-ping', 'opacity-50');
+                $('translate-stage-2').classList.add('hidden');
+                $('translate-stage-3').classList.remove('hidden');
+                // Simulate AI transcription
+                $('trans-user').value = "This is a simulated transcription of your voice. " + $('trans-source').value.substring(0, 50) + "...";
+            },
+            calculateOmission: () => {
+                const src = $('trans-source').value.trim();
+                const usr = $('trans-user').value.trim();
+                if (!src || !usr) return;
+
+                // Simulate Levenshtein / Word diff
+                const srcWords = src.split(/\s+/);
+                const usrWords = usr.split(/\s+/);
+                const diffCount = Math.abs(srcWords.length - usrWords.length);
+                const rate = Math.round((diffCount / srcWords.length) * 1000) / 10;
+
+                $('omit-report').classList.remove('hidden');
+                $('omit-value').innerText = rate + '%';
+                
+                const status = $('omit-status');
+                if (rate < 3) {
+                    status.innerText = '恭喜！省略率低於 3%。';
+                    status.className = 'text-green-500 font-bold';
+                } else {
+                    status.innerText = '省略率高於 3%。請仔細檢查差異。';
+                    status.className = 'text-red-500 font-bold';
+                }
+
+                $('diff-source').innerText = src.split(' ').slice(0, 10).join(' ') + '...';
+                $('diff-result').innerText = '偵測到關鍵動詞缺失或連接詞誤用。建議加強句型結構練習。';
+
+                translate.activeTask.status = 'done';
+                storage.save();
+                ui.renderDashboard();
+            }
+        };
+
+        // Attach listeners for translation
+        $('btn-start-trans').onclick = () => {
+            if (!$('trans-source').value.trim()) return toast.show('請先輸入原始文本', 'error');
+            translate.startAudio();
+        };
+        $('btn-finish-audio').onclick = translate.stopAudio;
+        $('btn-force-stop').onclick = translate.stopAudio;
+        $('btn-calc-omit').onclick = translate.calculateOmission;
+
+        /**
+         * MODULE: BOTTLENECK INDEX
+         */
+        const bottleneck = {
+            activeTask: null,
+            init: (task) => {
+                bottleneck.activeTask = task;
+                $('bottleneck-result-area').classList.add('hidden');
+                document.querySelectorAll('.score-input').forEach(input => {
+                    const key = input.dataset.key;
+                    input.value = state.history.weakness[key] || 0;
+                });
+            },
+            calculate: () => {
+                const scores = {};
+                document.querySelectorAll('.score-input').forEach(input => {
+                    scores[input.dataset.key] = parseFloat(input.value) || 0;
+                    state.history.weakness[input.dataset.key] = scores[input.dataset.key];
+                });
+
+                // Bottleneck Index Calculation (Simplified Algorithm SC003)
+                // Formula: Avg(Dist from Target 9.0) * Complexity Factor
+                const avg = (scores.ta + scores.cc + scores.lr + scores.gra) / 4;
+                const dist = 9.0 - avg;
+                const index = (dist * 0.005).toFixed(3);
+
+                $('bottleneck-value').innerText = index;
+                $('bottleneck-result-area').classList.remove('hidden');
+
+                const status = $('bottleneck-status-badge');
+                if (index < 0.02) {
+                    status.innerText = '恭喜！瓶頸指數低於 0.02。';
+                    status.className = 'inline-block px-4 py-1 bg-green-500 rounded-full text-xs font-bold';
+                } else {
+                    status.innerText = '瓶頸指數高於 0.02。請參考改善方案。';
+                    status.className = 'inline-block px-4 py-1 bg-yellow-500 rounded-full text-xs font-bold text-black';
+                }
+
+                // AI Generated Plan (Simulated)
+                const planArea = $('bottleneck-plan');
+                planArea.innerHTML = `
+                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/40 rounded-lg">
+                        <strong class="text-indigo-700 dark:text-indigo-300">優先改善項目：${scores.gra < 7 ? '語法多樣性 (GRA)' : '詞彙精準度 (LR)'}</strong>
+                        <p class="mt-1">根據您的數據，目前的瓶頸在於複雜句型使用頻率較低。建議增加被動語態與從句的練習。</p>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 mt-2">
+                        <li>每日進行 2 組「盲譯回寫」以提升聽覺轉文字的精準度。</li>
+                        <li>在衝刺練習中強制使用 3 個以上的完成時態。</li>
+                    </ul>
+                `;
+
+                bottleneck.activeTask.status = 'done';
+                storage.save();
+                ui.renderDashboard();
+                toast.show('瓶頸分析完成！', 'success');
+            }
+        };
+
+        $('btn-calc-bottleneck').onclick = bottleneck.calculate;
+        $('btn-recalc').onclick = () => bottleneck.init(bottleneck.activeTask);
+        
+        // File upload simulation
+        $('file-upload').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                $('txt-upload-hint').innerText = `已讀取: ${file.name}`;
+                toast.show('正在解析成績單 PDF...', 'info');
+                setTimeout(() => {
+                    document.querySelectorAll('.score-input').forEach(input => {
+                        input.value = (Math.floor(Math.random() * 5) + 5) + (Math.random() > 0.5 ? 0.5 : 0);
+                    });
+                    toast.show('成績已自動填充', 'success');
+                }, 1500);
+            }
+        };
+
+        /**
+         * INITIALIZATION
+         */
+        document.addEventListener('DOMContentLoaded', ui.init);
+
+        /**
+         * Standardized Test Hook
+         */
+        window.injectTestRunner = function(runner) {
+            runner.app = { state, ui, router, sprint, translate, bottleneck };
+            console.log("🧪 Test Runner Hook Injected");
+        };
+
+    </script>
+</body>
+</html>

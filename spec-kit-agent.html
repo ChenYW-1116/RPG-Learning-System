@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spec Kit AI Agent - SDD 代碼生成器 v2.0</title>
+    <meta name="description" content="基於 Spec-Driven Development 的 AI 代碼生成器 - 完整 SDD 工作流程">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f0f1a 100%);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+
+        .title-glow {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(90deg, #10B981, #6366F1, #8B5CF6, #EC4899);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleShimmer 4s linear infinite;
+        }
+
+        @keyframes titleShimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 300% 50%;
+            }
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+        }
+
+        .step-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+            border: 2px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .step-card.active {
+            border-color: #10B981;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+        }
+
+        .step-card.completed {
+            border-color: #6366F1;
+            opacity: 0.7;
+        }
+
+        .chat-bubble {
+            background: linear-gradient(145deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 16px 16px 16px 4px;
+            padding: 16px;
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .chat-bubble.user {
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border-color: rgba(16, 185, 129, 0.3);
+            border-radius: 16px 16px 4px 16px;
+            margin-left: 40px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #10B981, #059669);
+            font-size: 18px;
+            padding: 16px 32px;
+        }
+
+        .btn-generate:hover {
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .code-preview {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: linear-gradient(90deg, #161b22, #21262d);
+            padding: 12px 16px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-content {
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #c9d1d9;
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #6366F1;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            30% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #6366F1);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #6366F1, #8B5CF6);
+            border-radius: 4px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #1E293B, #0F172A);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #94A3B8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #6366F1;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 32px;
+            right: 32px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .settings-btn:hover {
+            background: rgba(99, 102, 241, 0.4);
+            transform: rotate(45deg);
+        }
+
+        .config-modal .modal-content {
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .cmd-btn {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #a5b4fc;
+        }
+
+        .cmd-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .cmd-btn.active {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #6ee7b7;
+        }
+
+        .terminal-output {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Back Link -->
+        <a href="rpg-hub.html" class="back-link mb-6 inline-block">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            返回主頁
+        </a>
+
+        <!-- Settings Button -->
+        <button onclick="openConfig()" class="settings-btn" title="API 設定">
+            <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        </button>
+
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <div class="text-6xl mb-4">🤖</div>
+            <h1 class="title-glow text-3xl md:text-4xl font-black mb-2 tracking-wider">SPEC KIT AI AGENT v2.0</h1>
+            <p class="text-gray-400">完整 Spec-Driven Development 工作流程 - 8 大指令整合</p>
+        </header>
+
+        <!-- SDD Commands Bar -->
+        <div class="glass-card p-4 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm text-gray-400">🛠️ SDD 指令工具列</span>
+                <span class="text-xs text-indigo-400">點擊指令開始工作流程</span>
+            </div>
+            <div class="flex flex-wrap gap-2" id="cmd-bar">
+                <button class="cmd-btn" data-cmd="specify" title="建立功能規格說明">📝 /specify</button>
+                <button class="cmd-btn" data-cmd="clarify" title="釐清模糊需求">❓ /clarify</button>
+                <button class="cmd-btn" data-cmd="plan" title="產生技術規劃">🗺️ /plan</button>
+                <button class="cmd-btn" data-cmd="tasks" title="產生任務清單">📋 /tasks</button>
+                <button class="cmd-btn" data-cmd="checklist" title="產生檢查清單">✅ /checklist</button>
+                <button class="cmd-btn" data-cmd="analyze" title="分析一致性">🔍 /analyze</button>
+                <button class="cmd-btn" data-cmd="implement" title="執行實作">🚀 /implement</button>
+                <button class="cmd-btn" data-cmd="constitution" title="管理專案憲章">📜 /constitution</button>
+            </div>
+        </div>
+
+        <!-- Progress Steps -->
+        <div class="glass-card p-4 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-sm text-gray-400">開發流程進度</span>
+                <span id="progress-text" class="text-sm text-indigo-400">步驟 1/6</span>
+            </div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 16.6%"></div>
+            </div>
+            <div class="flex justify-between mt-4 text-xs">
+                <div id="step-1-indicator" class="text-center flex-1">
+                    <div
+                        class="w-8 h-8 mx-auto mb-1 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold">
+                        1</div>
+                    <span class="text-indigo-400">Specify</span>
+                </div>
+                <div id="step-2-indicator" class="text-center flex-1 opacity-50">
+                    <div
+                        class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+                        2</div>
+                    <span class="text-gray-500">Clarify</span>
+                </div>
+                <div id="step-3-indicator" class="text-center flex-1 opacity-50">
+                    <div
+                        class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+                        3</div>
+                    <span class="text-gray-500">Plan</span>
+                </div>
+                <div id="step-4-indicator" class="text-center flex-1 opacity-50">
+                    <div
+                        class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+                        4</div>
+                    <span class="text-gray-500">Tasks</span>
+                </div>
+                <div id="step-5-indicator" class="text-center flex-1 opacity-50">
+                    <div
+                        class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+                        5</div>
+                    <span class="text-gray-500">Checklist</span>
+                </div>
+                <div id="step-6-indicator" class="text-center flex-1 opacity-50">
+                    <div
+                        class="w-8 h-8 mx-auto mb-1 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
+                        6</div>
+                    <span class="text-gray-500">Implement</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Output -->
+        <div id="terminal-output"
+            class="glass-card bg-black/60 border-gray-800 p-3 mb-6 terminal-output text-xs text-gray-400 h-32 overflow-y-auto hidden">
+            <div class="flex justify-between border-b border-gray-800 pb-1 mb-2">
+                <span class="text-blue-400">PowerShell - SDD Operations</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="downloadLogs()" class="hover:text-indigo-400 transition-colors" title="匯出日誌">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </button>
+                    <span class="text-gray-600">pwsh</span>
+                </div>
+            </div>
+            <div id="terminal-content">
+                <div class="text-green-500">PS > Spec Kit Agent v2.0 initialized</div>
+                <div class="text-indigo-300">✓ SDD Templates loaded</div>
+                <div class="text-indigo-300">✓ 8 Commands ready</div>
+                <div class="text-gray-500">Awaiting user input...</div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Left: Chat Interface -->
+            <div class="glass-card p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span>💬</span> AI 對話
+                </h2>
+                <div id="chat-container" class="h-96 overflow-y-auto mb-4 space-y-3">
+                    <div class="chat-bubble">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-2xl">🤖</span>
+                            <span class="font-bold text-indigo-400">Spec Kit Agent v2.0</span>
+                        </div>
+                        <p>歡迎使用 <strong>Spec Kit AI Agent v2.0</strong>！我已整合完整的 SDD 工作流程：</p>
+                        <ul class="text-sm mt-2 space-y-1 text-gray-300">
+                            <li>📝 <code>/specify</code> - 建立功能規格說明</li>
+                            <li>❓ <code>/clarify</code> - 釐清模糊需求</li>
+                            <li>🗺️ <code>/plan</code> - 產生技術規劃</li>
+                            <li>📋 <code>/tasks</code> - 產生任務清單</li>
+                            <li>✅ <code>/checklist</code> - 產生檢查清單</li>
+                            <li>🔍 <code>/analyze</code> - 分析一致性</li>
+                            <li>🚀 <code>/implement</code> - 執行實作</li>
+                        </ul>
+                        <p class="mt-3 text-yellow-400">👉 請描述你想開發的功能，或直接點擊上方指令按鈕！</p>
+                    </div>
+                </div>
+
+                <div id="shortcuts" class="flex flex-wrap gap-2 mb-4 hidden"></div>
+
+                <div class="flex gap-2">
+                    <textarea id="user-input"
+                        class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white resize-none"
+                        rows="3" placeholder="描述你想要的應用，或輸入 /specify 開始..."></textarea>
+                    <button id="send-btn" onclick="sendMessage()" class="btn-primary self-end">發送 →</button>
+                </div>
+            </div>
+
+            <!-- Right: Generated Content -->
+            <div class="space-y-4">
+                <!-- Spec Preview -->
+                <div id="spec-section" class="step-card p-4">
+                    <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
+                        <span>📋</span> 規格說明 (spec.md)
+                        <span id="spec-status" class="text-xs bg-gray-700 px-2 py-1 rounded-full">等待中</span>
+                    </h3>
+                    <div id="spec-content" class="text-sm text-gray-400">等待描述你的需求...</div>
+                </div>
+
+                <!-- Plan Preview -->
+                <div id="plan-section" class="step-card p-4 opacity-50">
+                    <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
+                        <span>🗺️</span> 技術規劃 (plan.md)
+                        <span id="plan-status" class="text-xs bg-gray-700 px-2 py-1 rounded-full">等待中</span>
+                    </h3>
+                    <div id="plan-content" class="text-sm text-gray-400">等待規格說明完成...</div>
+                </div>
+
+                <!-- Tasks Preview -->
+                <div id="tasks-section" class="step-card p-4 opacity-50">
+                    <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
+                        <span>📋</span> 任務清單 (tasks.md)
+                        <span id="tasks-status" class="text-xs bg-gray-700 px-2 py-1 rounded-full">等待中</span>
+                    </h3>
+                    <div id="tasks-content" class="text-sm text-gray-400">等待技術規劃完成...</div>
+                </div>
+
+                <!-- Code Preview -->
+                <div id="code-section" class="step-card p-4 opacity-50">
+                    <h3 class="font-bold text-lg mb-3 flex items-center gap-2">
+                        <span>💻</span> 生成的代碼
+                        <span id="code-status" class="text-xs bg-gray-700 px-2 py-1 rounded-full">等待中</span>
+                    </h3>
+                    <div id="code-preview" class="code-preview hidden">
+                        <div class="code-header">
+                            <div class="code-dot bg-red-500"></div>
+                            <div class="code-dot bg-yellow-500"></div>
+                            <div class="code-dot bg-green-500"></div>
+                            <span id="code-filename" class="text-gray-400 text-sm ml-2">generated-app.html</span>
+                        </div>
+                        <pre id="code-content" class="code-content"></pre>
+                    </div>
+                    <div id="code-placeholder" class="text-sm text-gray-400">完成規劃後將生成代碼...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div id="action-buttons" class="mt-6 flex justify-center gap-4 hidden flex-wrap">
+            <button onclick="downloadCode()" class="btn-primary flex items-center gap-2"><span>📥</span> 下載代碼</button>
+            <button onclick="runDynamicTests()"
+                class="px-6 py-3 rounded-lg font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 transition-all shadow-lg flex items-center gap-2 border border-amber-500/30"><span>🧪</span>
+                動態沙盒測試</button>
+            <button onclick="downloadAllDocs()"
+                class="px-6 py-3 rounded-lg font-bold bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg flex items-center gap-2 border border-white/10"><span>📂</span>
+                下載全套文件</button>
+            <button onclick="verifyCodeWithBridge()"
+                class="px-6 py-3 rounded-lg font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg flex items-center gap-2 border border-indigo-400"><span>🛡️</span>
+                精確驗證 (Auto-Fix)</button>
+
+            <button onclick="downloadLogFile()"
+                class="px-6 py-3 rounded-lg font-bold bg-gray-700/50 hover:bg-gray-700/70 text-gray-300 transition-all shadow-lg flex items-center gap-2 border border-gray-600/30"><span>📋</span>
+                下載執行日誌</button>
+            <button onclick="addToEquipment()" class="btn-generate flex items-center gap-2"><span>🎒</span>
+                添加到我的裝備</button>
+        </div>
+
+        <!-- Dynamic Test Sandbox Panel -->
+        <div id="test-sandbox-panel" class="glass-card mt-6 p-6 hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <span>🧪</span> 動態沙盒測試
+                    <span id="test-status-badge" class="text-xs bg-gray-700 px-2 py-1 rounded-full">等待執行</span>
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="toggleSandboxPreview()"
+                        class="text-xs px-3 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-lg text-indigo-300 transition">
+                        <span id="toggle-preview-text">隱藏預覽</span>
+                    </button>
+                    <button onclick="closeSandboxPanel()"
+                        class="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-300 transition">
+                        關閉
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sandbox iframe -->
+            <div id="sandbox-preview-container" class="mb-4">
+                <div class="bg-gray-900 rounded-lg overflow-hidden border border-gray-700">
+                    <div class="bg-gray-800 px-3 py-2 flex items-center gap-2 border-b border-gray-700">
+                        <div class="flex gap-1.5">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <span class="text-xs text-gray-400 ml-2">生成的應用預覽 (沙盒環境)</span>
+                    </div>
+                    <iframe id="sandbox-iframe" class="w-full h-64 bg-white"
+                        sandbox="allow-scripts allow-same-origin"></iframe>
+                </div>
+            </div>
+
+            <!-- Test Results -->
+            <div id="test-results-container" class="space-y-3">
+                <div class="text-sm text-gray-400 flex items-center gap-2">
+                    <span id="test-spinner" class="hidden">
+                        <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </span>
+                    <span id="test-progress-text">點擊「動態沙盒測試」開始驗證</span>
+                </div>
+                <div id="test-results-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                <div id="test-summary" class="hidden mt-4 p-3 rounded-lg border">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold" id="test-summary-text"></span>
+                        <div class="flex gap-3 text-sm">
+                            <span class="text-green-400" id="test-passed-count">✓ 0</span>
+                            <span class="text-red-400" id="test-failed-count">✗ 0</span>
+                            <span class="text-yellow-400" id="test-skipped-count">⊘ 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center py-8 mt-8 border-t border-gray-800">
+            <p class="text-gray-500 text-sm">Spec Kit AI Agent v2.0 — 完整 SDD 工作流程 | 8 大指令整合 🤖</p>
+        </footer>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content text-center">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-2xl font-bold text-green-400 mb-2">成功添加到裝備！</h2>
+            <p class="text-gray-400 mb-4">你的新工具已經加入到「我的裝備」中</p>
+            <div class="bg-gray-800/50 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-center gap-3">
+                    <span class="text-3xl" id="modal-icon">🛠️</span>
+                    <div class="text-left">
+                        <div id="modal-tool-name" class="font-bold text-white">新工具</div>
+                        <div class="text-sm text-gray-400">+50 XP 獎勵</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeModal()"
+                    class="px-6 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">繼續生成</button>
+                <a href="rpg-hub.html" class="btn-primary inline-block">返回主頁 →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Config Modal -->
+    <div id="config-modal" class="modal config-modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-indigo-400 mb-6 flex items-center gap-2"><span>⚙️</span> AI Provider 設定
+            </h2>
+
+            <div class="mb-6 bg-gray-800/50 p-4 rounded-lg border border-gray-700">
+                <label class="block text-sm text-gray-400 mb-3 block font-bold">選擇主要的 AI 模型供應商</label>
+                <div class="flex gap-6">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <div class="relative">
+                            <input type="radio" name="provider" value="gemini" class="peer sr-only"
+                                onchange="toggleProviderSettings()">
+                            <div
+                                class="w-5 h-5 border-2 border-gray-500 rounded-full peer-checked:border-green-400 peer-checked:bg-green-400 transition-all">
+                            </div>
+                        </div>
+                        <span class="text-gray-300 group-hover:text-white transition">Google Gemini</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <div class="relative">
+                            <input type="radio" name="provider" value="kimi" class="peer sr-only"
+                                onchange="toggleProviderSettings()">
+                            <div
+                                class="w-5 h-5 border-2 border-gray-500 rounded-full peer-checked:border-blue-400 peer-checked:bg-blue-400 transition-all">
+                            </div>
+                        </div>
+                        <span class="text-gray-300 group-hover:text-white transition">Moonshot Kimi</span>
+                    </label>
+                </div>
+            </div>
+
+            <hr class="border-gray-700 mb-6">
+
+            <!-- Gemini Settings -->
+            <div id="gemini-settings" class="space-y-4">
+                <h3 class="text-lg font-semibold text-green-400 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Google Gemini 設定
+                </h3>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">API Keys (支援多個，用逗號或換行分隔)</label>
+                    <textarea id="config-gemini-key"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-green-500 focus:outline-none transition"
+                        rows="3" placeholder="輸入一或多個 Gemini API Key..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Model Name</label>
+                    <input type="text" id="config-gemini-model"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-green-500 focus:outline-none transition"
+                        value="gemini-2.5-flash-preview-09-2025">
+                </div>
+            </div>
+
+            <!-- Kimi Settings -->
+            <div id="kimi-settings" class="space-y-4 hidden">
+                <h3 class="text-lg font-semibold text-blue-400 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                    Moonshot Kimi 設定
+                </h3>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">API Endpoint URL</label>
+                    <input type="text" id="config-kimi-url"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-blue-500 focus:outline-none transition"
+                        value="https://api.moonshot.cn/v1/chat/completions">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">API Key</label>
+                    <input type="password" id="config-kimi-key"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-blue-500 focus:outline-none transition"
+                        placeholder="輸入 Kimi API Key (sk-...)">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Model Name</label>
+                    <input type="text" id="config-kimi-model"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-blue-500 focus:outline-none transition"
+                        value="moonshot-v1-8k">
+                </div>
+            </div>
+
+            <div class="flex gap-3 justify-end mt-8 pt-4 border-t border-gray-700">
+                <button onclick="closeConfig()"
+                    class="px-6 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition text-white">取消</button>
+                <button onclick="saveConfig()" class="btn-primary px-8 py-2 rounded-lg shadow-lg">儲存並套用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Modal -->
+    <div id="template-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold text-indigo-400 mb-4 flex items-center gap-2" id="template-modal-title">📄
+                模板預覽</h2>
+            <pre id="template-modal-content"
+                class="bg-black/50 p-4 rounded-lg text-xs text-gray-300 max-h-96 overflow-y-auto"></pre>
+            <div class="flex gap-3 justify-end mt-6">
+                <button onclick="closeTemplateModal()"
+                    class="px-6 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="DevScribeRPG.js"></script>
+    <script src="modules/code-generator.js?v=1.0"></script>
+    <script src="spec-kit-sdd-core.js?v=3.4"></script>
+    <!-- 🔍 TROUBLESHOOTING MODULE (可選) - Phase 2 代碼生成後自動執行意圖對比除錯 -->
+    <script src="modules/troubleshooting.js?v=1.0"></script>
+    <!-- 🔧 AUTO-FIX MODULE (可選) - 移除下一行即可禁用 Auto-Fix 功能 -->
+    <script src="modules/auto-fix.js?v=1.0"></script>
+</body>
+
+</html>

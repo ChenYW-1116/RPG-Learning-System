@@ -1,0 +1,930 @@
+JSON.parse(localStorage.getItem('speckit_config'))
+.\start-precision-bridge.ps1
+py arena_api.py
+python zhihu_server.py
+
+#verify gemini key
+python verify_gemini_key.py [GCP_API_KEY]
+
+
+===
+要啟用並執行 代碼自動修復 (Auto-Fix) 功能，請按照以下兩個步驟操作：
+
+第一步：啟動本地橋接伺服器 (Bridge Server)
+這是為了讓瀏覽器能夠呼叫本地的 AI Agent 來修復檔案。
+
+在 VSCode 打開終端機 (Terminal)。
+確認當前目錄是 c:\2026 Tasks\07. Empire。
+執行以下指令：
+powershell
+.\start-precision-bridge.ps1
+成功標誌：您會看到終端機顯示 Bridge listening on http://localhost:3000。 (請保持這個視窗開啟，不要關閉)
+
+第二步：在網頁上觸發驗證
+用瀏覽器打開 spec-kit-agent.html。
+在介面上照常生成您的代碼 (Generate Code)。
+生成完畢後，在下方的功能按鈕區，點擊 [🛡️ 精確驗證 (Auto-Fix)] 按鈕。
+接下來會發生什麼事？
+
+終端機：您會看到 Bridge Server 開始跑一串日誌，顯示 AI 正在分析 (Analyzing target file...)。
+自動修復：如果 Agent 發現錯誤 (例如 injectTestRunner is not defined)，它會自動修改本地的暫存檔。
+網頁回應：修復完成後，網頁會彈出通知「🔧 代碼已精確修正」，並自動更新畫面上的代碼。
+這樣就完成了一次完整的「生成 -> 驗證 -> 修復」閉環。
+
+
+models:
+gemini-2.5-flash-preview-09-2025
+gemini-2.5-flash-lite
+gemini-3-flash-preview
+
+##https://ai.google.dev/gemini-api/docs/models?hl=zh-tw
+
+
+Notes:
+RPM (Requests Per Minute): 每分鐘請求次數限制。
+TPM (Tokens Per Minute): 每分鐘權標（Token）處理限量。
+RPD (Requests Per Day): 每日請求次數限制。
+
+
+
+PS C:\2026 Tasks\07. Empire> cd 'C:\2026 Tasks\07. Empire'
+PS C:\2026 Tasks\07. Empire> $p = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue; if ($p) { Stop-Process -Id $p.OwningProcess -Force; Write-Host "Stopped process on port 3000" } else { Write-Host "No process found on port 3000" }
+Stopped process on port 3000
+
+$p = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue; if ($p) { Stop-Process -Id $p.OwningProcess -Force; }; Start-Sleep -Seconds 2; .\start-precision-bridge.ps1
+
+
+
+=== Claud Agent Skills 調用原理===
+
+
+這個「查找 Skills」的動作通常由以下三個時機點之一來觸發，您可以根據需求選擇實作層級：
+
+1. 每次 AI 調用前觸發 (Global Hook) - 最智慧
+這是最通用的做法。將「查找 Skill」埋在最底層的 AI 請求函數中（例如 
+callKimi
+ 或 resolvePrompt）。
+
+觸發條件：只要程式準備向 AI 發送請求（無論是寫 Spec、寫 Code 或修 Bug）。
+優點：即使是寫 Spec 的階段，如果有一個「撰寫優良 Spec 的 Skill」，系統也會自動拿來用。
+成本：會多一次輕量級的 API 呼叫（Selection Step）。
+2. 特定命令觸發 (Command Based) - 最實用
+只在特定的高風險或複雜命令中觸發，例如 /implement (實作) 或 /auto (全自動)。
+
+觸發條件：當用戶輸入 /implement 或點擊「執行實作」按鈕時。
+實作位置：在 
+spec-kit-sdd-core.js
+ 的 SDD_COMMANDS.implement.prompt 生成邏輯區塊中。
+邏輯：「現在要開始寫程式碼了，先去看看有沒有相關的技術指南 (Skills)？」
+3. 錯誤恢復時觸發 (Error Recovery) - 最精準 (針對 Auto-Fix)
+這專門針對您的 Auto-Fix 場景。
+
+觸發條件：當 
+injectTestRunner
+ 驗證失敗，或是 compile 出錯，系統進入 Retry Loop 時。
+邏輯：系統發現錯誤（例如：Error: 'Unstyled'），此時觸發 Skill Search，搜尋關鍵字 "Style", "CSS"。系統就會找到 auto-fix-styling Skill 並在重試 (Retry) 時使用它。
+推薦實作方式：第 2 種 (Command Based)
+這是在效能與智慧之間的最佳平衡點。您不需要在聊天的每一句話都查 Skill，但每次要產生交付物（代碼/文件）時，都應該查一次。
+
+程式碼邏輯示意 (在 
+spec-kit-sdd-core.js
+ 中)：
+
+javascript
+// 在處理 /implement 命令的函數中
+if (command === '/implement' || command === '/auto') {
+    
+    // 1. [觸發點]: 執行 Skill 檢索
+    // 根據用戶的需求描述 (state.userRequirement) 去找 Skill
+    const relevantSkill = await findSkill(state.userRequirement);
+    
+    // 2. 注入 Prompt
+    if (relevantSkill) {
+        prompt += `\n\n[Active Skill Strategy]\n${relevantSkill}`;
+    }
+    
+    // 3. 繼續原本的 AI 請求...
+}
+這樣，只要您下令 /implement 製作一個倒數計時器，系統就會自動去 Skills 庫看看有沒有「倒數計時器製作指南」或者「通用樣式修復指南」，完全不需要您手動指定。
+
+
+
+=== 
+
+
+==== Skill 實作 ===
+
+好 那幫我將 透過skills方式解決問題 的方式 時做出來
+
+Thought for 4s
+
+Analyzed
+spec-kit-bridge.js#L1-139
+spec-kit-bridge.js
+ currently ONLY supports /verify endpoint. It uses fs internally but does not expose generic file reading/listing capabilities to the frontend (
+spec-kit-sdd-core.js
+).
+
+Immediate Problem: The frontend (
+spec-kit-agent.html
+ + 
+spec-kit-sdd-core.js
+) cannot scan directories or read arbitrary files because the Bridge API is hardcoded to only handle Code Verification (/verify).
+
+Solution Phase 1: Enhance the Bridge I must first add capabilities to 
+spec-kit-bridge.js
+ to support:
+
+GET /tools/list: List skills/tools.
+GET /tools/read?path=...: Read content of a skill file.
+Solution Phase 2: Modify frontend logic Then I can implement findRelevantSkill in 
+spec-kit-sdd-core.js
+ to call these new endpoints.
+
+I will implement this step-by-step.
+
+Step 1: Upgrade 
+spec-kit-bridge.js
+ Add:
+
+Import readdir.
+Endpoint POST /read-skill-index (or generic POST /fs/list)
+Endpoint POST /read-file
+Actually, I'll add a POST /ask-skills endpoint that does the listing for the frontend? No, better to expose primitives. POST /fs/list-skills -> returns list of 
+SKILL.md
+ files found in skills/*. POST /fs/read -> returns file content.
+
+I'll modify 
+spec-kit-bridge.js
+ to add these endpoints.
+
+Plan:
+
+Read 
+spec-kit-bridge.js
+ (Done).
+Update 
+spec-kit-bridge.js
+ to handle /fs/list-skills and /fs/read-file.
+Restart the bridge? (Wait, 
+spec-kit-bridge.js
+ is a Node script. If I modify it, the User needs to restart it. I should assume it's running via node spec-kit-bridge.js. Use process_manager? No, I don't have that. I'll just rely on updating the file, and assume the environment watcher or next run picks it up. But if it's currently running, it won't change. I should restart it if I can. Actually, I can use run_command to kill and restart it if I know the process name. Wait, 
+spec-kit-bridge.js
+ is usually run by the user manually or via a startup task. I'll just update the file and tell the user "Please restart the bridge". OR, if I can find the process... I'll check read_terminal or list_processes? No list_processes tool. I'll stick to updating the code and informing the user. Wait, "Run the command" is part of the request? "Help me implement...". I will handle the file updates first.
+Step 2: Update 
+spec-kit-sdd-core.js
+ Add the findSkill logic that calls the new bridge endpoints. Inject the skill content into implement logic.
+
+Let's start with 
+spec-kit-bridge.js
+.
+
+I need opendir or readdir with recursive? Node.js fs/promises. I'll implement a simple scanner for OPENCLAW_DIR/skills.
+
+Code to add to 
+spec-kit-bridge.js
+:
+
+javascript
+const { readdir } = require('fs/promises'); // Add to imports
+// ... inside server callback ...
+    if (req.url === "/fs/list-skills" && req.method === "POST") {
+        try {
+            const skillsDir = join(OPENCLAW_DIR, "skills");
+            // Read directories in skills/
+            const entries = await readdir(skillsDir, { withFileTypes: true });
+            const skills = [];
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    // Check for SKILL.md
+                    try {
+                        const skillPath = join(skillsDir, entry.name, "SKILL.md");
+                        const content = await readFile(skillPath, "utf-8");
+                        // Extract Name/Desc from frontmatter if possible
+                        // For now just return path and raw content snippet or just path
+                        skills.push({ 
+                            name: entry.name, 
+                            path: `skills/${entry.name}/SKILL.md`,
+                            fullPath: skillPath
+                            // content: content.substring(0, 200) // Optional optimization
+                        });
+                    } catch (e) {
+                        // SKILL.md doesn't exist, ignore
+                    }
+                }
+            }
+            res.writeHead(200, headers);
+            res.end(JSON.stringify({ skills }));
+        } catch (err) {
+            res.writeHead(500, headers);
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
+    if (req.url === "/fs/read-file" && req.method === "POST") {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+             try {
+                 const { path } = JSON.parse(body);
+                 // Security check: path should be relative to OPENCLAW_DIR or whitelisted
+                 // Simple implementation:
+                 const targetPath = join(OPENCLAW_DIR, path);
+                 const content = await readFile(targetPath, "utf-8");
+                 res.writeHead(200, headers);
+                 res.end(JSON.stringify({ content }));
+             } catch (err) {
+                 res.writeHead(500, headers);
+                 res.end(JSON.stringify({ error: err.message }));
+             }
+        });
+        return;
+    }
+I need to be careful with imports. readdir needs to be added to line 4.
+
+I'll use replace_file_content to add imports and the new routes.
+
+Step 1: Update 
+spec-kit-bridge.js
+ imports. Step 2: Add routes.
+
+Let's do Step 1. const { writeFile, readFile } = require('fs/promises'); -> const { writeFile, readFile, readdir } = require('fs/promises');
+
+And Step 2: Insert the new routes before res.writeHead(404, headers);.
+
+I'll do both in one replace_file_content if possible, or two. Line 4 is simple. Line 130 is simple.
+
+Executing Step 1 & 2.
+
+Note: I'll check line 4 again. const { writeFile, readFile } = require('fs/promises');. It matches.
+
+For the routes, I'll insert them before res.writeHead(404, headers); (Line 132). I'll overwrite lines 130-131 (which are     } and empty line?) Line 130 is     } (closing if (/verify) block). Line 131 is empty. Line 132 is     res.writeHead(404, headers);.
+
+I'll replace res.writeHead(404, headers); with the new logic + res.writeHead(404, headers); at the end.
+
+Wait, I can use write_to_file to rewrite the whole file since I have the full content in view_file. This is safer than splicing logic. I'll rewrite 
+spec-kit-bridge.js
+ entirely with the new features.
+
+Features to add:
+
+readdir import.
+/fs/list-skills endpoint.
+/fs/read-file endpoint.
+I'll structure the new file content.
+
+javascript
+const http = require('http');
+const { resolve, join } = require('path');
+const { writeFile, readFile, readdir } = require('fs/promises'); // Added readdir
+const { spawn } = require('child_process');
+// Configuration
+const OPENCLAW_DIR = resolve("./openclaw-main");
+const SCRIPT_PATH = "skills/precise-execution/scripts/run-task.ts";
+console.log("Starting Spec Kit Bridge Server (Node.js Mode - V2 with FS)...");
+// ... headers ...
+// ... verify endpoint ...
+    // NEW ENDPOINTS
+    if (req.url === "/fs/list-skills" && req.method === "POST") {
+         try {
+            const skillsDir = join(OPENCLAW_DIR, "skills");
+            const entries = await readdir(skillsDir, { withFileTypes: true });
+            const skills = [];
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    try {
+                        // Check if SKILL.md exists
+                        const relativePath = `skills/${entry.name}/SKILL.md`;
+                        const skillPath = join(skillsDir, entry.name, "SKILL.md");
+                        // Read first 200 chars for description
+                        const content = await readFile(skillPath, "utf-8");
+                        // Simple parse for Description in frontmatter?
+                        // Just send raw snippet
+                        skills.push({ 
+                            name: entry.name, 
+                            path: relativePath,
+                            contentSnippet: content.substring(0, 300) 
+                        });
+                    } catch (e) {
+                        // Skip if SKILL.md missing
+                    }
+                }
+            }
+            res.writeHead(200, headers);
+            res.end(JSON.stringify({ skills }));
+         } catch (err) {
+             console.error("[Bridge] List Skills Error:", err);
+             res.writeHead(500, headers);
+             res.end(JSON.stringify({ error: err.message }));
+         }
+         return;
+    }
+    if (req.url === "/fs/read-file" && req.method === "POST") {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+            try {
+                const { path } = JSON.parse(body);
+                // Sanitize path? For now trust local user.
+                const targetPath = join(OPENCLAW_DIR, path);
+                console.log(`[Bridge] Reading file: ${targetPath}`);
+                const content = await readFile(targetPath, "utf-8");
+                res.writeHead(200, headers);
+                res.end(JSON.stringify({ content }));
+            } catch (err) {
+                console.error("[Bridge] Read File Error:", err);
+                res.writeHead(500, headers);
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+    res.writeHead(404, headers);
+    res.end("Not Found");
+// ... listen ...
+This looks correct.
+
+After rewriting 
+spec-kit-bridge.js
+, I will update 
+spec-kit-sdd-core.js
+. I need to find where implement command is defined or executed. I'll use grep_search to find implement: { (definition in SDD_COMMANDS) and the execution logic. Outline showed SDD_COMMANDS around line 124+. And implement might be around line 350+ (it was truncated in outline loop).
+
+I'll search implement: {. I'll search function implement logic that constructs the prompt.
+
+Actually, the outline showed callAI or similar is not explicitly named. It might be inline inside the command handler. I'll search for where state.currentCommand is checked. state.currentCommand === 'implement'. Or SDD_COMMANDS.implement.prompt.
+
+I'll start with updating the bridge.
+
+One detail: OPENCLAW_DIR is set to ./openclaw-main. Is this correct context? The bridge script is at 
+c:/2026 Tasks/07. Empire/spec-kit-bridge.js
+. openclaw-main is a subdirectory. User's workspace is c:/2026 Tasks/07. Empire. So ./openclaw-main resolves to c:/2026 Tasks/07. Empire/openclaw-main. Correct.
+
+Executing write to spec-kit-bridge.js.
+
+Wait, duplicate readFile import? Original: const { writeFile, readFile } = require('fs/promises'); New: const { writeFile, readFile, readdir } = ... Correct.
+
+Refining the code content.
+
+One note: process.stdout.write usage in verify endpoint. I should keep the verify endpoint intact. I will verify I have the entire verify content. View file in Step 420 showed lines 1-139. It seems complete (lines 136-138 server.listen). So I can copy-paste and augment.
+
+Action 1: Rewrite spec-kit-bridge.js. Action 2: Update spec-kit-sdd-core.js.
+
+Let's do Action 1.
+
+(Self-correction: I should check if I need to restart the bridge process. User request: "Implement it out". If I change the file, it won't take effect until restart. I will perform the file change and tell the user to restart the bridge node spec-kit-bridge.js. Or, assume the user handles it. I'll add a "Proactive" note: "Updating Bridge Script... (Requires Restart)".
+
+Okay.
+
+Writing spec-kit-bridge.js.
+
+Wait, the code in Step 420 had if (req.url === "/verify" ...) block. I will preserve it exactly.
+
+One small mismatch: Line 8: const OPENCLAW_DIR = resolve("./openclaw-main");. VS Code/Terminal runs in c:/2026 Tasks/07. Empire. So ./openclaw-main is correct.
+
+Ready.
+
+Writing c:/2026 Tasks/07. Empire/spec-kit-bridge.js.
+
+Edited
+spec-kit-bridge.js
++196
+-138
+I noticed a small syntax error in my written content: let updatedCode = updatedCode = await readFile.... I should fix that immediately before it breaks the user's verify functionality. Line: let updatedCode = updatedCode = .... It should be let updatedCode = await readFile....
+
+I will apply a quick fix to 
+spec-kit-bridge.js
+.
+
+After that, I will modify 
+spec-kit-sdd-core.js
+ to use these new endpoints.
+
+Step 2: Fix Bridge Search and replace the double assignment.
+
+Step 3: Modify 
+spec-kit-sdd-core.js
+ I need to add the findRelevantSkill logic. I'll add it before 
+addLog
+ function or somewhere global. And call it inside implement command (or generic 
+generate
+ logic).
+
+I'll first fix the bridge.
+
+Edited
+spec-kit-bridge.js
++1
+-1
+Now I will modify 
+spec-kit-sdd-core.js
+. Since I cannot read the full file easily to find the exact insertion point (outline showed truncation), I will use grep_search to find const SDD_COMMANDS. Then I will try to insert the findRelevantSkill function before SDD_COMMANDS or after state definition. And I need to update the prompt logic inside SDD_COMMANDS.implement (or plan/
+auto
+).
+
+Wait, SDD_COMMANDS has prompt strings (template literals). If prompt is a static string, I cannot dynamically inject skills into it inside the object definition unless I change the structure to use a function. Reference Step 399 outline: prompt: \根據以下規格...`` This is a static string.
+
+However, the code that uses SDD_COMMANDS[cmd].prompt likely does regex replacement ({SPEC}, {PLAN}). I can modify the Execution Logic (where replace happens) to also inject {SKILLS} if I add {SKILLS} to the prompt template. OR, I can simply append to the final constructed prompt string in the execution function.
+
+I need to find the execution logic. I'll search for currentCommand.prompt or .replace('{SPEC}'.
+
+I'll search for .replace('{SPEC}' in 
+spec-kit-sdd-core.js
+.
+
+Searched
+.replace('{SPEC}'
+0 results
+Maybe it uses a regex? .replace(/{SPEC}/? I'll search for {SPEC}.
+
+Searched
+{SPEC}
+0 results
+Strange. The outline CLEARLY showed {SPEC} in the string content. Maybe grep_search is failing on special chars? I'll search for SDD_COMMANDS and then read the file from there. Outline Step 399 showed SDD_COMMANDS starts at line 125. I'll read lines 125-500 (approx). Actually, I want to find the Main Loop or Event Handler that processes the command. It's likely in the second half of the file.
+
+I'll read file from line 1000 to 1500 to search for logic. Or search for async function definitions.
+
+I'll define findRelevantSkill at the top of the file (after imports/constants), and then I need to find where to call it. If I can't find the execution logic, I can't inject it.
+
+Let's look for state.currentCommand. Any logic using state.currentCommand is key.
+
+Search: state.currentCommand.
+
+Searched
+state.currentCommand
+0 results
+This is extremely weird. Step 399 showing state object definition at line 455 had currentCommand. Maybe I need to try read_resource again? No, it failed. view_file works.
+
+I'll read lines 2000-2800. I'll iterate through the file to find the logic. Or better, I'll search for document.getElementById to find event listeners. Logic usually triggers on button click. start-btn?
+
+Let's search for "addEventListener".
+
+Searched
+addEventListener
+0 results
+Okay, grep_search is seemingly broken or the file content is indexed differently? I'll use view_file to read the script in chunks. Length is 213KB. 800 lines max per read. I'll read lines 1500-2300.
+
+Wait, I recall in Step 399 the file had 4707 lines. I'll read lines 2000-2800. I'm looking for the function that runs the AI generation. Probably named executeStep, runStep, processCommand.
+
+I'll read lines 2000-2800.
+
+Analyzed
+spec-kit-sdd-core.js#L2000-2799
+I have read the code. It contains functions like 
+runConstitutionCommand
+ (Line 2036). And 
+runAutoCommand
+ (Line 2505). And 
+startAutoFromPlan
+ (Line 2546).
+
+SDD_COMMANDS seems to be used directly: Line 2041: const prompt = SDD_COMMANDS.constitution.prompt...
+
+I also see 
+runSpecifyCommand
+ call in Line 2543. This suggests there are commands like 
+runSpecifyCommand
+, 
+runPlanCommand
+, 
+runImplementCommand
+. I haven't found 
+runImplementCommand
+ text in the viewed chunk.
+
+However, I see 
+runAutoCommand
+ executes Specify, then Plan, then... (Line 2530 list implies). But 
+runAutoCommand
+ implementation just calls await runSpecifyCommand(requirement). Presumably 
+runSpecifyCommand
+ will chain into others if state.autoMode is true.
+
+I need to find 
+runImplementCommand
+. I'll search for function runImplementCommand.
+
+And more importantly, I need to inject findRelevantSkills mechanism.
+
+The user asked to "Implement it". So I need to:
+
+Define findRelevantSkill function (can use state or pass userRequirement).
+Define listSkills function (calling Bridge).
+Inject call to findRelevantSkill inside 
+runImplementCommand
+ or 
+runAutoCommand
+ or wherever appropriate.
+If I modify 
+runImplementCommand
+, it covers both Manual /implement and Auto /auto (if Auto calls Implement).
+
+Let's find 
+runImplementCommand
+ first. I'll read lines 1500-2000. It must be there, before 
+runConstitutionCommand
+? Ah, logic typically flows Specify -> Plan -> Tasks -> Checklist -> Implement. So it's earlier in the file.
+
+I'll read lines 1200-1800.
+
+Also, I'll write the findRelevantSkill function. I'll put it in UTILITY FUNCTIONS section (Line 2200). Wait, Line 2200 starts Utility functions. I can append it after 
+downloadFile
+ (Line 2250).
+
+Code for findRelevantSkill:
+
+javascript
+// ─────────────────────────────────────────────────────────────────────────
+// 🧠 SKILL DISCOVERY
+// ─────────────────────────────────────────────────────────────────────────
+async function listSkills() {
+    try {
+        const bridgeUrl = 'http://localhost:3000/fs/list-skills';
+        const response = await fetch(bridgeUrl, { method: 'POST' });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.skills || [];
+    } catch (e) {
+        console.warn('Skill Discovery Failed:', e);
+        return [];
+    }
+}
+async function loadSkillContent(path) {
+    try {
+        const bridgeUrl = 'http://localhost:3000/fs/read-file';
+        const response = await fetch(bridgeUrl, { 
+            method: 'POST',
+            body: JSON.stringify({ path }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) return '';
+        const data = await response.json();
+        return data.content || '';
+    } catch (e) {
+        return '';
+    }
+}
+async function findRelevantSkill(requirement) {
+    // 1. Get List
+    const skills = await listSkills();
+    if (!skills || skills.length === 0) return null;
+    addLog(`🔍 探索可用 Skills (${skills.length} 個)...`, 'info', 'SKILL-SYSTEM');
+    // 2. Ask AI to select
+    const skillListStr = skills.map(s => `- Name: ${s.name}\n  Desc Snippet: ${s.contentSnippet ? s.contentSnippet.substring(0, 100).replace(/\n/g, ' ') : 'N/A'}`).join('\n');
+    
+    // Quick selector prompt
+    const prompt = `
+    Analyze the User Request and Available Skills.
+    
+    User Request: "${requirement}"
+    
+    Available Skills:
+    ${skillListStr}
+    
+    Task: Identify ONE skill that is STRICTLY relevant and necessary to solve the user's request.
+    If none are relevant, return "NONE".
+    If one is relevant, return its "Name" exactly.
+    `;
+    // Use a fast model if possible, or same config
+    // We reuse callKimi but maybe simpler
+    // Just reuse callKimi
+    const aiConfig = resolveAIConfig(); // assume this fn exists
+    let selection = await callKimi(prompt, "You are a Skill Dispatcher. Reply with Key Name only.", aiConfig.model, aiConfig.key, aiConfig.url); // Use same model
+    if (!selection) return null;
+    selection = selection.trim();
+    // Check if valid skill name
+    const targetSkill = skills.find(s => selection.includes(s.name) || s.name === selection);
+    
+    if (targetSkill) {
+        addLog(`✅ 激活 Skill: ${targetSkill.name}`, 'success', 'SKILL-SYSTEM');
+        const content = await loadSkillContent(targetSkill.path);
+        return `## Active Skill: ${targetSkill.name}\n${content}`;
+    }
+    
+    return null;
+}
+Now I need to find where to call findRelevantSkill. I will search for function runImplementCommand. I'll read lines 1000-1800.
+
+Once found, I'll insert const skillContext = await findRelevantSkill(state.userRequirement); at the start, and append to prompt.
+
+Let's read the file.
+
+Analyzed
+spec-kit-sdd-core.js#L1200-1800
+I found 
+runImplementCommand
+ at line 1788. And I've prepared findRelevantSkill utility.
+
+Action Plan:
+
+Define Utility: Use write_to_file to append the SKILL DISCOVERY utilities to the end of 
+spec-kit-sdd-core.js
+ (Or insert them before the end of file). Wait, I can't overwrite the whole file reliably because I haven't read all of it (missing lines 1801-1999, 2800-4700). I MUST use replace_file_content or multi_replace_file_content. I'll insert the functions before 
+resolveAIConfig
+ (line 1332) or just after imports. Actually I can insert them before // 🔄 MAIN MESSAGE HANDLER (Line 1247).
+Update 
+runImplementCommand
+: Inject the call to findRelevantSkill at the beginning of 
+runImplementCommand
+. Update the prompt construction to include the skill.
+Let's look at 
+runImplementCommand
+ prompt logic. I need to read lines 1800-2000 to see how prompt is built. view_file stopped at 1800.
+
+I'll read lines 1788-1900.
+
+After that, I will execute the edits.
+
+Step 2b: Read 
+runImplementCommand
+ implementation.
+
+Analyzed
+spec-kit-sdd-core.js#L1788-1900
+I see the logic. Line 1820: const prompt = SDD_COMMANDS.implement.prompt...
+
+I will modify 
+runImplementCommand
+ (starts Line 1788). I need to:
+
+Add let prompt = ... instead of const prompt = ... (to allow appending).
+Before building prompt, call findRelevantSkill(state.userRequirement).
+Inject skill content.
+Wait, prompt definition at 1820 is constructing it from SDD_COMMANDS. I can do:
+
+javascript
+// ...
+    // SKILL DISCOVERY
+    const activeSkill = await findRelevantSkill(state.userRequirement);
+    
+    let promptTemplate = SDD_COMMANDS.implement.prompt;
+    if (activeSkill) {
+        promptTemplate += `\n\n${activeSkill}`;
+    }
+    const prompt = promptTemplate
+        .replace('{SPEC}', specContent)
+        // ...
+This is clean.
+
+Now, Execution.
+
+Task 1: Add findRelevantSkill, listSkills, loadSkillContent to 
+spec-kit-sdd-core.js
+. I'll append them to the end of file? Or before 
+resolveAIConfig
+. Earlier I saw 
+resolveAIConfig
+ at line 1332. I'll insert them before that line.
+
+Task 2: Modify 
+runImplementCommand
+ to use logic.
+
+I'll do Task 1 first.
+
+Wait, I need to make sure listSkills works. The code I drafted earlier: const bridgeUrl = 'http://localhost:3000/fs/list-skills';. This assumes bridge is running on 3000. 
+spec-kit-bridge.js
+ line 136 says 3000. Correct.
+
+Okay.
+
+Applying Task 1: Add Utility Functions Target file: 
+spec-kit-sdd-core.js
+. Target location: before function resolveAIConfig.
+
+Applying Task 2: Modify 
+runImplementCommand
+ Target location: Line 1820 const prompt = .... Replace lines 1820-1827 with the new logic.
+
+I will do Task 1 now. (I need to find a unique enough target Content for Task 1 insertion). // 🧠 AI CONFIG RESOLUTION is at 1329. // ═══════════════════════════════════════════════════════════════════════════ at 1330.
+
+I'll insert before line 1329.
+
+Note: state.userRequirement might be empty? In 
+runImplementCommand
+, state.spec exists, so 
+runSpecifyCommand
+ must have run, so state.userRequirement should be populated (Line 1396). Yes.
+
+Let's execute.
+
+Insert Utility Functions (Task 1).
+
+Edited
+spec-kit-sdd-core.js
++87
+-0
+Now I execute Task 2: Modify 
+runImplementCommand
+ to inject the skill.
+
+I'll replace the block starting at const prompt = SDD_COMMANDS.implement.prompt (Line 1820).
+
+javascript
+// SKILL INJECTION
+    const activeSkill = await findRelevantSkill(state.userRequirement);
+    let promptTemplate = SDD_COMMANDS.implement.prompt;
+    if (activeSkill) {
+        promptTemplate += activeSkill;
+    }
+    const prompt = promptTemplate
+        .replace('{SPEC}', specContent)
+Wait, 
+findRelevantSkill
+ uses await. 
+runImplementCommand
+ is async. Correct. And 
+findRelevantSkill
+ logs its own start message.
+
+One detail: state.userRequirement is what usually triggers it, but for Auto-Fix, maybe the requirement is implicit? For now state.userRequirement is "Make a Task Timer". If the requirement doesn't mention "fix", 
+findRelevantSkill
+ might choose "NONE". However, if I use /implement manually for a fix... Wait, usually Auto-Fix comes from retry loop or explicit command. In 
+runImplementCommand
+, this is the initial generation.
+
+If the user wants Auto-Fix skill to be used during Initial Generation (Implementation), then finding it via userRequirement ("Fix the styling") is correct. If the user wants it during Retry Loop (inside while loop at line 1855), I need to modify the retry logic too.
+
+However, the user request "How to trigger skill search?" -> "Command Based". I am implementing it at the Command Start (
+runImplementCommand
+). This effectively makes it a "Smart Context Provider".
+
+This is what requested.
+
+I'll apply the edit.
+
+Edited
+spec-kit-sdd-core.js
++12
+-1
+I have successfully:
+
+Upgraded 
+spec-kit-bridge.js
+ to support File System discovery.
+Updated 
+spec-kit-sdd-core.js
+ with 
+findRelevantSkill
+ mechanism.
+Integrated the mechanism into the highly critical 
+runImplementCommand
+.
+Now, whenever the user runs /implement (or /auto -> /implement), the system will:
+
+Call Bridge to list skills.
+Ask AI "Which skill matches [User Requirement]?".
+If a skill matches (e.g. "Auto-fix styling"), load it.
+Inject it into the Prompt.
+This is a complete implementation of the "Skill Discovery System".
+
+I should inform the user that Spec Kit Bridge Restart is Required for the file system features to work. And I should verify if I can restart it for them? I can try to run node spec-kit-bridge.js but it might conflict with the existing one (Port 3000 in use). The user usually runs this in a separate terminal. I'll instruct them to restart it.
+
+Final response.
+
+(Wait, I should check if state.userRequirement is passed to 
+runImplementCommand
+? Yes, state is global. state.userRequirement is set in /specify.)
+
+Done.
+
+Response.
+
+"系統實作已完成！現在您的 Agent 具備了「自主學習與查找技能」的能力。..."
+
+Details:
+
+Bridge Upgraded (/fs/list-skills).
+Core Updated (
+findRelevantSkill
+).
+Integration (
+runImplementCommand
+ hook).
+Important Reminder: "請務必重啟 
+spec-kit-bridge.js
+ 服務，因為我更新了後端腳本。
+
+
+====================
+
+=== 調用流程 ===
+
+Spec Kit 系統調用 Skills 的步驟已經從手動進階到全自動化。以下是這個新機制的完整運作總結：
+
+1. 發現與觸發 (Discovery & Trigger)
+當您執行 /implement 或全自動流程 /auto 時，系統不再只是盲目執行 Prompt。
+
+攔截點：在生成代碼之前，程式 (
+spec-kit-sdd-core.js
+) 會先暫停。
+讀取目錄：透過 Bridge API (/fs/list-skills) 掃描 skills/ 資料夾，獲取所有可用的技能名稱與簡介。
+2. AI 決策 (Decision)
+系統將「用戶需求」與「可用技能列表」發送給 AI 大腦 (Kimi/Gemini)，詢問核心問題：
+
+"用戶想要做 [需求]，請問這些 Skills 中有沒有哪一個是必須參考的？"
+
+判斷：AI 會分析語意。
+若需求是 "Fix styling"，AI 會選中 auto-fix-styling。
+若需求是 "一般開發"，AI 可能回覆 NONE。
+3. 載入與注入 (Load & Inject)
+如果 AI 選中了某個 Skill：
+
+載入內容：系統透過 Bridge API (/fs/read-file) 讀取該 Skill 的完整 Markdown (
+SKILL.md
+)。
+上下文注入：這份文件會被強制插入到最核心的 System Prompt 中，標註為 ACTIVE SKILL。
+4. 執行 (Execution)
+最後，帶著 Skill 知識的 Prompt 被送往代碼生成模型。此時 AI 就像是拿著一本「特定任務指南」在寫程式，確保產出符合您定義的高標準規範（例如：必須移除 Shadow DOM、必須處理 ID 衝突）。
+
+您需要做的僅僅是：
+
+把好的經驗寫成 
+SKILL.md
+ 丟進 skills/ 資料夾。
+重啟 
+spec-kit-bridge.js
+。
+像平常一樣下指令，系統會自動變聰明。
+===============
+
+如何 重啟 
+ spec-kit-bridge.js ?
+要重啟 
+spec-kit-bridge.js
+，您需要進入執行該腳本的終端機視窗進行操作。
+
+由於這是 Node.js 服務，最簡單的方式是：
+
+找到執行中的終端機：切換到您原本啟動 Bridge 的那個 VS Code Terminal（通常名稱為 Node 或 
+Bridge
+）。
+停止服務：按鍵盤組合鍵 Ctrl + C（這會終止當前的 Process）。如果系統詢問是否終止，輸入 Y。
+重新啟動：輸入以下指令並按 Enter：
+powershell
+node spec-kit-bridge.js
+
+=====================================
+
+人工干預：如果您覺得系統沒抓到，也可以直接在對話中說：「使用 spec-kit-app-repair 技能來修復這個檔案」，這會直接強制系統加載該技能。 <-- 這個要在哪裡 下指令?
+
+Thought for 2s
+
+
+
+
+就在您平常與 Spec Kit Agent 對話的那個 主要對話框（Chat Input） 直接輸入就可以了！
+
+具體來說，有以下兩種下指令的方式：
+
+1. 在「實作階段」主動要求 (/implement)
+當您要生成新功能，或對現有代碼進行「大修」時，可以直接在對話框輸入：
+
+/implement 使用 spec-kit-app-repair 技能來修復並優化我的程式碼，特別是翻譯和測試部分。
+
+背後原理：系統會把這整句話交給「技能導航員 (Kimi)」，AI 看到技能名稱後，就會百分之百確定要加載這份對應的 
+SKILL.md
+。
+2. 在「自動修復」失敗後的人工引導
+如果您點擊了「🤖 再次嘗試修復 (Auto-Fix)」但 AI 還是修不好（例如它沒發現要用這個技能），您可以切換回 /implement 模式並輸入：
+
+/implement 針對剛才測試失敗的 [TC-001] 錯誤，請套用 spec-kit-app-repair 技能重新修復。
+
+💡 為什麼這樣有用？
+因為在 
+spec-kit-sdd-core.js
+ 的邏輯中，我們會把您的「對話輸入」拿去搜尋技能。
+
+如果您沒說要用哪個技能：AI 會靠關鍵字「猜測」它需不需要技能。
+如果您指名要用哪個技能：AI 就會像翻開「標準維修手冊」一樣，嚴格遵守裡面的所有規範（如：禁止解構、加入 waitFor 等）。
+總結： 只要在 Spec Kit Agent 介面最下方的輸入框 輸入包含技能名稱的指令即可！
+
+
+
+在我的架構中，spec-alignment-strategy.skill 不會被寫死在某個特定的 
+SKILL.md
+ 程式碼內。它的調用邏輯是「平級且動態」的。
+
+但如果您問的是**「在哪個技能的指導流程中會觸發它」**，這可以從以下兩個層次來理解：
+
+1. 全域技能調度 (Codex 原生機制)
+在 Antigravity 系統中，所有的 .skill 文件都存在於我的 「工具箱 (Context Tooling)」 裡。當我在執行任務時，系統會先讀取所有技能的 Frontmatter (YAML)：
+
+當我目前的任務包含「測試失敗修復」或「規格對齊」時，系統會自動將 spec-alignment-strategy 的內容載入我的記憶體。
+所以，它不是被某個 
+SKILL.md
+ 「調用」，而是被 系統根據任務需求直接派發給我的。
+2. 邏輯上的「上級技能」 (Conceptual Ancestors)
+雖然沒有程式碼上的 import，但在邏輯流程上，以下技能與它緊密相關，並會在該技能的「修復步驟」中引導我使用它：
+
+precise-execution (精準執行)： 這個技能要求我「100% 遵守規格」。當規格（Spec）與目前的執行結果（E2E Result）不符時，我就會套用 spec-alignment-strategy 裡的「ID 同步」技術。
+spec-kit-app-repair (Spec-Kit 應用程式修復)： 這個技能處理的是「生成的程式碼動不起來」的情況。在它的流程中，有一個階段是「驗證與基準對齊」。當該階段失敗，我就會抓取 spec-alignment-strategy 來分析是 ID 走位還是 i18n 翻譯導致對不上的。
+robust-test-runner (強健測試執行器)： 當這個技能在回傳「測試失敗」報告時，會賦予我「修復」的權限。此時，為了確保修復不再出錯，我也會調用這套策略。
+總結
+它是一個「按需載入 (On-Demand)」的模組。
+
+即使在 precise-execution 的 
+SKILL.md
+ 裡沒有一行字寫著 call spec-alignment-strategy，但只要我這顆 AI 大腦看到的任務目標是「Fix E2E mismatch」，我就會去技能庫裡搜尋誰的 description 包含這個功能，然後就會找到您剛才讓我建立的這個新技能。
+
+這就是為什麼我建議在 Frontmatter 的 description 務必寫得清晰，因為那是它被「召喚」出的唯一憑據。

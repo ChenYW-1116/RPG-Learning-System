@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沉浸式練習器 (Immersive Practice Tool)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <!-- Dev-Scribe RPG Engine -->
+    <script src="DevScribeRPG.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                        mono: ['Orbitron', 'monospace'],
+                    },
+                    colors: {
+                        emerald: {
+                            450: '#10B981', // Custom bright emerald
+                            950: '#022c22',
+                        },
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #022c22 100%);
+            color: #E2E8F0;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            min-height: 100vh;
+        }
+
+        .title-glow {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(90deg, #34D399, #10B981, #059669, #34D399);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titleShimmer 4s linear infinite;
+        }
+
+        @keyframes titleShimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 300% 50%;
+            }
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.8), rgba(2, 44, 34, 0.6));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #059669, #10B981);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        /* Tabs */
+        .nav-tab {
+            transition: all 0.3s ease;
+            color: #94A3B8;
+            border: 1px solid transparent;
+        }
+
+        .nav-tab:hover {
+            color: #E2E8F0;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Inputs */
+        .input-dark {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .input-dark:focus {
+            border-color: #10B981;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        /* Markdown Styles */
+        .markdown-output ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: #CBD5E1;
+        }
+
+        .markdown-output h3 {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #34D399;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* XP Bar */
+        .xp-bar-container {
+            background: rgba(2, 6, 23, 0.6);
+            border-radius: 12px;
+            padding: 3px;
+        }
+
+        .xp-bar {
+            height: 8px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #10B981, #34D399);
+            transition: width 0.5s ease;
+        }
+
+        /* Spinner */
+        .spinner {
+            border: 3px solid rgba(16, 185, 129, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #10B981;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+
+        // --- Translations ---
+        const i18n = {
+            zh: {
+                appTitle: "沉浸式練習器",
+                appSubtitle: "英語沉浸式練習工具，支援 WT1 類型的寫作訓練",
+                backToHub: "返回主頁",
+                apiKeyPlaceholder: "請輸入 Google Gemini API Key",
+                saveKey: "儲存金鑰",
+                keyNote: "金鑰僅儲存於本地瀏覽器",
+
+                // Tabs
+                tabOverview: "總覽",
+                tabNatural: "自然循環",
+                tabManufacturing: "製造流程",
+                tabSystem: "系統流程",
+                tabTextToPrompt: "圖文轉考題",
+
+                // Overview
+                welcome: "歡迎使用！",
+                intro1: "雅思流程圖 (Process Diagram) 不只是考試，而是描述世界運作的方式。",
+                intro2: "本工具將流程分為三大類：自然循環、製造流程、系統流程。",
+                intro3: "使用上方頁籤切換類型，利用 AI 結合生活情境進行深度學習。",
+
+                // Common Actions
+                genPrompt: "✨ 產生練習題目",
+                genVocab: "✨ 生成進階詞彙",
+                analyzeImg: "📷 分析圖片",
+                playAudio: "🔊 朗讀",
+                newPromptTitle: "新的 IELTS Task 1 題目：",
+                vocabResult: "生成詞彙：",
+                analysisResult: "AI 圖像分析結果：",
+                uploadImg: "選擇照片",
+
+                // Image Analysis Tips
+                tipNatural: "上傳自然界循環照片（如植物生長、水循環）。AI 將強調「主動語態」。",
+                tipManuf: "上傳製造或烹飪過程照片。AI 將強調「被動語態」與「順序」。",
+                tipSystem: "上傳服務或系統流程照片。AI 將強調「條件判斷」與「互動」。",
+                tipTextPrompt: "上傳含有說明文字的圖片（如課本圖解）。AI 將自動辨識文字並轉化為標準考題。",
+
+                // Analogies
+                analogyCoffee: "情境 1: 手沖咖啡 (自然循環模擬)",
+                analogyCake: "情境 1: 烤蛋糕 (製造流程模擬)",
+                analogyDelivery: "情境 1: 線上訂餐 (系統流程模擬)",
+
+                // Text to Prompt
+                btnExtract: "📝 辨識文字並出題",
+                extractedContent: "AI 流程分析結果 (中文詳解)",
+                examPromptTitle: "GENERATED IELTS PROCESS PROMPT",
+
+                // Status
+                statusXP: "經驗值",
+                statusTokens: "代幣",
+                level: "等級",
+
+                // Ranks
+                rpgRank1: "新手挑戰者",
+                rpgRank2: "見習冒險家",
+                rpgRank3: "探索者",
+                rpgRank4: "挑戰達人",
+                rpgRank5: "精英戰士",
+                rpgRank6: "專家引導者",
+                rpgRank7: "大師創造者",
+                rpgRank8: "宗師煉金師",
+                rpgRank9: "傳奇締造者",
+                rpgRank10: "帝國領袖",
+
+                loading: "AI 思考中..."
+            },
+            en: {
+                appTitle: "Immersive Practice Tool",
+                appSubtitle: "English immersive practice tool, supporting WT1 writing training",
+                backToHub: "Back to Hub",
+                apiKeyPlaceholder: "Enter Google Gemini API Key",
+                saveKey: "Save Key",
+                keyNote: "Key is stored locally in your browser",
+
+                // Tabs
+                tabOverview: "Overview",
+                tabNatural: "Natural Cycles",
+                tabManufacturing: "Manufacturing",
+                tabSystem: "System Flows",
+                tabTextToPrompt: "Text to Prompt",
+
+                // Overview
+                welcome: "Welcome!",
+                intro1: "IELTS Process Diagrams are not just tests; they describe how the world works.",
+                intro2: "We categorize processes into three types: Natural Cycles, Manufacturing, and Systems.",
+                intro3: "Use the tabs above to explore each type and leverage AI for deep learning.",
+
+                // Common Actions
+                genPrompt: "✨ Generate Prompt",
+                genVocab: "✨ Generate Vocab",
+                analyzeImg: "📷 Analyze Image",
+                playAudio: "🔊 Read Aloud",
+                newPromptTitle: "New IELTS Task 1 Prompt:",
+                vocabResult: "Generated Vocabulary:",
+                analysisResult: "AI Image Analysis Result:",
+                uploadImg: "Select Image",
+
+                // Image Analysis Tips
+                tipNatural: "Upload natural cycle photos (e.g., plant growth). AI emphasizes 'Active Voice'.",
+                tipManuf: "Upload manufacturing/cooking photos. AI emphasizes 'Passive Voice' & 'Sequence'.",
+                tipSystem: "Upload service/system photos. AI emphasizes 'Conditionals' & 'Interaction'.",
+                tipTextPrompt: "Upload images with text (e.g., textbook diagrams). AI converts them into standard prompts.",
+
+                // Analogies
+                analogyCoffee: "Scenario 1: Drip Coffee (Natural Cycle Sim)",
+                analogyCake: "Scenario 1: Baking a Cake (Manufacturing Sim)",
+                analogyDelivery: "Scenario 1: Online Ordering (System Flow Sim)",
+
+                // Text to Prompt
+                btnExtract: "📝 Extract & Generate",
+                extractedContent: "Process Analysis (Chinese Detail)",
+                examPromptTitle: "GENERATED IELTS PROCESS PROMPT",
+
+                // Status
+                statusXP: "XP",
+                statusTokens: "Tokens",
+                level: "Level",
+
+                // Ranks
+                rpgRank1: "Novice Challenger",
+                rpgRank2: "Apprentice Adventurer",
+                rpgRank3: "Explorer",
+                rpgRank4: "Challenge Expert",
+                rpgRank5: "Elite Warrior",
+                rpgRank6: "Specialist Guide",
+                rpgRank7: "Master Creator",
+                rpgRank8: "Grandmaster Alchemist",
+                rpgRank9: "Legendary Architect",
+                rpgRank10: "Empire Leader",
+
+                loading: "AI Thinking..."
+            }
+        };
+
+        // --- Constants & Helpers ---
+        const LLM_MODEL = 'gemini-2.5-flash-preview-09-2025';
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+        });
+
+        const fetchGenContent = async (apiKey, payload) => {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(`API Error: ${res.status}`);
+            return await res.json();
+        };
+
+        // --- Components ---
+
+        // 1. Language Toggle
+        const LangToggle = ({ lang, setLang }) => (
+            <button
+                onClick={() => setLang(l => l === 'zh' ? 'en' : 'zh')}
+                className="fixed bottom-6 right-6 z-50 bg-slate-800/90 text-emerald-400 hover:text-white px-4 py-2 rounded-full border border-emerald-500/30 shadow-lg backdrop-blur-md transition flex items-center font-mono text-sm"
+            >
+                <span className="mr-2">🌐</span>
+                {lang === 'zh' ? 'EN' : '中'}
+            </button>
+        );
+
+        // 2. Player Status Card
+        const PlayerStatusCard = ({ lang, t }) => {
+            const [status, setStatus] = useState(null);
+
+            const refreshStatus = useCallback(() => {
+                if (typeof window.DevScribeRPG !== 'undefined') {
+                    const s = window.DevScribeRPG.getState();
+                    const level = s.level || 1;
+                    const rankData = window.DevScribeRPG.RANKS.find(r => r.level === level);
+                    const prog = window.DevScribeRPG.getProgressToNextLevel(s.totalXP);
+
+                    const rankKey = 'rpgRank' + level;
+                    const translatedTitle = t[rankKey] || rankData.title;
+
+                    setStatus({ ...s, title: translatedTitle, icon: rankData.icon, progress: prog });
+                }
+            }, [t]);
+
+            useEffect(() => {
+                refreshStatus();
+                window.addEventListener('devscribe:action', refreshStatus);
+                return () => window.removeEventListener('devscribe:action', refreshStatus);
+            }, [refreshStatus]);
+
+            if (!status) return null;
+
+            return (
+                <div className="glass-card p-4 mb-6 flex items-center justify-between max-w-2xl mx-auto transform hover:scale-[1.01] transition-transform">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-emerald-900/50 flex items-center justify-center text-2xl border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                            {status.icon}
+                        </div>
+                        <div>
+                            <div className="text-sm font-bold text-white leading-tight">{status.title}</div>
+                            <div className="text-xs text-emerald-400">Lv. {status.level}</div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 mx-6">
+                        <div className="flex justify-between text-[10px] text-gray-400 mb-1 font-mono">
+                            <span>{t.statusXP} {status.totalXP}</span>
+                            <span>{status.progress.xpNeeded} to Next</span>
+                        </div>
+                        <div className="xp-bar-container">
+                            <div className="xp-bar" style={{ width: `${status.progress.progress}%` }}></div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col items-end min-w-[60px]">
+                        <span className="text-xs text-amber-400 font-bold font-mono">💰 {status.tokens}</span>
+                        <span className="text-[10px] text-gray-500">{t.statusTokens}</span>
+                    </div>
+                </div>
+            );
+        };
+
+        // 3. Tab Button
+        const TabButton = ({ id, label, activeTab, onClick }) => (
+            <button
+                onClick={() => onClick(id)}
+                className={`nav-tab px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === id ? 'active' : ''}`}
+            >
+                {label}
+            </button>
+        );
+
+        // 4. Content Sections
+
+        // --- Natural Cycles ---
+        const NaturalCyclesSection = ({ t, apiKey, setLoading }) => {
+            const [promptResult, setPromptResult] = useState("");
+            const [vocabResult, setVocabResult] = useState("");
+            const [analysisResult, setAnalysisResult] = useState("");
+            const [imgPreview, setImgPreview] = useState(null);
+
+            const handleGenPrompt = async () => {
+                if (!apiKey) return alert(t.apiKeyPlaceholder);
+                setLoading(true);
+                try {
+                    const q = `Generate a new IELTS Writing Task 1 process diagram prompt about a "Natural Cycle" (e.g. water cycle, life cycle of a frog). Output in English. Pure text.`;
+                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    setPromptResult(res.candidates[0].content.parts[0].text);
+                    if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
+                } catch (e) { alert(e.message); }
+                setLoading(false);
+            };
+
+            const handleGenVocab = async () => {
+                if (!apiKey) return alert(t.apiKeyPlaceholder);
+                setLoading(true);
+                try {
+                    const q = `Provide advanced vocabulary and transition words for describing the process of "Drip Coffee Preparation" as an analogy to a natural water cycle. Output in Markdown list.`;
+                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    setVocabResult(res.candidates[0].content.parts[0].text);
+                } catch (e) { alert(e.message); }
+                setLoading(false);
+            };
+
+            const handleAnalyzeImg = async (e) => {
+                if (!apiKey) return alert(t.apiKeyPlaceholder);
+                const file = e.target.files[0];
+                if (!file) return;
+
+                setLoading(true);
+                try {
+                    const b64 = await toBase64(file);
+                    setImgPreview(`data:${file.type};base64,${b64}`);
+
+                    const q = `Analyze this image as a "Natural Cycle" process for IELTS Task 1. Identify stages and suggest sentences using ACTIVE VOICE. Output in Traditional Chinese.`;
+                    const payload = {
+                        contents: [{
+                            parts: [
+                                { text: q },
+                                { inlineData: { mimeType: file.type, data: b64 } }
+                            ]
+                        }]
+                    };
+                    const res = await fetchGenContent(apiKey, payload);
+                    setAnalysisResult(res.candidates[0].content.parts[0].text);
+                    if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
+                } catch (e) { alert(e.message); }
+                setLoading(false);
+            };
+
+            return (
+                <div className="space-y-8 animate-fadeIn">
+                    <div className="glass-panel p-6 border-emerald-500/20">
+                        <h2 className="text-xl font-bold text-emerald-400 mb-4">{t.tabNatural}</h2>
+                        <div className="bg-emerald-900/20 p-4 rounded-lg border border-emerald-500/10 mb-6">
+                            <h3 className="text-sm font-bold text-emerald-300 mb-2">{t.genPrompt}</h3>
+                            <button onClick={handleGenPrompt} className="btn-primary px-4 py-2 rounded-lg text-sm mb-3 shadow-lg">{t.genPrompt}</button>
+                            {promptResult && <div className="p-3 bg-slate-900/50 rounded text-sm text-gray-300 whitespace-pre-wrap border border-white/5">{promptResult}</div>}
+                        </div>
+
+                        <div className="border border-white/10 rounded-lg p-4 bg-slate-800/30">
+                            <h3 className="font-bold text-white mb-2">{t.analogyCoffee}</h3>
+                            <p className="text-gray-400 text-sm mb-3">Analogy: Coffee Drip ≈ Water Infiltration</p>
+                            <button onClick={handleGenVocab} className="px-3 py-1 bg-slate-700 text-xs rounded hover:bg-slate-600 transition mb-3">{t.genVocab}</button>
+                            {vocabResult && <div className="markdown-output text-sm p-3 bg-black/20 rounded"><pre className="whitespace-pre-wrap font-sans">{vocabResult}</pre></div>}
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-white/10">
+                            <h3 className="text-lg font-bold text-emerald-400 mb-2">{t.analyzeImg}</h3>
+                            <p className="text-gray-500 text-xs mb-4">{t.tipNatural}</p>
+                            <input type="file" accept="image/*" onChange={e => handleAnalyzeImg({ target: e.target.parentElement.querySelector('input') })} className="hidden" id="img-nat" />
+                            <div className="flex gap-4 items-start">
+                                <label htmlFor="img-nat" className="cursor-pointer px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-white transition">{t.uploadImg}</label>
+                            </div>
+
+                            {(imgPreview || analysisResult) && (
+                                <div className="mt-4 flex flex-col md:flex-row gap-4">
+                                    {imgPreview && <img src={imgPreview} className="w-full md:w-1/3 rounded-lg border border-white/10 object-contain max-h-48 bg-black/20" />}
+                                    {analysisResult && <div className="flex-1 p-4 bg-slate-900/50 rounded-lg border border-emerald-500/20 text-sm text-gray-300 whitespace-pre-wrap">{analysisResult}</div>}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Manufacturing & Systems (Simplified structure for brevity, logic same as Natural) ---
+        const GenericSection = ({ t, apiKey, setLoading, type, title, tip, analogyTitle, analogyDesc, analogyProcess }) => {
+            const [promptRes, setPromptRes] = useState("");
+            const [vocabRes, setVocabRes] = useState("");
+            const [analysisRes, setAnalysisRes] = useState("");
+            const [img, setImg] = useState(null);
+
+            const genPrompt = async () => {
+                if (!apiKey) return alert(t.apiKeyPlaceholder);
+                setLoading(true);
+                try {
+                    const q = `Generate a new IELTS Writing Task 1 process diagram prompt about "${type}". Output in English.`;
+                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    setPromptRes(res.candidates[0].content.parts[0].text);
+                    if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
+                } catch (e) { alert(e.message); }
+                setLoading(false);
+            };
+
+            const genVocab = async () => {
+                if (!apiKey) return alert(t.apiKeyPlaceholder);
+                setLoading(true);
+                try {
+                    const q = `Provide advanced vocabulary for "${analogyProcess}". Output in Markdown.`;
+                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }] }] });
+                    setVocabRes(res.candidates[0].content.parts[0].text);
+                } catch (e) { alert(e.message); }
+                setLoading(false);
+            };
+
+            const analyze = async (e) => {
+                if (!apiKey) return alert(t.apiKeyPlaceholder);
+                const f = e.target.files[0];
+                if (!f) return;
+                setLoading(true);
+                try {
+                    const b64 = await toBase64(f);
+                    setImg(`data:${f.type};base64,${b64}`);
+                    const q = `Analyze this image as a "${type}" process for IELTS Task 1. Output in Traditional Chinese.`;
+                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }, { inlineData: { mimeType: f.type, data: b64 } }] }] });
+                    setAnalysisRes(res.candidates[0].content.parts[0].text);
+                    if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
+                } catch (e) { alert(e.message); }
+                setLoading(false);
+            };
+
+            return (
+                <div className="glass-panel p-6 border-emerald-500/20 animate-fadeIn">
+                    <h2 className="text-xl font-bold text-emerald-400 mb-4">{title}</h2>
+
+                    {/* Prompt */}
+                    <div className="mb-6 p-4 bg-emerald-900/10 rounded-lg border border-emerald-500/10">
+                        <button onClick={genPrompt} className="btn-primary px-4 py-2 rounded-lg text-sm mb-2">{t.genPrompt}</button>
+                        {promptRes && <div className="text-sm text-gray-300 mt-2 whitespace-pre-wrap">{promptRes}</div>}
+                    </div>
+
+                    {/* Analogy */}
+                    <div className="mb-8 p-4 bg-slate-800/30 rounded-lg border border-white/5">
+                        <h3 className="text-white font-bold">{analogyTitle}</h3>
+                        <p className="text-gray-500 text-xs mb-2">{analogyDesc}</p>
+                        <button onClick={genVocab} className="text-xs bg-slate-700 px-3 py-1 rounded text-gray-200 hover:bg-slate-600">{t.genVocab}</button>
+                        {vocabRes && <pre className="mt-2 text-xs text-gray-400 whitespace-pre-wrap font-sans">{vocabRes}</pre>}
+                    </div>
+
+                    {/* Image */}
+                    <div>
+                        <h3 className="text-lg font-bold text-emerald-400 mb-2">{t.analyzeImg}</h3>
+                        <p className="text-xs text-gray-500 mb-3">{tip}</p>
+                        <input type="file" onChange={analyze} className="block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-slate-700 file:text-emerald-400 hover:file:bg-slate-600 cursor-pointer" />
+                        {(img || analysisRes) && (
+                            <div className="mt-4 flex gap-4 flex-col md:flex-row">
+                                {img && <img src={img} className="max-h-40 rounded border border-white/10" />}
+                                {analysisRes && <div className="flex-1 text-sm text-gray-300 bg-slate-900/50 p-3 rounded border border-white/5 whitespace-pre-wrap">{analysisRes}</div>}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Text to Prompt ---
+        const TextToPromptSection = ({ t, apiKey, setLoading }) => {
+            const [result, setResult] = useState(null); // { extracted: "", prompt: "" }
+            const [img, setImg] = useState(null);
+
+            const handleRun = async (e) => {
+                if (!apiKey) return alert(t.apiKeyPlaceholder);
+                const f = e.target.files[0];
+                if (!f) return;
+
+                setLoading(true);
+                try {
+                    const b64 = await toBase64(f);
+                    setImg(`data:${f.type};base64,${b64}`);
+
+                    const q = `Task: Convert image content to IELTS Task 1 Process Prompt. 
+                    Step 1: Extract text. 
+                    Step 2: Analyze steps. 
+                    Step 3: List steps in Traditional Chinese. 
+                    Step 4: Generate English IELTS Prompt. 
+                    Output JSON: { "process_steps_cn": "...", "prompt": "..." }`;
+
+                    const res = await fetchGenContent(apiKey, { contents: [{ parts: [{ text: q }, { inlineData: { mimeType: f.type, data: b64 } }] }] });
+                    const txt = res.candidates[0].content.parts[0].text;
+                    const jsonMatch = txt.match(/\{[\s\S]*\}/);
+
+                    if (jsonMatch) {
+                        const data = JSON.parse(jsonMatch[0]);
+                        setResult(data);
+                    } else {
+                        setResult({ process_steps_cn: txt, prompt: "Could not parse JSON, see raw text." });
+                    }
+                    if (window.DevScribeRPG) window.DevScribeRPG.recordModuleAction('training', 'practice_analysis');
+
+                } catch (e) { alert(e.message); }
+                setLoading(false);
+            };
+
+            return (
+                <div className="glass-panel p-6 border-amber-500/20 animate-fadeIn">
+                    <h2 className="text-xl font-bold text-amber-400 mb-4">{t.tabTextToPrompt}</h2>
+                    <p className="text-sm text-gray-400 mb-4">{t.tipTextPrompt}</p>
+
+                    <input type="file" onChange={handleRun} accept="image/*" className="block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-amber-900/20 file:text-amber-400 hover:file:bg-amber-900/30 cursor-pointer mb-6" />
+
+                    {(img || result) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {img && <div className="bg-black/20 rounded-lg p-2 border border-white/5 flex items-center justify-center"><img src={img} className="max-h-60 object-contain" /></div>}
+
+                            {result && (
+                                <div className="space-y-4">
+                                    <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 h-60 overflow-y-auto custom-scrollbar">
+                                        <h4 className="text-xs font-bold text-gray-500 mb-2 border-b border-white/5 pb-1">{t.extractedContent}</h4>
+                                        <pre className="whitespace-pre-wrap text-sm text-gray-300 font-sans">{result.process_steps_cn}</pre>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {result && (
+                        <div className="mt-6 p-6 bg-white/5 rounded-lg border border-amber-500/30 relative">
+                            <div className="absolute -top-3 left-4 bg-amber-600 text-white px-3 py-0.5 text-xs font-bold rounded shadow-lg tracking-wider">GENERATED PROMPT</div>
+                            <p className="font-serif text-lg text-amber-100 leading-relaxed mt-2">{result.prompt}</p>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+
+        // 5. Main App
+        const App = () => {
+            const [lang, setLang] = useState('zh');
+            const [activeTab, setActiveTab] = useState('overview');
+            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+            const [isLoading, setIsLoading] = useState(false);
+
+            const t = i18n[lang];
+
+            const saveKey = () => {
+                localStorage.setItem('gemini_api_key', apiKey);
+                alert('Saved!');
+            };
+
+            return (
+                <div className="container mx-auto px-4 py-8 max-w-5xl">
+                    <LangToggle lang={lang} setLang={setLang} />
+
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-6">
+                        <a href="rpg-hub.html" className="flex items-center text-sm text-gray-400 hover:text-emerald-400 transition bg-slate-900/50 px-4 py-2 rounded-lg border border-white/5 hover:border-emerald-500/30 shadow-md group">
+                            <span className="mr-2 text-lg group-hover:-translate-x-1 transition-transform">‹</span> {t.backToHub}
+                        </a>
+                    </div>
+
+                    <div className="text-center mb-10">
+                        <div className="text-6xl mb-4 animate-bounce inline-block">🎓</div>
+                        <h1 className="title-glow text-3xl md:text-5xl font-black tracking-tight">{t.appTitle}</h1>
+                    </div>
+
+                    {/* Status Card */}
+                    <PlayerStatusCard lang={lang} t={t} />
+
+                    {/* API Key Input */}
+                    <div className="flex justify-center mb-8">
+                        <div className="flex gap-2 w-full max-w-md bg-slate-900/50 p-1.5 rounded-lg border border-white/10">
+                            <input
+                                type="password"
+                                value={apiKey}
+                                onChange={e => setApiKey(e.target.value)}
+                                placeholder={t.apiKeyPlaceholder}
+                                className="bg-transparent border-none text-xs text-white px-3 w-full focus:outline-none placeholder-gray-600"
+                            />
+                            <button onClick={saveKey} className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded transition whitespace-nowrap">{t.saveKey}</button>
+                        </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex flex-wrap justify-center gap-2 mb-8">
+                        <TabButton id="overview" label={t.tabOverview} activeTab={activeTab} onClick={setActiveTab} />
+                        <TabButton id="natural" label={t.tabNatural} activeTab={activeTab} onClick={setActiveTab} />
+                        <TabButton id="manufacturing" label={t.tabManufacturing} activeTab={activeTab} onClick={setActiveTab} />
+                        <TabButton id="system" label={t.tabSystem} activeTab={activeTab} onClick={setActiveTab} />
+                        <TabButton id="textprompt" label={t.tabTextToPrompt} activeTab={activeTab} onClick={setActiveTab} />
+                    </div>
+
+                    {/* Content */}
+                    <div className="min-h-[400px] relative">
+                        {isLoading && (
+                            <div className="absolute inset-0 z-10 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center rounded-2xl">
+                                <div className="flex flex-col items-center">
+                                    <div className="spinner mb-3"></div>
+                                    <span className="text-emerald-400 font-bold animate-pulse">{t.loading}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'overview' && (
+                            <div className="glass-panel p-8 text-center animate-fadeIn">
+                                <h2 className="text-2xl font-bold text-white mb-4">{t.welcome}</h2>
+                                <div className="space-y-4 text-gray-400 max-w-2xl mx-auto">
+                                    <p>{t.intro1}</p>
+                                    <p>{t.intro2}</p>
+                                    <p className="text-emerald-400">{t.intro3}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'natural' && <NaturalCyclesSection t={t} apiKey={apiKey} setLoading={setIsLoading} />}
+
+                        {activeTab === 'manufacturing' && <GenericSection
+                            t={t} apiKey={apiKey} setLoading={setIsLoading} type="Manufacturing Process" title={t.tabManufacturing} tip={t.tipManuf}
+                            analogyTitle={t.analogyCake} analogyDesc="Baking ≈ Raw Mat. to Product" analogyProcess="Baking a Cake"
+                        />}
+
+                        {activeTab === 'system' && <GenericSection
+                            t={t} apiKey={apiKey} setLoading={setIsLoading} type="System Flow" title={t.tabSystem} tip={t.tipSystem}
+                            analogyTitle={t.analogyDelivery} analogyDesc="Ordering ≈ User-System Interaction" analogyProcess="Food Delivery System"
+                        />}
+
+                        {activeTab === 'textprompt' && <TextToPromptSection t={t} apiKey={apiKey} setLoading={setIsLoading} />}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

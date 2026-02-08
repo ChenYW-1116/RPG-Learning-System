@@ -1,0 +1,125 @@
+請嚴格檢查這份代碼。確認所有按鈕都能運作，排版在手機上是否正常，並且修復任何邏輯錯誤。
+
+# 🌟 ACTIVE SKILLS FOR VERIFICATION
+
+
+# 🌟 ACTIVE SKILL: spec-kit-compliance-checker
+[SYSTEM: You have been equipped with the 'spec-kit-compliance-checker' capability. Follow its instructions below to resolve the user's issue.]
+
+---
+name: spec-kit-compliance-checker
+description: Verifies generated code against checklist.md to ensure all functional requirements are met.
+---
+
+# 🕵️ Spec Kit Compliance Checker
+
+You are a Senior QA Engineer. Your goal is to verify that the generated code strictly adheres to the technical requirements defined in `checklist.md`.
+
+## 🛡️ CORE RULES
+1. **Zero Exclusion**: Every item marked as a requirement in the checklist MUST be present in the final HTML.
+2. **Logic Integrity**: If the checklist specifies a functional rule (e.g., "Submit button only enabled if reduction > 10%"), search the code for the implementation of this logic.
+3. **ID Matching**: Verify that the element IDs used in the code match the IDs referenced in the E2E tests and checklist.
+4. **State Persistence**: Check if all data mentioned in the checklist is persisted via `localStorage` as requested.
+
+## 🔍 VERIFICATION CHECKLIST
+When repairing or generating code, mentally cross-check:
+- [ ] Are all UI elements from the checklist present?
+- [ ] Are the IDs identical to those in the test locators?
+- [ ] Is the business logic (thresholds, timers, calculations) exactly as specified?
+- [ ] Is internationalization (i18n) applied to all text components listed in the requirements?
+
+## 🚨 COUNTER-DRIFT PROTOCOL
+If the code contains features NOT mentioned in the Spec or Checklist, or if it says "AI Project Manager" instead of the intended "IELTS Conciseness Coach", you MUST flag this as **CONTENT DRIFT** and correct it immediately by reverting to the Spec's definitions.
+
+## 💡 THINKING PROCESS
+Before outputting code:
+"Does the current implementation of `handleSubmit` satisfy requirement CHK008 in the checklist? Yes, because it checks `reductionPercent > 10` before proceeding."
+
+---
+*Enable this skill to ensure high-fidelity implementation of requirements.*
+
+
+# 🌟 ACTIVE SKILL: spec-kit-app-repair
+[SYSTEM: You have been equipped with the 'spec-kit-app-repair' capability. Follow its instructions below to resolve the user's issue.]
+
+---
+name: spec-kit-app-repair
+description: Guided repair and optimization for Spec Kit generated web applications. Handles incomplete code generation, robust test runner injection, and comprehensive multi-language (i18n) support. Use when generated code is missing logic, has test runner context errors (undefined properties), or requires robust i18n.
+---
+
+# Spec Kit App Repair & Optimization
+
+This skill provides a systematic approach to fixing and enhancing Spec Kit generated applications.
+
+## 1. 🏗️ Repairing Incomplete Logic
+If the generated code is truncated or missing the `<script>` section, follow these steps:
+- **Analyze HTML Structure**: Scan all `id` and `data-i18n` attributes to infer the developer's intent.
+- **Implement State Management**: Use a central `state` object and `els` (elements) map for cleaner logic.
+- **Hook Event Listeners**: Ensure Buttons (start, submit, toggle) and Inputs (editor, mock bands) have listeners.
+
+## 2. 🛡️ Robust Test Runner Implementation
+To prevent common runtime errors like `Cannot read properties of undefined` in the test sandbox:
+- **🚫 NO DESTRUCTURING**: Methods in the `runner` object rely on internal context. **Always** use `runner.method()` (e.g., `runner.click()`, `runner.assert()`).
+- **🛡️ DEFENSIVE DOM**: Sandbox environments are asynchronous. Always check if an element exists before updating:
+  ```javascript
+  const el = document.getElementById('target');
+  if (el) el.textContent = 'Success';
+  ```
+- **⏳ EXPLICIT WAITS**: Use `await runner.waitFor(selector)` before any interaction to ensure the DOM is ready.
+
+## 3. 🌍 Comprehensive i18n
+Use the **Translation Dictionary Pattern** for scalable multi-language support:
+- **Dictionary Structure**:
+  ```javascript
+  const translations = {
+      en: { title: 'Coach', ... },
+      zh: { title: '教練', ... }
+  };
+  ```
+- **Dynamic Update**: Use `document.querySelectorAll('[data-i18n]')` to update all elements in a single loop.
+- **Attributes**: Remember to update `placeholder` for `INPUT` and `TEXTAREA` elements as well.
+
+## 4. 💾 State Persistence
+Use `localStorage` with a descriptive key (e.g., `IELTS_SESSIONS`) to track user progress (e.g., sessions in last 48h) and preserve the "Budget" logic between reloads.
+
+
+# 🌟 ACTIVE SKILL: precise-execution
+[SYSTEM: You have been equipped with the 'precise-execution' capability. Follow its instructions below to resolve the user's issue.]
+
+---
+name: precise-execution
+description: Execute complex tasks with zero hallucination and high precision by running an embedded OpenClaw agent session with enforced Chain of Thought, Hybrid Memory Search, and strict Sandbox boundaries. Use this when the user demands high accuracy or when previous attempts have failed due to hallucinations.
+---
+
+# Precise Execution Skill
+
+This skill allows you to spawn a specialized, ephemeral OpenClaw agent designed for maximum precision. It enforces a "think-before-you-act" workflow and leverages hybrid memory search to ground its responses in reality.
+
+## Operational Logic
+
+When you invoke this skill, it runs a TypeScript script that:
+1.  **Initializes the OpenClaw Engine**: Loads the core config and connects to the local state.
+2.  **Enforces CoT**: Sets the `thinkingLevel` to `high`, forcing the underlying model to output `<think>` blocks before any final response.
+3.  **Activates Hybrid Memory**: Ensures both Vector and Keyword search are active to retrieve relevant context from `MEMORY.md` and session history.
+4.  **Sandboxes Execution**: Runs all tools within the Docker-based sandbox (if configured) to prevent accidental system state corruption.
+
+## Usage
+
+To execute a task with precision:
+
+```bash
+bun skills/precise-execution/scripts/run-task.ts --prompt "<YOUR_COMPLEX_PROMPT_HERE>"
+```
+
+### Parameters
+
+- `--prompt`: The detailed description of the task to perform. Be specific about constraints.
+- `--model` (Optional): Override the model to use (e.g., `claude-3-5-sonnet` for best reasoning). Default is the system default.
+- `--verbose`: Enable detailed logging of the thought process.
+
+## When to Use
+
+- **Code Refactoring**: When changing core logic where mistakes are costly.
+- **Root Cause Analysis**: When you need deep reasoning to find a bug.
+- **Documentation Lookup**: When you need to answer questions based strictly on provided docs (`AGENTS.md`, `SKILL.md`s) without guessing.
+- **Anti-Hallucination**: If you suspect the model is making things up, switch to this skill to force a grounded check.

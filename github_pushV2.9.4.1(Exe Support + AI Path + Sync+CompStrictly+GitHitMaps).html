@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub 檔案管理終端 v2.9.6 (Exe Support + AI Path + Gamified Heatmap)</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Dev-Scribe RPG Engine -->
+    <script src="DevScribeRPG.js"></script>
+
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0F172A, #1E293B);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2563EB, #7C3AED);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #EF4444, #B91C1C);
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .input-field {
+            background: #0F172A;
+            border: 1px solid #334155;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+            outline: none;
+        }
+
+        /* --- Tree View Specific Styles --- */
+        .tree-container {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            /* VS Code style font */
+            font-size: 13px;
+        }
+
+        .tree-node {
+            display: flex;
+            align-items: center;
+            padding: 3px 0;
+            cursor: pointer;
+            color: #cbd5e1;
+            user-select: none;
+            transition: background-color 0.1s;
+        }
+
+        .tree-node:hover {
+            background-color: #334155;
+            color: #fff;
+        }
+
+        .tree-node.selected {
+            background-color: #2563eb !important;
+            /* VS Code Blue */
+            color: #fff !important;
+        }
+
+        .tree-toggle-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #94a3b8;
+            transition: transform 0.2s ease;
+        }
+
+        .tree-toggle-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tree-toggle-icon.invisible {
+            visibility: hidden;
+        }
+
+        .tree-icon {
+            margin-right: 6px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .tree-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Loading indicator inside tree */
+        .tree-spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 4px;
+        }
+
+        .drag-over {
+            border-color: #3B82F6 !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+            transform: scale(1.02);
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .markdown-body h1,
+        .markdown-body h2,
+        .markdown-body h3 {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .markdown-body ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        .markdown-body ol {
+            list-style-type: decimal;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        .markdown-body li {
+            margin-bottom: 0.3em;
+        }
+
+        .markdown-body code {
+            background-color: #334155;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .markdown-body pre {
+            background-color: #1e293b;
+            padding: 1em;
+            border-radius: 0.5em;
+            overflow-x: auto;
+            margin-bottom: 1em;
+        }
+
+        .markdown-body p {
+            margin-bottom: 0.8em;
+        }
+
+        .markdown-body strong {
+            color: #A5B4FC;
+        }
+
+        /* --- Heatmap Contribution Graph Styles (Enhanced) --- */
+        .heatmap-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .heatmap-week {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .heatmap-day {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            background-color: #1e293b;
+            /* 預設: 無貢獻 */
+            position: relative;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .heatmap-day:hover {
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transform: scale(1.3);
+            z-index: 10;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Contribution Levels (Enhanced Green Colors) */
+        .level-0 {
+            background-color: #1e293b;
+        }
+
+        .level-1 {
+            background-color: #0e4429;
+        }
+
+        .level-2 {
+            background-color: #006d32;
+        }
+
+        .level-3 {
+            background-color: #26a641;
+        }
+
+        .level-4 {
+            background-color: #39d353;
+            box-shadow: 0 0 4px rgba(57, 211, 83, 0.4);
+            /* Glow for max effort */
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            background: rgba(15, 23, 42, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom Tooltip for Heatmap */
+        .heatmap-tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            border: 1px solid #334155;
+            z-index: 50;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 左側面板：設定與檔案瀏覽器 -->
+        <div class="lg:col-span-1 space-y-6">
+
+            <!-- 1. 設定區塊 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-xl relative">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold flex items-center text-blue-400">
+                        <i class="fa-brands fa-github mr-2"></i> <span data-i18n="repoSettings">倉庫設定</span>
+                    </h2>
+                    <button id="langToggleBtn" onclick="toggleLanguage()"
+                        class="bg-slate-700 hover:bg-slate-600 text-gray-300 text-xs py-1.5 px-3 rounded-lg border border-slate-600 transition flex items-center">
+                        <i class="fa-solid fa-globe mr-1"></i> EN
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Token -->
+                    <div>
+                        <div class="flex justify-between items-end">
+                            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                                data-i18n="githubToken">GitHub PAT Token</label>
+                            <span id="tokenStatus" class="text-[10px] text-green-400 opacity-0 transition-opacity"><i
+                                    class="fa-solid fa-check"></i> <span data-i18n="tokenSaved">已紀錄</span></span>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx"
+                                class="input-field w-full p-2.5 rounded-lg text-sm mt-1 pr-10">
+                            <button onclick="toggleTokenVisibility('token', 'eyeIcon')"
+                                class="absolute right-3 top-3.5 text-gray-500 hover:text-white">
+                                <i class="fa-regular fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center mt-2 group cursor-pointer">
+                            <input type="checkbox" id="saveToken"
+                                class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 cursor-pointer w-4 h-4">
+                            <label for="saveToken"
+                                class="ml-2 text-xs text-gray-400 group-hover:text-blue-300 transition-colors cursor-pointer select-none">
+                                <i class="fa-solid fa-database mr-1"></i> <span data-i18n="autoSaveToken">自動儲存 Token
+                                    (下次啟動自動帶入)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Gemini API Key -->
+                    <div class="border-t border-slate-700 pt-4">
+                        <div class="flex justify-between items-end">
+                            <label
+                                class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center">
+                                <i class="fa-solid fa-robot mr-1"></i> <span data-i18n="geminiApiKey">Gemini API Key
+                                    (選填)</span>
+                            </label>
+                            <span id="geminiStatus" class="text-[10px] text-green-400 opacity-0 transition-opacity"><i
+                                    class="fa-solid fa-check"></i> <span data-i18n="tokenSaved">已紀錄</span></span>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="geminiApiKey" placeholder="AIzaSy..."
+                                class="input-field w-full p-2.5 rounded-lg text-sm mt-1 pr-10">
+                            <button onclick="toggleTokenVisibility('geminiApiKey', 'aiEyeIcon')"
+                                class="absolute right-3 top-3.5 text-gray-500 hover:text-white">
+                                <i class="fa-regular fa-eye" id="aiEyeIcon"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center mt-2 group cursor-pointer">
+                            <input type="checkbox" id="saveGeminiKey"
+                                class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500 cursor-pointer w-4 h-4">
+                            <label for="saveGeminiKey"
+                                class="ml-2 text-xs text-gray-400 group-hover:text-blue-300 transition-colors cursor-pointer select-none">
+                                <i class="fa-solid fa-database mr-1"></i> <span data-i18n="autoSaveApiKey">自動儲存 API Key
+                                    (下次啟動自動帶入)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Repo & Branch -->
+                    <div class="border-t border-slate-700 pt-4">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                                data-i18n="ownerRepo">Owner / Repo</label>
+                            <button onclick="fetchRepositories(document.getElementById('token').value)"
+                                class="text-[10px] text-blue-400 hover:text-blue-300" title="重新整理列表">
+                                <i class="fa-solid fa-sync"></i>
+                            </button>
+                        </div>
+                        <select id="repo" onchange="fetchBranches(document.getElementById('token').value)"
+                            class="input-field w-full p-2.5 rounded-lg text-sm mt-1 appearance-none">
+                            <option value="t26020402-debug/Personal_Learning_Database">
+                                t26020402-debug/Personal_Learning_Database</option>
+                            <option value="" disabled>請輸入 Token 以讀取更多...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider"
+                                data-i18n="branch">Branch</label>
+                        </div>
+                        <select id="branch" class="input-field w-full p-2.5 rounded-lg text-sm mt-1 appearance-none">
+                            <option value="master">master</option>
+                        </select>
+                    </div>
+
+                    <button onclick="initTreeBrowser()"
+                        class="w-full bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 rounded-lg text-sm transition flex justify-center items-center shadow-lg mt-4">
+                        <i class="fa-solid fa-rotate mr-2"></i> <span data-i18n="connectAndLoad">連線並讀取 (Root)</span>
+                    </button>
+
+                    <!-- 手動備份區塊 -->
+                    <div class="border-t border-slate-700 pt-4 mt-2">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[10px] text-gray-500 uppercase font-bold" data-i18n="configBackup">設定檔備份
+                                (Config Backup)</label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="ConfigDB.exportToFile()"
+                                class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-1.5 rounded border border-gray-600 transition">
+                                <i class="fa-solid fa-download mr-1"></i> <span
+                                    data-i18n="exportConfig">匯出設定.json</span>
+                            </button>
+                            <button onclick="document.getElementById('importConfigInput').click()"
+                                class="bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-1.5 rounded border border-gray-600 transition">
+                                <i class="fa-solid fa-upload mr-1"></i> <span data-i18n="importConfig">匯入設定.json</span>
+                            </button>
+                            <input type="file" id="importConfigInput" accept=".json" class="hidden"
+                                onchange="ConfigDB.importFromFile(this)">
+                        </div>
+                        <p class="text-[9px] text-gray-500 mt-1 text-center" data-i18n="configBackupHint">
+                            可將設定匯出為實體檔案保存於電腦</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 檔案瀏覽器 (Tree View) -->
+            <div class="glass-panel rounded-2xl p-4 shadow-xl flex flex-col h-[500px]">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-slate-700">
+                    <h2 class="text-lg font-bold flex items-center text-emerald-400">
+                        <i class="fa-regular fa-folder-open mr-2"></i> <span data-i18n="fileBrowser">檔案瀏覽器</span>
+                    </h2>
+                    <span id="repoNameDisplay" class="text-xs text-gray-500 font-mono"></span>
+                </div>
+
+                <!-- 樹狀列表區域 -->
+                <div id="fileList"
+                    class="flex-grow overflow-y-auto overflow-x-hidden bg-[#0F172A] rounded border border-slate-800 p-1 tree-container">
+                    <div class="text-center text-gray-500 mt-10 text-xs">
+                        <p data-i18n="enterSettingsHint">請輸入設定並點擊上方<br>「連線並讀取」按鈕</p>
+                    </div>
+                </div>
+
+                <div class="mt-2 text-[10px] text-gray-500 text-center flex justify-between px-2">
+                    <span><i class="fa-solid fa-mouse-pointer mr-1"></i><span
+                            data-i18n="clickToSelect">點擊選取</span></span>
+                    <span><i class="fa-solid fa-chevron-right mr-1"></i><span
+                            data-i18n="expandFolder">展開資料夾</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側面板：上傳與操作區 -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- 3. 上傳/編輯區 -->
+            <div class="glass-panel rounded-2xl p-6 md:p-10 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                    <i class="fa-brands fa-git-alt text-9xl"></i>
+                </div>
+
+                <h1 class="text-3xl font-extrabold text-white mb-4 tracking-tight flex items-center gap-3">
+                    <span data-i18n="uploadTitle">檔案上傳與智能操作</span>
+                    <span class="text-xs font-normal bg-blue-600 text-white px-2 py-1 rounded-full align-middle"
+                        data-i18n="aiPowered">AI
+                        Powered</span>
+                </h1>
+
+                <div class="mb-6">
+                    <a href="rpg-hub.html"
+                        class="inline-flex items-center px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-600 rounded-full text-indigo-400 hover:text-indigo-300 text-sm transition"
+                        data-i18n="backLink">
+                        ← 返回 Quest Empire
+                    </a>
+                </div>
+
+                <!-- RPG Status Card -->
+                <div id="rpg-status-card" class="mb-6 max-w-md mx-auto md:mx-0"></div>
+
+                <!-- 目標路徑 (AI 推薦按鈕) -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-400 mb-1" data-i18n="targetPath">目標路徑
+                        (含檔名)</label>
+                    <div class="flex gap-2">
+                        <div class="flex flex-1">
+                            <span
+                                class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-slate-600 bg-slate-700 text-gray-400 text-sm">
+                                /
+                            </span>
+                            <input type="text" id="targetPath" placeholder="folder/filename.ext"
+                                class="input-field flex-1 p-3 rounded-r-lg focus:ring-2 focus:ring-blue-500 w-full">
+                        </div>
+                        <button onclick="suggestPathWithAI()" id="btnAiPath"
+                            class="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-3 py-2 text-xs font-bold transition flex items-center shadow-lg whitespace-nowrap border border-indigo-400/50">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> <span data-i18n="aiSuggestPath">AI
+                                推薦位置</span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-1" data-i18n="targetPathHint">上傳前請確認路徑。可手動輸入或點擊「AI
+                        推薦位置」由系統自動判斷。</p>
+                </div>
+
+                <!-- 檔案選擇區域 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-400 mb-2" data-i18n="selectFile">選擇檔案</label>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 拖放區 -->
+                        <div id="dropZone"
+                            class="md:col-span-2 relative border-2 border-dashed border-slate-600 rounded-xl p-6 hover:border-blue-500 transition-all duration-200 cursor-pointer bg-slate-800/50 flex flex-col items-center justify-center"
+                            onclick="document.getElementById('fileInput').click()" ondragover="handleDragOver(event)"
+                            ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)">
+
+                            <input type="file" id="fileInput" class="hidden"
+                                accept=".txt,.html,.css,.js,.json,.md,.png,.jpg,.jpeg,.gif,.svg,.webp,.py,.java,.cpp,.ts,.tsx,.jsx"
+                                onchange="handleFileSelect(this)">
+
+                            <div class="text-center space-y-2 pointer-events-none">
+                                <i
+                                    class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 group-hover:text-blue-400 transition"></i>
+                                <p id="fileNameDisplay" class="text-sm text-gray-300 font-medium"
+                                    data-i18n="dropOrClick">點擊或拖曳檔案至此</p>
+                                <p class="text-[10px] text-gray-500 leading-tight max-w-xs mx-auto">
+                                    <span data-i18n="supportedFormats">支援格式:</span> <br>
+                                    <span class="text-gray-400" data-i18n="textCode">文字/代碼:</span> .txt, .md, .html,
+                                    .css, .js, .py, .json,
+                                    .cpp, .java<br>
+                                    <span class="text-gray-400" data-i18n="images">圖片:</span> .png, .jpg, .jpeg, .gif,
+                                    .svg, .webp
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 預覽區 -->
+                        <div
+                            class="md:col-span-1 border border-slate-700 rounded-xl bg-slate-900 flex items-center justify-center overflow-hidden relative min-h-[120px]">
+                            <img id="imagePreview" class="hidden w-full h-full object-contain p-1" alt="Preview">
+                            <div id="textPreviewIcon" class="hidden text-gray-600 flex flex-col items-center gap-2">
+                                <i class="fa-regular fa-file-code text-4xl"></i>
+                                <span class="text-xs" data-i18n="codeFile">程式碼檔案</span>
+                            </div>
+                            <span id="noPreviewText" class="text-xs text-gray-600" data-i18n="noPreview">無預覽</span>
+
+                            <!-- 清除按鈕 -->
+                            <button onclick="clearFileSelection(event)" id="clearFileBtn"
+                                class="hidden absolute top-1 right-1 bg-red-500/80 hover:bg-red-600 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs backdrop-blur-sm shadow-md">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gemini AI 功能區 -->
+                <div class="mb-6 p-4 rounded-xl border border-indigo-500/30 bg-indigo-900/10">
+                    <label class="block text-sm font-bold text-indigo-300 mb-3 flex items-center">
+                        <i class="fa-solid fa-robot mr-2"></i> <span data-i18n="geminiAssistant">Gemini AI 智能助手</span>
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <button onclick="runGeminiTask('summary')" id="btnSummary" disabled
+                            class="bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/30 py-2 px-3 rounded-lg text-sm font-medium transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-file-lines mr-2"></i> <span data-i18n="fileSummary">檔案摘要</span>
+                        </button>
+                        <button onclick="runGeminiTask('commit')" id="btnCommitMsg" disabled
+                            class="bg-amber-600/20 border border-amber-500/30 text-amber-300 hover:bg-amber-600/30 py-2 px-3 rounded-lg text-sm font-medium transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-message mr-2"></i> <span data-i18n="writeCommitMsg">寫 Commit 訊息</span>
+                        </button>
+                        <button onclick="runGeminiTask('review')" id="btnCodeReview" disabled
+                            class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 py-2 px-3 rounded-lg text-sm font-medium transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed relative overflow-hidden group">
+                            <span
+                                class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                            <i class="fa-solid fa-bug-slash mr-2"></i> <span data-i18n="smartCodeReview">✨ 智能代碼審查</span>
+                        </button>
+                    </div>
+
+                    <!-- Gemini 輸出區塊 -->
+                    <div id="geminiOutputContainer" class="hidden mt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs text-indigo-300 font-bold" id="aiOutputTitle" data-i18n="aiResponse">AI
+                                回應:</span>
+                            <button onclick="document.getElementById('geminiOutputContainer').classList.add('hidden')"
+                                class="text-xs text-gray-500 hover:text-white">
+                                <i class="fa-solid fa-times"></i> <span data-i18n="close">關閉</span>
+                            </button>
+                        </div>
+                        <div id="geminiOutput"
+                            class="p-4 bg-slate-800/80 border border-indigo-500/20 rounded-lg text-sm text-gray-200 markdown-body max-h-64 overflow-y-auto">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🌟 Contribution Heatmap (Gamified Version) -->
+                <div class="mb-6 p-4 rounded-xl border border-slate-700 bg-slate-800/50">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-chart-line mr-2 text-green-400"></i> <span
+                                data-i18n="recentContributions">近期貢獻概覽 (Activity)</span>
+                        </label>
+                        <span class="text-[10px] text-gray-500" data-i18n="last90Days">Last 90 Days</span>
+                    </div>
+
+                    <!-- Stats Dashboard (NEW) -->
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <!-- Streak Card -->
+                        <div class="stat-card p-3 rounded-lg text-center">
+                            <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1"
+                                data-i18n="currentStreak">Current Streak</div>
+                            <div class="flex items-center justify-center text-xl font-bold text-orange-400">
+                                <i class="fa-solid fa-fire mr-1.5 animate-pulse"></i> <span id="statStreak">0</span>
+                            </div>
+                            <div class="text-[9px] text-gray-500 mt-1"><span data-i18n="bestStreak">Best:</span> <span
+                                    id="statMaxStreak">0</span> <span data-i18n="days">Days</span>
+                            </div>
+                        </div>
+
+                        <!-- Total Card -->
+                        <div class="stat-card p-3 rounded-lg text-center">
+                            <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1"
+                                data-i18n="totalCommits">Total Commits</div>
+                            <div class="flex items-center justify-center text-xl font-bold text-blue-400">
+                                <span id="statTotal">0</span>
+                            </div>
+                            <div class="text-[9px] text-gray-500 mt-1" data-i18n="in3Months">In 3 Months</div>
+                        </div>
+
+                        <!-- Rank Card -->
+                        <div class="stat-card p-3 rounded-lg text-center">
+                            <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1"
+                                data-i18n="currentRank">Current Rank</div>
+                            <div
+                                class="flex items-center justify-center text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
+                                <span id="statRank">Novice</span>
+                            </div>
+                            <div class="text-[9px] text-gray-500 mt-1" id="nextLevelMsg">Keep coding!</div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto pb-1">
+                        <div id="contributionHeatmap"
+                            class="heatmap-container min-h-[60px] flex items-center justify-center text-gray-500 text-xs"
+                            data-i18n="loading">
+                            載入中...
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end mt-2 gap-1 text-[10px] text-gray-500">
+                        <span data-i18n="less">Less</span>
+                        <div class="w-2.5 h-2.5 rounded bg-[#1e293b]"></div>
+                        <div class="w-2.5 h-2.5 rounded bg-[#0e4429]"></div>
+                        <div class="w-2.5 h-2.5 rounded bg-[#006d32]"></div>
+                        <div class="w-2.5 h-2.5 rounded bg-[#26a641]"></div>
+                        <div class="w-2.5 h-2.5 rounded bg-[#39d353]"></div>
+                        <span data-i18n="more">More</span>
+                    </div>
+                </div>
+
+                <!-- Commit Message -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-400 mb-1" data-i18n="commitMessage">Commit
+                        Message</label>
+                    <input type="text" id="commitMessage" value="Update via AI GitHub Manager"
+                        class="input-field w-full p-3 rounded-lg">
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="performAction('upload')" id="btnUpload"
+                        class="btn-gradient text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center">
+                        <span id="spinnerUpload" class="spinner hidden mr-2"></span>
+                        <i class="fa-solid fa-cloud-upload-alt mr-2"></i> <span data-i18n="uploadUpdate">上傳 / 更新</span>
+                    </button>
+                    <button onclick="performAction('delete')" id="btnDelete"
+                        class="btn-danger text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-center">
+                        <span id="spinnerDelete" class="spinner hidden mr-2"></span>
+                        <i class="fa-solid fa-trash-alt mr-2"></i> <span data-i18n="deleteFile">刪除檔案</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 狀態與結果 -->
+            <div id="statusArea" class="hidden p-4 rounded-xl border transition-all duration-300">
+                <div class="flex items-start">
+                    <i id="statusIcon" class="fa-solid fa-circle-info mt-1 mr-3"></i>
+                    <div class="flex-1 overflow-hidden">
+                        <h4 id="statusTitle" class="font-bold text-sm mb-1" data-i18n="statusUpdate">狀態更新</h4>
+                        <p id="statusMsg" class="text-xs opacity-90 break-all"></p>
+
+                        <!-- 成功後的連結 -->
+                        <div id="successLinks" class="hidden mt-3 pt-3 border-t border-white/20">
+                            <label class="text-[10px] uppercase font-bold opacity-70" data-i18n="rawUrl">Raw URL</label>
+                            <div class="flex mt-1">
+                                <input type="text" id="resultUrl" readonly
+                                    class="bg-black/20 border-none rounded-l text-xs w-full px-2 py-1 select-all text-white">
+                                <button onclick="copyUrl()"
+                                    class="bg-white/20 hover:bg-white/30 px-3 rounded-r text-xs font-bold transition"
+                                    data-i18n="copy">
+                                    COPY
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Tooltip Element -->
+    <div id="heatmapTooltip" class="heatmap-tooltip"></div>
+
+    <script>
+        // --- Internationalization (i18n) System ---
+        const i18n = {
+            currentLang: 'zh',
+            translations: {
+                zh: {
+                    // Page Title
+                    pageTitle: 'GitHub 檔案管理終端 v2.9.6',
+
+                    // Settings Panel
+                    repoSettings: '倉庫設定',
+                    githubToken: 'GitHub PAT Token',
+                    tokenSaved: '已紀錄',
+                    syncComplete: '同步完成',
+                    autoSaveToken: '自動儲存 Token (下次啟動自動帶入)',
+                    geminiApiKey: 'Gemini API Key (選填)',
+                    autoSaveApiKey: '自動儲存 API Key (下次啟動自動帶入)',
+                    ownerRepo: 'Owner / Repo',
+                    branch: 'Branch',
+                    connectAndLoad: '連線並讀取 (Root)',
+                    configBackup: '設定檔備份 (Config Backup)',
+                    exportConfig: '匯出設定.json',
+                    importConfig: '匯入設定.json',
+                    configBackupHint: '可將設定匯出為實體檔案保存於電腦',
+
+                    // File Browser
+                    fileBrowser: '檔案瀏覽器',
+                    clickToSelect: '點擊選取',
+                    expandFolder: '展開資料夾',
+                    enterSettingsHint: '請輸入設定並點擊上方<br>「連線並讀取」按鈕',
+                    loadingRepoList: '正在同步 Repo 列表...',
+                    loadingBranches: '讀取分支中...',
+                    noRepoFound: '找不到任何倉庫',
+                    readFailed: '讀取失敗',
+                    folderReadFailed: '讀取資料夾失敗',
+
+                    // Upload Panel
+                    uploadTitle: '檔案上傳與智能操作',
+                    aiPowered: 'AI Powered',
+                    targetPath: '目標路徑 (含檔名)',
+                    aiSuggestPath: 'AI 推薦位置',
+                    targetPathHint: '上傳前請確認路徑。可手動輸入或點擊「AI 推薦位置」由系統自動判斷。',
+                    selectFile: '選擇檔案',
+                    dropOrClick: '點擊或拖曳檔案至此',
+                    supportedFormats: '支援格式:',
+                    textCode: '文字/代碼:',
+                    images: '圖片:',
+                    codeFile: '程式碼檔案',
+                    noPreview: '無預覽',
+
+                    // Gemini AI
+                    geminiAssistant: 'Gemini AI 智能助手',
+                    fileSummary: '檔案摘要',
+                    writeCommitMsg: '寫 Commit 訊息',
+                    smartCodeReview: '✨ 智能代碼審查',
+                    aiResponse: 'AI 回應:',
+                    close: '關閉',
+                    analyzing: 'Gemini 正在分析檔案結構...',
+                    comparingRemote: '正在比對遠端檔案並生成摘要...',
+                    codeReviewing: '正在進行代碼審查...',
+
+                    // Heatmap
+                    recentContributions: '近期貢獻概覽 (Activity)',
+                    last90Days: 'Last 90 Days',
+                    currentStreak: 'Current Streak',
+                    bestStreak: 'Best:',
+                    days: 'Days',
+                    totalCommits: 'Total Commits',
+                    in3Months: 'In 3 Months',
+                    currentRank: 'Current Rank',
+                    loading: '載入中...',
+                    less: 'Less',
+                    more: 'More',
+                    contributions: 'contributions',
+                    setTokenRepoHint: '請先設定 Token 與 Repo 以檢視貢獻圖',
+                    loadingContribData: '讀取貢獻數據...',
+
+                    // Commit & Actions
+                    commitMessage: 'Commit Message',
+                    uploadUpdate: '上傳 / 更新',
+                    deleteFile: '刪除檔案',
+
+                    // Status Messages
+                    statusUpdate: '狀態更新',
+                    processing: '正在處理請求...',
+                    error: '發生錯誤',
+                    success: '操作成功',
+                    warning: '警告',
+                    inProgress: '處理中',
+                    rawUrl: 'Raw URL',
+                    copy: 'COPY',
+
+                    // Error/Info Messages
+                    enterTokenRepo: '請輸入 GitHub Token 和 Repository 名稱以讀取列表',
+                    selectFileFirst: '請先選擇要上傳的檔案',
+                    setGeminiKey: '請先設定 Gemini API Key',
+                    setTokenRepoForAnalysis: '請先設定 GitHub Token 和 Repository 以便分析資料夾結構',
+                    fillAllFields: '請填寫所有必要欄位 (Token, Repo, Branch, Path, Message)',
+                    fileNotChanged: '檔案內容未變更，無需上傳更新。',
+                    aiAnalyzingDiff: '內容有變動，正在使用 AI 分析差異並生成 Commit 訊息...',
+                    aiSummarizingNew: '新檔案上傳中，正在使用 AI 摘要內容並生成 Commit 訊息...',
+                    fileNotExist: '檔案不存在，無法刪除',
+                    uploadSuccess: '檔案上傳成功！',
+                    updateSuccess: '檔案更新成功！',
+                    deleteSuccess: '檔案刪除成功！',
+                    operationFailed: '操作失敗',
+                    tokenInvalidOrNetwork: 'Token 無效或網路錯誤',
+                    repoSyncFailed: 'Repo 列表同步失敗，請確認 Token 權限。目前使用快取設定。',
+                    cannotReadBranch: '無法讀取分支',
+                    cannotReadCommits: '無法讀取 Commit 紀錄',
+                    configExportSuccess: '設定檔匯出成功！',
+                    exportCancelledOrFailed: '匯出已取消或失敗。',
+                    pythonExportFailed: '呼叫 Python 匯出功能失敗。',
+                    configExported: '設定檔已匯出，請妥善保存。',
+                    configImportSuccess: '設定檔匯入成功！',
+                    configFormatError: '設定檔格式錯誤，無法匯入。',
+                    openingSaveDialog: '正在開啟存檔對話框...',
+                    aiSuggestedPath: 'AI 已建議路徑',
+                    aiSuggestFailed: 'AI 推薦失敗',
+                    aiRequestFailed: 'AI 請求失敗',
+                    autoFilledTitle: '已自動填入標題',
+                    newFileMode: '(新檔案模式：無變更摘要)',
+                    copySummaryHint: '↑ 您可以選取並複製上方的摘要作為詳細描述',
+
+                    // Language
+                    language: '語言',
+                    chinese: '中文',
+                    english: 'English',
+
+                    // Ranks
+                    rankNovice: '🌱 新手',
+                    rankBuilder: '🔨 建造者',
+                    rankContributor: '🚀 貢獻者',
+                    rankNinja: '🔥 程式忍者',
+                    rankLegend: '👑 Git 傳奇',
+                    // RPG Ranks (DevScribeRPG)
+                    rpgRank1: '新手挑戰者',
+                    rpgRank2: '見習冒險家',
+                    rpgRank3: '探索者',
+                    rpgRank4: '挑戰達人',
+                    rpgRank5: '精英戰士',
+                    rpgRank6: '專家引導者',
+                    rpgRank7: '大師創造者',
+                    rpgRank8: '宗師煉金師',
+                    rpgRank9: '傳奇締造者',
+                    rpgRank10: '帝國領袖',
+                    rpgXpNeeded: '還需 {xp} XP 升級',
+                    backLink: '← 返回 Quest Empire',
+                    msgStart: '開始你的旅程！',
+                    msgKeepBuilding: '繼續建造！',
+                    msgFlyingHigh: '你正在高飛！',
+                    msgUnstoppable: '勢不可擋！',
+                    msgMaxRespect: '最高敬意！',
+
+                    // Dynamic Messages (JavaScript)
+                    analyzingAI: '分析中...',
+                    fileSummaryTitle: '📄 檔案摘要',
+                    diffSummaryTitle: '💬 差異摘要與 Commit 建議',
+                    codeReviewTitle: '✨ 智能代碼審查',
+                    fileActionSuccess: '檔案{action}成功！ Commit SHA: {sha}',
+                    actionUpload: '上傳',
+                    actionUpdate: '更新',
+                    actionDelete: '刪除',
+                    refreshList: '重新整理列表',
+                    savedManual: '(Saved/Manual)',
+                    private: '(Private)',
+                    readFailedWithBranch: '(讀取失敗)'
+                },
+                en: {
+                    // Page Title
+                    pageTitle: 'GitHub File Manager Terminal v2.9.6',
+
+                    // Settings Panel
+                    repoSettings: 'Repository Settings',
+                    githubToken: 'GitHub PAT Token',
+                    tokenSaved: 'Saved',
+                    syncComplete: 'Sync Complete',
+                    autoSaveToken: 'Auto-save Token (load on next startup)',
+                    geminiApiKey: 'Gemini API Key (Optional)',
+                    autoSaveApiKey: 'Auto-save API Key (load on next startup)',
+                    ownerRepo: 'Owner / Repo',
+                    branch: 'Branch',
+                    connectAndLoad: 'Connect & Load (Root)',
+                    configBackup: 'Config Backup',
+                    exportConfig: 'Export Config.json',
+                    importConfig: 'Import Config.json',
+                    configBackupHint: 'Export settings to a local file for backup',
+
+                    // File Browser
+                    fileBrowser: 'File Browser',
+                    clickToSelect: 'Click to select',
+                    expandFolder: 'Expand folder',
+                    enterSettingsHint: 'Please enter settings and click<br>"Connect & Load" button above',
+                    loadingRepoList: 'Syncing repository list...',
+                    loadingBranches: 'Loading branches...',
+                    noRepoFound: 'No repositories found',
+                    readFailed: 'Read failed',
+                    folderReadFailed: 'Failed to read folder',
+
+                    // Upload Panel
+                    uploadTitle: 'File Upload & Smart Operations',
+                    aiPowered: 'AI Powered',
+                    targetPath: 'Target Path (with filename)',
+                    aiSuggestPath: 'AI Suggest Path',
+                    targetPathHint: 'Confirm path before uploading. Enter manually or click "AI Suggest Path" for auto-detection.',
+                    selectFile: 'Select File',
+                    dropOrClick: 'Click or drag file here',
+                    supportedFormats: 'Supported formats:',
+                    textCode: 'Text/Code:',
+                    images: 'Images:',
+                    codeFile: 'Code file',
+                    noPreview: 'No preview',
+
+                    // Gemini AI
+                    geminiAssistant: 'Gemini AI Smart Assistant',
+                    fileSummary: 'File Summary',
+                    writeCommitMsg: 'Write Commit Message',
+                    smartCodeReview: '✨ Smart Code Review',
+                    aiResponse: 'AI Response:',
+                    close: 'Close',
+                    analyzing: 'Gemini is analyzing file structure...',
+                    comparingRemote: 'Comparing with remote file and generating summary...',
+                    codeReviewing: 'Performing code review...',
+
+                    // Heatmap
+                    recentContributions: 'Recent Contributions (Activity)',
+                    last90Days: 'Last 90 Days',
+                    currentStreak: 'Current Streak',
+                    bestStreak: 'Best:',
+                    days: 'Days',
+                    totalCommits: 'Total Commits',
+                    in3Months: 'In 3 Months',
+                    currentRank: 'Current Rank',
+                    loading: 'Loading...',
+                    less: 'Less',
+                    more: 'More',
+                    contributions: 'contributions',
+                    setTokenRepoHint: 'Set Token & Repo to view contribution graph',
+                    loadingContribData: 'Loading contribution data...',
+
+                    // Commit & Actions
+                    commitMessage: 'Commit Message',
+                    uploadUpdate: 'Upload / Update',
+                    deleteFile: 'Delete File',
+
+                    // Status Messages
+                    statusUpdate: 'Status Update',
+                    processing: 'Processing request...',
+                    error: 'Error',
+                    success: 'Success',
+                    warning: 'Warning',
+                    inProgress: 'In Progress',
+                    rawUrl: 'Raw URL',
+                    copy: 'COPY',
+
+                    // Error/Info Messages
+                    enterTokenRepo: 'Please enter GitHub Token and Repository name to load list',
+                    selectFileFirst: 'Please select a file to upload first',
+                    setGeminiKey: 'Please set Gemini API Key first',
+                    setTokenRepoForAnalysis: 'Please set GitHub Token and Repository for folder structure analysis',
+                    fillAllFields: 'Please fill all required fields (Token, Repo, Branch, Path, Message)',
+                    fileNotChanged: 'File content unchanged, no update needed.',
+                    aiAnalyzingDiff: 'Content changed, using AI to analyze diff and generate commit message...',
+                    aiSummarizingNew: 'Uploading new file, using AI to summarize and generate commit message...',
+                    fileNotExist: 'File does not exist, cannot delete',
+                    uploadSuccess: 'File uploaded successfully!',
+                    updateSuccess: 'File updated successfully!',
+                    deleteSuccess: 'File deleted successfully!',
+                    operationFailed: 'Operation failed',
+                    tokenInvalidOrNetwork: 'Token invalid or network error',
+                    repoSyncFailed: 'Repo list sync failed, please check Token permissions. Using cached settings.',
+                    cannotReadBranch: 'Cannot read branches',
+                    cannotReadCommits: 'Cannot read commit history',
+                    configExportSuccess: 'Config exported successfully!',
+                    exportCancelledOrFailed: 'Export cancelled or failed.',
+                    pythonExportFailed: 'Failed to call Python export function.',
+                    configExported: 'Config exported, please keep it safe.',
+                    configImportSuccess: 'Config imported successfully!',
+                    configFormatError: 'Config format error, cannot import.',
+                    openingSaveDialog: 'Opening save dialog...',
+                    aiSuggestedPath: 'AI suggested path',
+                    aiSuggestFailed: 'AI suggestion failed',
+                    aiRequestFailed: 'AI request failed',
+                    autoFilledTitle: 'Auto-filled title',
+                    newFileMode: '(New file mode: no change summary)',
+                    copySummaryHint: '↑ You can select and copy the summary above as detailed description',
+
+                    // Language
+                    language: 'Language',
+                    chinese: '中文',
+                    english: 'English',
+
+                    // Ranks
+                    rankNovice: '🌱 Novice',
+                    rankBuilder: '🔨 Builder',
+                    rankContributor: '🚀 Contributor',
+                    rankNinja: '🔥 Code Ninja',
+                    rankLegend: '👑 Git Legend',
+                    // RPG Ranks (DevScribeRPG)
+                    rpgRank1: 'Novice Challenger',
+                    rpgRank2: 'Apprentice Adventurer',
+                    rpgRank3: 'Explorer',
+                    rpgRank4: 'Challenge Master',
+                    rpgRank5: 'Elite Warrior',
+                    rpgRank6: 'Expert Guide',
+                    rpgRank7: 'Master Creator',
+                    rpgRank8: 'Grandmaster Alchemist',
+                    rpgRank9: 'Legendary Founder',
+                    rpgRank10: 'Empire Leader',
+                    rpgXpNeeded: 'Need {xp} XP to level up',
+                    backLink: '← Back to Quest Empire',
+                    msgStart: 'Start your journey!',
+                    msgKeepBuilding: 'Keep building!',
+                    msgFlyingHigh: "You're flying high!",
+                    msgUnstoppable: 'Unstoppable!',
+                    msgMaxRespect: 'Maximum Respect!',
+
+                    // Dynamic Messages (JavaScript)
+                    analyzingAI: 'Analyzing...',
+                    fileSummaryTitle: '📄 File Summary',
+                    diffSummaryTitle: '💬 Diff Summary & Commit Suggestion',
+                    codeReviewTitle: '✨ Smart Code Review',
+                    fileActionSuccess: 'File {action} successful! Commit SHA: {sha}',
+                    actionUpload: 'uploaded',
+                    actionUpdate: 'updated',
+                    actionDelete: 'deleted',
+                    refreshList: 'Refresh list',
+                    savedManual: '(Saved/Manual)',
+                    private: '(Private)',
+                    readFailedWithBranch: '(Read failed)'
+                }
+            },
+
+            t: function (key) {
+                return this.translations[this.currentLang][key] || key;
+            },
+
+            setLanguage: function (lang) {
+                this.currentLang = lang;
+                localStorage.setItem('github_manager_lang', lang);
+                this.applyTranslations();
+            },
+
+            loadSavedLanguage: function () {
+                const savedLang = localStorage.getItem('github_manager_lang');
+                if (savedLang && this.translations[savedLang]) {
+                    this.currentLang = savedLang;
+                }
+            },
+
+            applyTranslations: function () {
+                // Update all elements with data-i18n attribute
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    const translation = this.t(key);
+                    if (el.tagName === 'INPUT' && el.type !== 'checkbox') {
+                        if (el.placeholder) el.placeholder = translation;
+                    } else {
+                        el.innerHTML = translation;
+                    }
+                });
+
+                // Update page title
+                document.title = this.t('pageTitle');
+
+                // Update language toggle button
+                const langBtn = document.getElementById('langToggleBtn');
+                if (langBtn) {
+                    langBtn.innerHTML = `<i class="fa-solid fa-globe mr-1"></i> ${this.currentLang === 'zh' ? 'EN' : '中文'}`;
+                }
+
+                // Update RPG Status Card (Refresh content with new language)
+                if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
+                    document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                }
+            }
+        };
+        // Expose i18n for external scripts (like DevScribeRPG)
+        window.i18n = i18n;
+
+        function toggleLanguage() {
+            const newLang = i18n.currentLang === 'zh' ? 'en' : 'zh';
+            i18n.setLanguage(newLang);
+        }
+
+        // --- 全域常數與變數 ---
+        const DEFAULT_UPLOAD_MESSAGE = "Update via AI GitHub Manager";
+
+        let selectedFile = null;
+        let selectedFileBase64 = null;
+
+        // Tree View State
+        let currentlySelectedNode = null;
+
+        // --- 1. 小型資料庫 (Config Manager) ---
+        const ConfigDB = {
+            KEYS: {
+                GITHUB_TOKEN: 'github_pat_token',
+                GEMINI_KEY: 'gemini_api_key',
+                REPO: 'github_repo_name',
+                BRANCH: 'github_branch_name'
+            },
+
+            save: function (key, value) {
+                if (value) {
+                    localStorage.setItem(key, value);
+                    this.showSaveIndicator(key);
+                } else {
+                    localStorage.removeItem(key);
+                    this.hideSaveIndicator(key);
+                }
+            },
+
+            remove: function (key) {
+                localStorage.removeItem(key);
+                this.hideSaveIndicator(key);
+            },
+
+            get: function (key) {
+                return localStorage.getItem(key);
+            },
+
+            showSaveIndicator: function (key) {
+                let elId = '';
+                if (key === this.KEYS.GITHUB_TOKEN) elId = 'tokenStatus';
+                if (key === this.KEYS.GEMINI_KEY) elId = 'geminiStatus';
+
+                const el = document.getElementById(elId);
+                if (el) el.style.opacity = 1;
+            },
+
+            hideSaveIndicator: function (key) {
+                let elId = '';
+                if (key === this.KEYS.GITHUB_TOKEN) elId = 'tokenStatus';
+                if (key === this.KEYS.GEMINI_KEY) elId = 'geminiStatus';
+
+                const el = document.getElementById(elId);
+                if (el) el.style.opacity = 0;
+            },
+
+            exportToFile: function () {
+                const config = {
+                    github_token: localStorage.getItem(this.KEYS.GITHUB_TOKEN) || '',
+                    gemini_key: localStorage.getItem(this.KEYS.GEMINI_KEY) || '',
+                    repo: document.getElementById('repo').value,
+                    branch: document.getElementById('branch').value
+                };
+
+                const jsonString = JSON.stringify(config, null, 2);
+
+                if (window.pywebview && window.pywebview.api) {
+                    showStatus('info', '正在開啟存檔對話框...');
+                    window.pywebview.api.export_json(jsonString).then(result => {
+                        if (result) {
+                            showStatus('success', i18n.t('configExportSuccess'));
+                        } else {
+                            showStatus('warning', i18n.t('exportCancelledOrFailed'));
+                        }
+                    }).catch(err => {
+                        console.error(err);
+                        showStatus('error', i18n.t('pythonExportFailed'));
+                    });
+                } else {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonString);
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", "github_manager_config.json");
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                    showStatus('info', i18n.t('configExported'));
+                }
+            },
+
+            importFromFile: function (inputElement) {
+                const file = inputElement.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const config = JSON.parse(e.target.result);
+                        if (config.github_token) {
+                            document.getElementById('token').value = config.github_token;
+                            document.getElementById('saveToken').checked = true;
+                            ConfigDB.save(ConfigDB.KEYS.GITHUB_TOKEN, config.github_token);
+                            // 自動觸發 Repo 同步
+                            fetchRepositories(config.github_token, config.repo);
+                        }
+                        if (config.gemini_key) {
+                            document.getElementById('geminiApiKey').value = config.gemini_key;
+                            document.getElementById('saveGeminiKey').checked = true;
+                            ConfigDB.save(ConfigDB.KEYS.GEMINI_KEY, config.gemini_key);
+                        }
+                        // 如果有 Branch 設定，先存入 LocalStorage，讓稍後的 fetchBranches 能抓到
+                        if (config.branch) {
+                            ConfigDB.save(ConfigDB.KEYS.BRANCH, config.branch);
+                        }
+
+                        showStatus('success', i18n.t('configImportSuccess'));
+                    } catch (err) {
+                        console.error(err);
+                        showStatus('error', i18n.t('configFormatError'));
+                    }
+                    inputElement.value = '';
+                };
+                reader.readAsText(file);
+            }
+        };
+
+        window.onload = function () {
+            // Initialize i18n system
+            i18n.loadSavedLanguage();
+            i18n.applyTranslations();
+
+            const savedToken = ConfigDB.get(ConfigDB.KEYS.GITHUB_TOKEN);
+            if (savedToken) {
+                document.getElementById('token').value = savedToken;
+                document.getElementById('saveToken').checked = true;
+                ConfigDB.showSaveIndicator(ConfigDB.KEYS.GITHUB_TOKEN);
+                // 自動讀取 Repo
+                fetchRepositories(savedToken);
+            }
+
+            const savedGeminiKey = ConfigDB.get(ConfigDB.KEYS.GEMINI_KEY);
+            if (savedGeminiKey) {
+                document.getElementById('geminiApiKey').value = savedGeminiKey;
+                document.getElementById('saveGeminiKey').checked = true;
+                ConfigDB.showSaveIndicator(ConfigDB.KEYS.GEMINI_KEY);
+            }
+
+            document.getElementById('commitMessage').value = DEFAULT_UPLOAD_MESSAGE;
+
+            setupRealtimeSync('token', 'saveToken', ConfigDB.KEYS.GITHUB_TOKEN);
+            setupRealtimeSync('geminiApiKey', 'saveGeminiKey', ConfigDB.KEYS.GEMINI_KEY);
+            setupRealtimeSync('branch', 'saveToken', ConfigDB.KEYS.BRANCH);
+
+            // 監聽 Token 變更以自動讀取 Repo
+            document.getElementById('token').addEventListener('change', function () {
+                fetchRepositories(this.value);
+            });
+
+            // 監聽 Repo 變更以更新 Heatmap
+            document.getElementById('repo').addEventListener('change', function () {
+                updateContributionHeatmap();
+            });
+
+            // 🎮 RPG: Initialize Status Card
+            if (typeof DevScribeRPG !== 'undefined') {
+                const card = document.getElementById('rpg-status-card');
+                if (card) {
+                    card.innerHTML = DevScribeRPG.generateStatusCardHTML();
+                    // Listen for updates from RPG engine
+                    window.addEventListener('questempire:action', () => {
+                        card.innerHTML = DevScribeRPG.generateStatusCardHTML();
+                    });
+                }
+            }
+        };
+
+        async function fetchRepositories(token, preferredRepo = null) {
+            if (!token) return;
+
+            const repoSelect = document.getElementById('repo');
+            const currentSelection = preferredRepo || repoSelect.value || ConfigDB.get(ConfigDB.KEYS.REPO) || "t26020402-debug/Personal_Learning_Database";
+
+            repoSelect.disabled = true;
+            const originalText = repoSelect.innerHTML;
+            repoSelect.innerHTML = `<option>${i18n.t('loadingRepoList')}</option>`;
+
+            try {
+                // 抓取前 100 個 Repos，依更新時間排序
+                const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100&type=all', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(i18n.t('tokenInvalidOrNetwork'));
+                }
+
+                const repos = await response.json();
+
+                repoSelect.innerHTML = '';
+
+                if (repos.length === 0) {
+                    repoSelect.innerHTML = `<option value="">${i18n.t('noRepoFound')}</option>`;
+                } else {
+                    repos.forEach(repo => {
+                        const option = document.createElement('option');
+                        option.value = repo.full_name;
+                        option.textContent = repo.full_name + (repo.private ? ' ' + i18n.t('private') : '');
+                        option.dataset.defaultBranch = repo.default_branch;
+                        repoSelect.appendChild(option);
+                    });
+
+                    let found = false;
+                    for (let i = 0; i < repoSelect.options.length; i++) {
+                        if (repoSelect.options[i].value === currentSelection) {
+                            repoSelect.selectedIndex = i;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found && currentSelection) {
+                        const option = document.createElement('option');
+                        option.value = currentSelection;
+                        option.textContent = currentSelection + ' ' + i18n.t('savedManual');
+                        option.selected = true;
+                        option.dataset.defaultBranch = 'master';
+                        repoSelect.prepend(option);
+                    }
+                }
+
+                const statusEl = document.getElementById('tokenStatus');
+                if (statusEl) {
+                    statusEl.innerHTML = `<i class="fa-solid fa-check"></i> <span data-i18n="syncComplete">${i18n.t('syncComplete')}</span>`;
+                    statusEl.style.opacity = 1;
+                    setTimeout(() => {
+                        if (statusEl) statusEl.innerHTML = `<i class="fa-solid fa-check"></i> <span data-i18n="tokenSaved">${i18n.t('tokenSaved')}</span>`;
+                    }, 3000);
+                }
+
+                await fetchBranches(token);
+                // Trigger Heatmap update after repo loaded
+                updateContributionHeatmap();
+
+            } catch (error) {
+                console.error("Repo fetch failed:", error);
+                repoSelect.innerHTML = `<option value="${currentSelection}">${currentSelection}</option>`;
+                showStatus('warning', i18n.t('repoSyncFailed'));
+                await fetchBranches(token);
+            } finally {
+                repoSelect.disabled = false;
+            }
+        }
+
+        async function fetchBranches(token) {
+            const repoSelect = document.getElementById('repo');
+            const branchSelect = document.getElementById('branch');
+            const repoName = repoSelect.value;
+
+            if (!token || !repoName) return;
+
+            branchSelect.disabled = true;
+            branchSelect.innerHTML = `<option>${i18n.t('loadingBranches')}</option>`;
+
+            try {
+                const selectedOption = repoSelect.options[repoSelect.selectedIndex];
+                let defaultBranch = selectedOption ? selectedOption.dataset.defaultBranch : 'master';
+
+                const response = await fetch(`https://api.github.com/repos/${repoName}/branches`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) throw new Error(i18n.t('cannotReadBranch'));
+                const branches = await response.json();
+
+                branchSelect.innerHTML = '';
+                branches.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.name;
+                    opt.textContent = b.name;
+                    branchSelect.appendChild(opt);
+                });
+
+                const savedBranch = ConfigDB.get(ConfigDB.KEYS.BRANCH);
+                const savedRepo = ConfigDB.get(ConfigDB.KEYS.REPO);
+
+                let targetBranch = defaultBranch;
+
+                if (savedRepo === repoName && savedBranch && branches.some(b => b.name === savedBranch)) {
+                    targetBranch = savedBranch;
+                } else if (branches.some(b => b.name === defaultBranch)) {
+                    targetBranch = defaultBranch;
+                } else if (branches.length > 0) {
+                    targetBranch = branches[0].name;
+                }
+
+                branchSelect.value = targetBranch;
+
+                if (document.getElementById('saveToken').checked) {
+                    ConfigDB.save(ConfigDB.KEYS.BRANCH, targetBranch);
+                    ConfigDB.save(ConfigDB.KEYS.REPO, repoName);
+                }
+
+            } catch (e) {
+                console.error(e);
+                branchSelect.innerHTML = `<option value="master">master ${i18n.t('readFailedWithBranch')}</option>`;
+            } finally {
+                branchSelect.disabled = false;
+            }
+        }
+
+        function setupRealtimeSync(inputId, checkboxId, storageKey) {
+            const inputEl = document.getElementById(inputId);
+            const checkboxEl = document.getElementById(checkboxId);
+            if (!inputEl || !checkboxEl) return;
+
+            const syncLogic = () => {
+                if (checkboxEl.checked) {
+                    const val = inputEl.value.trim();
+                    if (val) {
+                        ConfigDB.save(storageKey, val);
+                    }
+                } else {
+                    ConfigDB.remove(storageKey);
+                }
+            };
+
+            inputEl.addEventListener('input', () => { if (checkboxEl.checked) syncLogic(); });
+            inputEl.addEventListener('change', () => { if (checkboxEl.checked) syncLogic(); });
+            checkboxEl.addEventListener('change', syncLogic);
+        }
+
+        function toggleTokenVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+
+        // --- 2. 檔案瀏覽器邏輯 (VS Code Tree View Style) ---
+
+        async function initTreeBrowser() {
+            const inputs = getInputs(false);
+            if (!inputs.token || !inputs.repo) {
+                showStatus('error', '請輸入 GitHub Token 和 Repository 名稱以讀取列表');
+                return;
+            }
+
+            const listContainer = document.getElementById('fileList');
+            const repoDisplay = document.getElementById('repoNameDisplay');
+
+            listContainer.innerHTML = '<div class="flex justify-center py-4"><span class="spinner"></span></div>';
+            repoDisplay.textContent = inputs.repo;
+
+            try {
+                const items = await fetchItemsFromApi(inputs.repo, inputs.token, inputs.branch, '');
+
+                listContainer.innerHTML = '';
+
+                items.sort(sortItems);
+
+                items.forEach(item => {
+                    listContainer.appendChild(createTreeNode(item, 0));
+                });
+
+                // Also refresh heatmap just in case
+                updateContributionHeatmap();
+
+            } catch (error) {
+                listContainer.innerHTML = `<div class="text-red-400 text-center text-sm p-2">讀取失敗<br>${error.message}</div>`;
+            }
+        }
+
+        async function fetchItemsFromApi(repo, token, branch, path) {
+            const timestamp = new Date().getTime();
+            const url = `https://api.github.com/repos/${repo}/contents/${path}?ref=${branch}&_t=${timestamp}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+            const data = await response.json();
+            return Array.isArray(data) ? data : [data];
+        }
+
+        function sortItems(a, b) {
+            if (a.type === b.type) return a.name.localeCompare(b.name);
+            return a.type === 'dir' ? -1 : 1;
+        }
+
+        function createTreeNode(item, level) {
+            const container = document.createElement('div');
+
+            const nodeRow = document.createElement('div');
+            nodeRow.className = 'tree-node rounded';
+            nodeRow.style.paddingLeft = `${level * 16 + 4}px`;
+
+            const toggleIcon = document.createElement('div');
+            toggleIcon.className = 'tree-toggle-icon';
+            if (item.type === 'dir') {
+                toggleIcon.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            } else {
+                toggleIcon.classList.add('invisible');
+                toggleIcon.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            }
+            nodeRow.appendChild(toggleIcon);
+
+            const fileIcon = document.createElement('div');
+            fileIcon.className = 'tree-icon';
+            const iconClass = item.type === 'dir' ? 'fa-folder text-yellow-400' : getFileIcon(item.name);
+            fileIcon.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            nodeRow.appendChild(fileIcon);
+
+            const label = document.createElement('span');
+            label.className = 'tree-label ml-1';
+            label.textContent = item.name;
+            nodeRow.appendChild(label);
+
+            container.appendChild(nodeRow);
+
+            let childrenContainer = null;
+            if (item.type === 'dir') {
+                childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-children hidden';
+                container.appendChild(childrenContainer);
+            }
+
+            nodeRow.onclick = async (e) => {
+                e.stopPropagation();
+
+                if (currentlySelectedNode) {
+                    currentlySelectedNode.classList.remove('selected');
+                }
+                nodeRow.classList.add('selected');
+                currentlySelectedNode = nodeRow;
+
+                if (item.type === 'file') {
+                    document.getElementById('targetPath').value = item.path;
+
+                } else if (item.type === 'dir') {
+                    const inputs = getInputs(false);
+
+                    if (childrenContainer.innerHTML === '') {
+                        toggleIcon.innerHTML = '<div class="tree-spinner"></div>';
+
+                        try {
+                            const subItems = await fetchItemsFromApi(inputs.repo, inputs.token, inputs.branch, item.path);
+                            subItems.sort(sortItems);
+
+                            subItems.forEach(subItem => {
+                                childrenContainer.appendChild(createTreeNode(subItem, level + 1));
+                            });
+
+                            childrenContainer.classList.remove('hidden');
+                            toggleIcon.classList.add('expanded');
+                            toggleIcon.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+
+                            fileIcon.innerHTML = '<i class="fa-solid fa-folder-open text-yellow-400"></i>';
+
+                        } catch (err) {
+                            toggleIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500"></i>';
+                            showStatus('error', `讀取資料夾失敗: ${err.message}`);
+                        }
+                    } else {
+                        const isHidden = childrenContainer.classList.contains('hidden');
+                        if (isHidden) {
+                            childrenContainer.classList.remove('hidden');
+                            toggleIcon.classList.add('expanded');
+                            fileIcon.innerHTML = '<i class="fa-solid fa-folder-open text-yellow-400"></i>';
+                        } else {
+                            childrenContainer.classList.add('hidden');
+                            toggleIcon.classList.remove('expanded');
+                            fileIcon.innerHTML = '<i class="fa-solid fa-folder text-yellow-400"></i>';
+                        }
+                    }
+                }
+            };
+
+            return container;
+        }
+
+        function getFileIcon(filename) {
+            if (filename.endsWith('.html')) return 'fa-html5 text-orange-500';
+            if (filename.endsWith('.js')) return 'fa-js text-yellow-300';
+            if (filename.endsWith('.css')) return 'fa-css3-alt text-blue-500';
+            if (filename.match(/\.(jpg|jpeg|png|gif|svg)$/i)) return 'fa-image text-purple-400';
+            if (filename.endsWith('.md')) return 'fa-markdown text-white';
+            if (filename.endsWith('.json')) return 'fa-file-code text-yellow-500';
+            if (filename.endsWith('.py')) return 'fa-python text-blue-300';
+            return 'fa-file-lines text-gray-400';
+        }
+
+        // --- 3. 檔案處理 (Drag & Drop, 選擇, 預覽) ---
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.remove('drag-over');
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('dropZone').classList.remove('drag-over');
+
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files && files.length > 0) {
+                handleFileSelect({ files: files });
+            }
+        }
+
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            selectedFile = file;
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            const previewImg = document.getElementById('imagePreview');
+            const previewText = document.getElementById('textPreviewIcon');
+            const noPreview = document.getElementById('noPreviewText');
+            const clearBtn = document.getElementById('clearFileBtn');
+            const targetPath = document.getElementById('targetPath');
+
+            fileNameDisplay.textContent = file.name;
+            fileNameDisplay.classList.add('text-blue-300');
+            clearBtn.classList.remove('hidden');
+            noPreview.classList.add('hidden');
+
+            const currentVal = targetPath.value;
+            const lastSlashIndex = currentVal.lastIndexOf('/');
+
+            if (lastSlashIndex !== -1) {
+                const dir = currentVal.substring(0, lastSlashIndex + 1);
+                targetPath.value = dir + file.name;
+            } else {
+                if (targetPath.value === '') {
+                    targetPath.value = file.name;
+                }
+            }
+
+            const reader = new FileReader();
+
+            if (file.type.startsWith('image/')) {
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                    previewText.classList.add('hidden');
+                    selectedFileBase64 = e.target.result.split(',')[1];
+                    enableGemini(false);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.classList.add('hidden');
+                previewText.classList.remove('hidden');
+
+                reader.onload = (e) => {
+                    selectedFileBase64 = btoa(unescape(encodeURIComponent(e.target.result)));
+                    enableGemini(true);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function clearFileSelection(e) {
+            if (e) e.stopPropagation();
+            document.getElementById('fileInput').value = '';
+            selectedFile = null;
+            selectedFileBase64 = null;
+            document.getElementById('fileNameDisplay').textContent = i18n.t('dropOrClick');
+            document.getElementById('fileNameDisplay').classList.remove('text-blue-300');
+            document.getElementById('imagePreview').classList.add('hidden');
+            document.getElementById('textPreviewIcon').classList.add('hidden');
+            document.getElementById('noPreviewText').classList.remove('hidden');
+            document.getElementById('clearFileBtn').classList.add('hidden');
+            document.getElementById('geminiOutputContainer').classList.add('hidden');
+            enableGemini(false);
+        }
+
+        // --- 4. 上傳與刪除邏輯 ---
+
+        function isTextFile(filename) {
+            return /\.(txt|md|html|css|js|json|py|java|cpp|ts|xml|csv|rb|go|php)$/i.test(filename);
+        }
+
+        async function performAction(action) {
+            const inputs = getInputs(true);
+            if (!inputs) return;
+
+            const btn = action === 'upload' ? document.getElementById('btnUpload') : document.getElementById('btnDelete');
+            const spinner = action === 'upload' ? document.getElementById('spinnerUpload') : document.getElementById('spinnerDelete');
+
+            if (action === 'upload' && !selectedFileBase64) {
+                showStatus('error', i18n.t('selectFileFirst'));
+                return;
+            }
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            showStatus('info', i18n.t('processing'));
+
+            try {
+                // 1. Check File Existence (GET SHA)
+                const ts = new Date().getTime();
+                const apiUrl = `https://api.github.com/repos/${inputs.repo}/contents/${inputs.path}?ref=${inputs.branch}&_t=${ts}`;
+                const checkRes = await fetch(apiUrl, {
+                    headers: { 'Authorization': `token ${inputs.token}` }
+                });
+
+                let sha = null;
+                let remoteContentBase64 = null;
+
+                if (checkRes.ok) {
+                    const data = await checkRes.json();
+                    sha = data.sha;
+                    remoteContentBase64 = data.content;
+                }
+
+                if (action === 'upload') {
+
+                    if (sha) {
+                        const cleanRemoteBase64 = remoteContentBase64.replace(/\n/g, '');
+
+                        if (cleanRemoteBase64 === selectedFileBase64) {
+                            showStatus('info', i18n.t('fileNotChanged'));
+                            btn.disabled = false;
+                            spinner.classList.add('hidden');
+                            return;
+                        }
+
+                        if (inputs.message === DEFAULT_UPLOAD_MESSAGE && inputs.geminiApiKey && isTextFile(inputs.path)) {
+                            showStatus('info', i18n.t('aiAnalyzingDiff'));
+                            try {
+                                const remoteContent = decodeURIComponent(escape(atob(cleanRemoteBase64)));
+                                const localContent = decodeURIComponent(escape(atob(selectedFileBase64)));
+                                const newCommitMessage = await generateDiffCommitMessage(inputs.geminiApiKey, remoteContent, localContent, inputs.path);
+                                inputs.message = newCommitMessage;
+                                document.getElementById('commitMessage').value = newCommitMessage;
+                            } catch (geminiError) {
+                                console.error("Gemini Diff failed:", geminiError);
+                            }
+                        }
+                    } else if (inputs.message === DEFAULT_UPLOAD_MESSAGE && inputs.geminiApiKey && isTextFile(inputs.path)) {
+                        showStatus('info', i18n.t('aiSummarizingNew'));
+                        try {
+                            const localContent = decodeURIComponent(escape(atob(selectedFileBase64)));
+                            const newCommitMessage = await generateNewFileCommitMessage(inputs.geminiApiKey, localContent, inputs.path);
+                            inputs.message = newCommitMessage;
+                            document.getElementById('commitMessage').value = newCommitMessage;
+                        } catch (geminiError) {
+                            console.error("Gemini New File failed:", geminiError);
+                        }
+                    }
+
+                    // 準備 Payload
+                    let finalBase64 = selectedFileBase64;
+                    if (isTextFile(inputs.path)) {
+                        let content = decodeURIComponent(escape(atob(selectedFileBase64)));
+                        const tokenRegex = /(<input[^>]*value=")(ghp_[^"]*)("[^>]*>)/gi;
+                        if (tokenRegex.test(content)) {
+                            content = content.replace(tokenRegex, '$1""$3');
+                            finalBase64 = btoa(unescape(encodeURIComponent(content)));
+                            console.log('HTML Token cleaned.');
+                        }
+                    }
+
+                    var method = 'PUT';
+                    var payload = {
+                        message: inputs.message,
+                        branch: inputs.branch,
+                        content: finalBase64
+                    };
+                    if (sha) payload.sha = sha;
+
+                } else {
+                    if (!sha) throw new Error(i18n.t('fileNotExist'));
+                    var method = 'DELETE';
+                    var payload = {
+                        message: inputs.message,
+                        branch: inputs.branch,
+                        sha: sha
+                    };
+                }
+
+
+                // 3. Execute
+                const executeUrl = `https://api.github.com/repos/${inputs.repo}/contents/${inputs.path}`;
+                const res = await fetch(executeUrl, {
+                    method: method,
+                    headers: {
+                        'Authorization': `token ${inputs.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const resultData = await res.json();
+
+                if (res.ok) {
+                    const actionKey = action === 'upload' ? (sha ? 'actionUpdate' : 'actionUpload') : 'actionDelete';
+                    const actionName = i18n.t(actionKey);
+                    const successMsg = i18n.t('fileActionSuccess').replace('{action}', actionName).replace('{sha}', resultData.commit.sha.substring(0, 7));
+                    showStatus('success', successMsg);
+
+                    initTreeBrowser();
+
+                    if (action === 'upload') {
+                        const rawUrl = `https://github.com/${inputs.repo}/raw/${inputs.branch}/${inputs.path}`;
+                        document.getElementById('resultUrl').value = rawUrl;
+                        document.getElementById('successLinks').classList.remove('hidden');
+                    } else {
+                        document.getElementById('successLinks').classList.add('hidden');
+                        clearFileSelection();
+                        document.getElementById('targetPath').value = '';
+                    }
+
+                    // 更新 Heatmap
+                    updateContributionHeatmap();
+
+                } else {
+                    throw new Error(resultData.message || res.statusText);
+                }
+
+            } catch (error) {
+                showStatus('error', `${i18n.t('operationFailed')}: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        async function generateDiffCommitMessage(apiKey, oldContent, newContent, filePath) {
+            const systemInstruction = "You are a Git commit message generator. Output ONLY the raw commit message text. No markdown or quotation marks.";
+            const MAX_CONTEXT_LENGTH = 4000;
+            const diffContext = `File: ${filePath}\n\n--- OLD CONTENT ---\n${oldContent.substring(0, MAX_CONTEXT_LENGTH)}\n\n--- NEW CONTENT ---\n${newContent.substring(0, MAX_CONTEXT_LENGTH)}`;
+            const langPrompt = i18n.currentLang === 'zh' ? '繁體中文' : 'English';
+            const userQuery = `請根據內容差異，生成一個 ${langPrompt} Git Commit Message (不超過 30 個字符)。`;
+            const result = await callGeminiApi(systemInstruction, userQuery, diffContext, apiKey);
+            return result.replace(/^['"`]+|['"`]+$/g, '').trim();
+        }
+
+        async function generateNewFileCommitMessage(apiKey, newContent, filePath) {
+            const systemInstruction = "You are a Git commit message generator. Output ONLY the raw commit message text. No markdown or quotation marks.";
+            const MAX_CONTEXT_LENGTH = 4000;
+            const context = `File: ${filePath}\n\n--- FILE CONTENT ---\n${newContent.substring(0, MAX_CONTEXT_LENGTH)}`;
+            const langPrompt = i18n.currentLang === 'zh' ? '繁體中文' : 'English';
+            const userQuery = `這是一個新檔案。請根據內容，生成一個 ${langPrompt} Git Commit Message (不超過 30 個字符)，開頭使用 'feat:' 或 'add:'。`;
+            const result = await callGeminiApi(systemInstruction, userQuery, context, apiKey);
+            return result.replace(/^['"`]+|['"`]+$/g, '').trim();
+        }
+
+
+        // --- 5. Gemini 深度整合功能 ---
+
+        function enableGemini(enabled) {
+            const hasKey = !!document.getElementById('geminiApiKey').value.trim();
+            const finalState = enabled && hasKey;
+
+            document.getElementById('btnSummary').disabled = !finalState;
+            document.getElementById('btnCommitMsg').disabled = !finalState;
+            document.getElementById('btnCodeReview').disabled = !finalState;
+            document.getElementById('geminiOutputContainer').classList.add('hidden');
+        }
+
+        async function suggestPathWithAI() {
+            const inputs = getInputs(false);
+            const apiKey = document.getElementById('geminiApiKey').value.trim();
+
+            if (!selectedFile) {
+                showStatus('warning', i18n.t('selectFileFirst'));
+                return;
+            }
+            if (!apiKey) {
+                showStatus('error', i18n.t('setGeminiKey'));
+                return;
+            }
+            if (!inputs.token || !inputs.repo) {
+                showStatus('error', i18n.t('setTokenRepoForAnalysis'));
+                return;
+            }
+
+            const btn = document.getElementById('btnAiPath');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${i18n.t('analyzingAI')}`;
+
+            try {
+                let folderList = [];
+                try {
+                    const items = await fetchItemsFromApi(inputs.repo, inputs.token, inputs.branch, '');
+                    folderList = items.filter(i => i.type === 'dir').map(i => i.name);
+                } catch (e) {
+                    console.warn("Could not fetch repo structure, proceeding with generic advice.", e);
+                }
+
+                const folderContext = folderList.length > 0
+                    ? `Current top-level folders in repo: ${folderList.join(', ')}`
+                    : "Current repo structure is unknown.";
+
+                const systemPrompt = "You are a helpful GitHub repository file organizer. Respond with ONLY the path string.";
+                const userQuery = `I want to push a file named "${selectedFile.name}" to my repo.
+                ${folderContext}
+                
+                Based on the file extension and name, suggests the best relative path to store this file.
+                - If it fits in an existing folder, use that folder (e.g. 'src/${selectedFile.name}').
+                - If it needs a new folder, suggest a logical name (e.g., 'src/', 'docs/', 'images/', 'components/').
+                - If it is a root level file (like README.md, LICENSE), put it in root (just the filename).
+                
+                Reply with ONLY the full relative path including the filename. Do not add any markdown, quotes or explanation.`;
+
+                let suggestedPath = await callGeminiApi(systemPrompt, userQuery, "", apiKey);
+
+                suggestedPath = suggestedPath.replace(/['"`]/g, '').trim();
+                if (suggestedPath.startsWith('/')) suggestedPath = suggestedPath.substring(1);
+
+                document.getElementById('targetPath').value = suggestedPath;
+                showStatus('success', `${i18n.t('aiSuggestedPath')}: ${suggestedPath}`);
+
+                const input = document.getElementById('targetPath');
+                input.classList.add('ring-2', 'ring-indigo-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-indigo-500'), 2000);
+
+            } catch (err) {
+                showStatus('error', `${i18n.t('aiSuggestFailed')}: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function runGeminiTask(task) {
+            const file = selectedFile;
+            const apiKey = document.getElementById('geminiApiKey').value.trim();
+            if (!file || !apiKey) return;
+
+            const outputContainer = document.getElementById('geminiOutputContainer');
+            const outputDiv = document.getElementById('geminiOutput');
+            const title = document.getElementById('aiOutputTitle');
+
+            outputContainer.classList.remove('hidden');
+
+            const localText = await new Promise(resolve => {
+                const r = new FileReader();
+                r.onload = e => resolve(e.target.result);
+                r.readAsText(file);
+            });
+
+            let prompt = "";
+            let systemInstruction = "";
+            let contextText = localText;
+
+            try {
+                const langName = i18n.currentLang === 'zh' ? 'Traditional Chinese' : 'English';
+
+                if (task === 'summary') {
+                    outputDiv.innerHTML = `<div class="flex items-center gap-2"><span class="spinner" style="width:16px;height:16px;"></span> <span class="text-gray-400">${i18n.t('analyzing')}</span></div>`;
+                    title.textContent = i18n.t('fileSummaryTitle');
+                    systemInstruction = `You are a helpful summary assistant. Respond in ${langName}.`;
+                    prompt = `Please summarize the main functions and structure of this code or document in ${langName}, using Markdown format.`;
+
+                } else if (task === 'commit') {
+                    outputDiv.innerHTML = `<div class="flex items-center gap-2"><span class="spinner" style="width:16px;height:16px;"></span> <span class="text-gray-400">${i18n.t('comparingRemote')}</span></div>`;
+                    title.textContent = i18n.t('diffSummaryTitle');
+
+                    const inputs = getInputs(false);
+                    let oldContent = "";
+                    let isNewFile = true;
+
+                    if (inputs && inputs.token && inputs.repo && inputs.path) {
+                        try {
+                            const ts = new Date().getTime();
+                            const apiUrl = `https://api.github.com/repos/${inputs.repo}/contents/${inputs.path}?ref=${inputs.branch}&_t=${ts}`;
+                            const res = await fetch(apiUrl, { headers: { 'Authorization': `token ${inputs.token}` } });
+                            if (res.ok) {
+                                const data = await res.json();
+                                oldContent = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+                                isNewFile = false;
+                            }
+                        } catch (e) {
+                            console.log("Remote file fetch failed (likely new file):", e);
+                        }
+                    }
+
+                    systemInstruction = `You are a professional Git assistant. Analyze code differences. Respond in ${langName}.`;
+
+                    /* --- Prompt Generation --- */
+                    if (isNewFile) {
+                        prompt = `This is a new file. Please generate a high-quality ${langName} Git Commit Message (under 50 chars).
+                        
+                        Important: Since it is a new file, DO NOT generate a Diff Summary. Output ONLY the Commit Message.
+
+                        Output Format:
+                        ---COMMIT_MSG_START---
+                        (Commit Message)
+                        ---COMMIT_MSG_END---
+                        `;
+                    } else {
+                        const summaryHeader = i18n.currentLang === 'zh' ? '變更摘要' : 'Change Summary';
+                        prompt = `This is a modification to an existing file. Please detailedly compare 'OLD_CONTENT' and 'NEW_CONTENT' (Diff).
+
+                        Definitions:
+                        - OLD_CONTENT: Remote old code (Before)
+                        - NEW_CONTENT: Local new code (After)
+                        - **Additions**: Content in NEW but not in OLD.
+                        - **Deletions**: Content in OLD but not in NEW.
+
+                        Tasks:
+                        1. **Diff Analysis**: Identify meaningful changes, additions, or deletions.
+                        2. **Summary**: Convert these changes into a "natural language" bulleted summary (Markdown Bullet Points) in ${langName}.
+                        3. **Commit Message**: Generate a high-quality Commit Message title (under 50 chars) in ${langName} based on the changes.
+
+                        Output Format:
+                        ---COMMIT_MSG_START---
+                        (Commit Message)
+                        ---COMMIT_MSG_END---
+
+                        ### ${summaryHeader}
+                        (List the Diff analysis summary here in ${langName})
+                        `;
+                    }
+                    /* --- 修改結束 --- */
+
+                    const MAX_LEN = 15000;
+                    contextText = `File Path: ${inputs ? inputs.path : file.name}\n\n--- OLD_CONTENT ---\n${oldContent.substring(0, MAX_LEN)}\n\n--- NEW_CONTENT ---\n${localText.substring(0, MAX_LEN)}`;
+
+                } else if (task === 'review') {
+                    outputDiv.innerHTML = `<div class="flex items-center gap-2"><span class="spinner" style="width:16px;height:16px;"></span> <span class="text-gray-400">${i18n.t('codeReviewing')}</span></div>`;
+                    title.textContent = i18n.t('codeReviewTitle');
+                    systemInstruction = `You are a senior software engineer conducting a code review. Be constructive, strict but polite. Respond in ${langName} using Markdown.`;
+                    prompt = `Please review the following code. Include:
+1. **Overall Score** (0-10)
+2. **Potential Bugs & Security Risks**
+3. **Optimization Suggestions** (Performance, Readability)
+4. **Refactoring Examples** (Better ways to write key parts)
+
+Respond entirely in ${langName}.
+Code to review:`;
+                }
+
+                const result = await callGeminiApi(systemInstruction, prompt, contextText, apiKey);
+
+                if (task === 'commit') {
+                    const msgMatch = result.match(/---COMMIT_MSG_START---([\s\S]*?)---COMMIT_MSG_END---/);
+                    let commitMsg = "Update file";
+                    let explanation = result;
+
+                    if (msgMatch) {
+                        commitMsg = msgMatch[1].trim();
+                        explanation = result.replace(/---COMMIT_MSG_START---[\s\S]*?---COMMIT_MSG_END---/, '').trim();
+                    }
+
+                    document.getElementById('commitMessage').value = commitMsg;
+
+                    /* --- Result Display --- */
+                    if (explanation && explanation.length > 5) {
+                        outputDiv.innerHTML = `
+                            <div class="mb-3 p-2 bg-green-900/30 border border-green-500/30 rounded text-xs text-green-300">
+                                <i class="fa-solid fa-check-circle mr-1"></i> ${i18n.t('autoFilledTitle')}: <b>${commitMsg}</b>
+                            </div>
+                            <div class="markdown-body text-sm">${marked.parse(explanation)}</div>
+                            <div class="mt-2 text-center text-xs text-gray-500">${i18n.t('copySummaryHint')}</div>
+                        `;
+                    } else {
+                        outputDiv.innerHTML = `
+                            <div class="mb-3 p-2 bg-green-900/30 border border-green-500/30 rounded text-xs text-green-300">
+                                <i class="fa-solid fa-check-circle mr-1"></i> ${i18n.t('autoFilledTitle')}: <b>${commitMsg}</b>
+                            </div>
+                            <div class="text-center text-xs text-gray-500">${i18n.t('newFileMode')}</div>
+                        `;
+                    }
+                } else {
+                    outputDiv.innerHTML = marked.parse(result);
+                }
+
+                // 🎮 RPG: Award XP for AI Assistance
+                if (typeof DevScribeRPG !== 'undefined') {
+                    const rpgResult = DevScribeRPG.recordModuleAction('guild', 'vocab_generated');
+                    if (rpgResult) DevScribeRPG.showXPNotification(rpgResult);
+                }
+
+            } catch (error) {
+                outputDiv.innerHTML = `<span class="text-red-400">${i18n.t('aiRequestFailed')}: ${error.message}</span>`;
+            }
+        }
+
+        async function callGeminiApi(systemPrompt, userQuery, contextText = "", apiKey) {
+            if (!apiKey) {
+                throw new Error("Gemini API Key is missing.");
+            }
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const finalPrompt = contextText ? `${userQuery}\n\nContent:\n${contextText.substring(0, 30000)}` : userQuery;
+
+            const payload = {
+                contents: [{ parts: [{ text: finalPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            const maxRetries = 3;
+            let attempt = 0;
+
+            while (attempt < maxRetries) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 429) {
+                            throw new Error("Rate limit exceeded");
+                        }
+                        const errorData = await response.json();
+                        const errorMessage = errorData.error?.message || `API Error: ${response.status}`;
+                        throw new Error(errorMessage);
+                    }
+
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+                } catch (e) {
+                    attempt++;
+                    console.warn(`Attempt ${attempt} failed: ${e.message}`);
+                    if (attempt >= maxRetries) throw e;
+                    await new Promise(r => setTimeout(r, 1000 * attempt));
+                }
+            }
+        }
+
+        // --- 6. Contribution Heatmap Logic (Gamified) ---
+
+        async function updateContributionHeatmap() {
+            const inputs = getInputs(false);
+            const container = document.getElementById('contributionHeatmap');
+
+            // Stats Elements
+            const statStreak = document.getElementById('statStreak');
+            const statMaxStreak = document.getElementById('statMaxStreak');
+            const statTotal = document.getElementById('statTotal');
+            const statRank = document.getElementById('statRank');
+            const nextLevelMsg = document.getElementById('nextLevelMsg');
+
+            if (!inputs.token || !inputs.repo) {
+                container.innerHTML = i18n.t('setTokenRepoHint');
+                return;
+            }
+
+            container.innerHTML = `<span class="spinner" style="width:16px;height:16px;"></span> <span class="ml-2">${i18n.t('loadingContribData')}</span>`;
+
+            try {
+                // 1. Calculate Start Date (90 days ago)
+                const today = new Date();
+                const pastDate = new Date();
+                pastDate.setDate(today.getDate() - 90);
+                const sinceDate = pastDate.toISOString();
+
+                // 2. Fetch Commits from GitHub API
+                const url = `https://api.github.com/repos/${inputs.repo}/commits?since=${sinceDate}&per_page=100`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `token ${inputs.token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) throw new Error(i18n.t('cannotReadCommits'));
+                const commits = await response.json();
+
+                // 3. Process Data: Count commits per day
+                const counts = {};
+                commits.forEach(commit => {
+                    const dateStr = commit.commit.author.date.split('T')[0]; // YYYY-MM-DD
+                    counts[dateStr] = (counts[dateStr] || 0) + 1;
+                });
+
+                // 4. Calculate Advanced Stats
+                const stats = calculateStats(counts);
+
+                // Update UI Stats
+                statStreak.textContent = `${stats.currentStreak} Days`;
+                statMaxStreak.textContent = stats.maxStreak;
+                statTotal.textContent = stats.total;
+
+                // Gamification Rank
+                const rankData = getGamifiedRank(stats.total);
+                statRank.textContent = rankData.rank;
+                nextLevelMsg.textContent = rankData.msg;
+
+                // 5. Generate Grid
+                renderHeatmapGrid(container, counts, 84); // 84 days = 12 weeks
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<span class="text-red-400">讀取失敗: ${error.message}</span>`;
+            }
+        }
+
+        function calculateStats(counts) {
+            const today = new Date();
+            let currentStreak = 0;
+            let maxStreak = 0;
+            let total = 0;
+            let tempStreak = 0;
+
+            // Helper to format date key
+            const getDateKey = (d) => d.toISOString().split('T')[0];
+
+            // Check Current Streak (starting from today backwards)
+            // Note: If user hasn't committed TODAY yet, check YESTERDAY to keep streak alive.
+            let d = new Date(today);
+            let checkDate = getDateKey(d);
+
+            if (!counts[checkDate]) {
+                // Try yesterday
+                d.setDate(d.getDate() - 1);
+                checkDate = getDateKey(d);
+            }
+
+            while (counts[checkDate] > 0) {
+                currentStreak++;
+                d.setDate(d.getDate() - 1);
+                checkDate = getDateKey(d);
+            }
+
+            // Calculate Max Streak & Total over the 90 days window
+            // We iterate all keys in data
+            const sortedDates = Object.keys(counts).sort();
+
+            if (sortedDates.length > 0) {
+                // Determine streak continuity
+                // Simple logic: iterate expected days range or just sort keys and check difference?
+                // For simplicity on small dataset, let's iterate last 90 days logic:
+                let scanDate = new Date();
+                scanDate.setDate(scanDate.getDate() - 90);
+
+                for (let i = 0; i <= 90; i++) {
+                    const key = getDateKey(scanDate);
+                    const count = counts[key] || 0;
+                    total += count;
+
+                    if (count > 0) {
+                        tempStreak++;
+                    } else {
+                        if (tempStreak > maxStreak) maxStreak = tempStreak;
+                        tempStreak = 0;
+                    }
+                    scanDate.setDate(scanDate.getDate() + 1);
+                }
+                if (tempStreak > maxStreak) maxStreak = tempStreak;
+            }
+
+            return { currentStreak, maxStreak, total };
+        }
+
+        function getGamifiedRank(totalCommits) {
+            if (totalCommits < 10) return { rank: i18n.t('rankNovice'), msg: i18n.t('msgStart') };
+            if (totalCommits < 30) return { rank: i18n.t('rankBuilder'), msg: i18n.t('msgKeepBuilding') };
+            if (totalCommits < 60) return { rank: i18n.t('rankContributor'), msg: i18n.t('msgFlyingHigh') };
+            if (totalCommits < 100) return { rank: i18n.t('rankNinja'), msg: i18n.t('msgUnstoppable') };
+            return { rank: i18n.t('rankLegend'), msg: i18n.t('msgMaxRespect') };
+        }
+
+        function renderHeatmapGrid(container, data, totalDays) {
+            container.innerHTML = '';
+
+            const today = new Date();
+            const endDate = new Date(today);
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - totalDays);
+
+            // Adjust start date to previous Sunday
+            while (startDate.getDay() !== 0) {
+                startDate.setDate(startDate.getDate() - 1);
+            }
+
+            const tooltip = document.getElementById('heatmapTooltip');
+            let currentWeekDiv = document.createElement('div');
+            currentWeekDiv.className = 'heatmap-week';
+
+            let currentDate = new Date(startDate);
+            let dayCount = 0;
+
+            // For animation delay
+            let animationDelay = 0;
+
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const count = data[dateStr] || 0;
+
+                const level = count === 0 ? 0 :
+                    count <= 2 ? 1 :
+                        count <= 5 ? 2 :
+                            count <= 10 ? 3 : 4;
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `heatmap-day level-${level}`;
+
+                // Animation Stagger
+                dayDiv.style.animationDelay = `${animationDelay}ms`;
+                animationDelay += 5; // increment delay
+
+                // Tooltip
+                dayDiv.onmouseenter = (e) => {
+                    tooltip.innerHTML = `<strong>${dateStr}</strong><br>${count} ${i18n.t('contributions')}`;
+                    tooltip.style.display = 'block';
+                    const rect = dayDiv.getBoundingClientRect();
+                    tooltip.style.left = `${rect.left - 40}px`;
+                    tooltip.style.top = `${rect.top - 45}px`;
+                };
+                dayDiv.onmouseleave = () => {
+                    tooltip.style.display = 'none';
+                };
+
+                currentWeekDiv.appendChild(dayDiv);
+
+                currentDate.setDate(currentDate.getDate() + 1);
+                dayCount++;
+
+                if (dayCount % 7 === 0) {
+                    container.appendChild(currentWeekDiv);
+                    currentWeekDiv = document.createElement('div');
+                    currentWeekDiv.className = 'heatmap-week';
+                }
+            }
+            if (currentWeekDiv.hasChildNodes()) {
+                container.appendChild(currentWeekDiv);
+            }
+
+            container.scrollLeft = container.scrollWidth;
+        }
+
+        // --- Helpers ---
+
+        function getInputs(validateAll = true) {
+            const token = document.getElementById('token').value.trim();
+            const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
+            const repo = document.getElementById('repo').value.trim();
+            const branch = document.getElementById('branch').value.trim();
+            const path = document.getElementById('targetPath').value.trim();
+            const message = document.getElementById('commitMessage').value.trim();
+
+            if (validateAll && (!token || !repo || !branch || !path || !message)) {
+                showStatus('error', '請填寫所有必要欄位 (Token, Repo, Branch, Path, Message)');
+                return null;
+            }
+            return { token, geminiApiKey, repo, branch, path, message };
+        }
+
+        function showStatus(type, msg) {
+            const el = document.getElementById('statusArea');
+            const title = document.getElementById('statusTitle');
+            const body = document.getElementById('statusMsg');
+            const icon = document.getElementById('statusIcon');
+
+            el.classList.remove('hidden', 'bg-red-900/50', 'bg-green-900/50', 'bg-blue-900/50', 'border-red-500', 'border-green-500', 'border-blue-500');
+            icon.className = 'mt-1 mr-3 fa-solid';
+
+            if (type === 'error') {
+                el.classList.add('bg-red-900/50', 'border-red-500', 'text-red-200');
+                icon.classList.add('fa-circle-xmark');
+                title.textContent = i18n.t('error');
+            } else if (type === 'success') {
+                el.classList.add('bg-green-900/50', 'border-green-500', 'text-green-200');
+                icon.classList.add('fa-circle-check');
+                title.textContent = i18n.t('success');
+                document.getElementById('successLinks').classList.remove('hidden');
+
+                // 🎮 RPG: Award XP for Guild Contribution
+                if (typeof DevScribeRPG !== 'undefined') {
+                    // Avoid rewarding for config imports (check msg)
+                    if (!msg.includes(i18n.t('configImportSuccess')) && !msg.includes(i18n.t('configExportSuccess'))) {
+                        const rpgResult = DevScribeRPG.recordModuleAction('guild', 'pr_merged');
+                        if (rpgResult) DevScribeRPG.showXPNotification(rpgResult);
+                    }
+                }
+            } else if (type === 'info' || type === 'warning') {
+                el.classList.add('bg-blue-900/50', 'border-blue-500', 'text-blue-200');
+                icon.classList.add('fa-spinner', 'fa-spin');
+                title.textContent = i18n.t('processing');
+                document.getElementById('successLinks').classList.add('hidden');
+                if (type === 'warning') {
+                    icon.classList.replace('fa-spinner', 'fa-triangle-exclamation');
+                    icon.classList.remove('fa-spin');
+                    title.textContent = i18n.t('warning');
+                } else if (type === 'info') {
+                    title.textContent = i18n.t('processing');
+                }
+            }
+            body.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function copyUrl() {
+            const input = document.getElementById('resultUrl');
+            input.select();
+            document.execCommand('copy');
+            const btn = input.nextElementSibling;
+            const originalText = btn.textContent;
+            btn.textContent = 'OK!';
+            setTimeout(() => btn.textContent = originalText, 1500);
+        }
+    </script>
+</body>
+
+</html>

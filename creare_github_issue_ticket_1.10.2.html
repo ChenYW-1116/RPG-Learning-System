@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark"> <!-- 預設啟用暗黑模式 -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Task 1 - AI vs Self Assessment</title>
+
+    <!-- 載入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind 設定：必須緊接在 CDN 載入之後執行 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // 啟用 class-based 暗黑模式
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'], // 支援中文
+                    },
+                    colors: {
+                        darkBg: '#1a1a2e', // 深色背景
+                        cardBg: '#2a2a4a', // 卡片 background
+                        primaryBtnStart: '#6a11cb', // 漸層按鈕起始色
+                        primaryBtnEnd: '#2575fc',   // 漸層按鈕結束色
+                        accentGreen: '#34d399',     // 完成提示綠色
+                        accentYellow: '#fbbf24',    // 警告提示黃色
+                        borderDark: '#4a4a6e',      // 深色邊框
+                        successGreen: '#10b981',    // 成功提示綠色
+                        errorRed: '#ef4444',        // 錯誤提示紅色
+                    }
+                }
+            }
+        }
+    </script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Orbitron:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', 'sans-serif';
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 自訂 placeholder 樣式，使其在暗黑模式下更明顯 */
+        textarea::placeholder,
+        input::placeholder {
+            color: #888;
+            opacity: 0.7;
+        }
+
+        .gradient-button {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
+            background-size: 200% auto;
+            transition: background-position 0.3s ease;
+        }
+
+        .gradient-button:hover {
+            background-position: right center;
+        }
+
+        /* 隱藏原生日期選擇器箭頭 */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            /* 反轉顏色以適應暗色模式 */
+            cursor: pointer;
+        }
+
+        /* 隱藏 Number 輸入框的上下箭頭 (Spin Buttons)，確保只能打字 */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            /* Firefox 兼容 */
+        }
+    </style>
+    <!-- Dev-Scribe RPG Engine -->
+    <script src="DevScribeRPG.js"></script>
+    <!-- 🌟 新增：載入 JSZip 函式庫 (用於 ZIP 壓縮/解壓縮) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+
+<body class="bg-darkBg text-gray-100 flex flex-col items-center py-12 px-6 min-h-screen">
+
+    <!-- 語言切換按鈕 (固定位置，避免蓋到字) -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="langToggleBtn" type="button" onclick="toggleLanguage()"
+            class="bg-slate-700/80 hover:bg-slate-600 backdrop-blur-md text-gray-300 text-sm py-2 px-4 rounded-full border border-slate-600 shadow-2xl transition flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            <span id="langBtnText">EN</span>
+        </button>
+    </div>
+
+    <!-- 🎮 RPG 頂部標題與說明 -->
+    <div class="text-center mb-10 max-w-4xl w-full">
+        <div class="mb-4">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 tracking-tight"
+                style="font-family: 'Orbitron', sans-serif;" data-i18n="pageTitle">
+                📋 任務看板
+            </h1>
+            <div class="text-center">
+                <a href="rpg-hub.html"
+                    class="inline-flex items-center mt-6 px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 rounded-full text-indigo-400 hover:text-indigo-300 text-sm transition"
+                    data-i18n="backLink">
+                    ← 返回 Quest Empire
+                </a>
+            </div>
+        </div>
+
+        <!-- RPG Status Card -->
+        <div id="rpg-status-card" class="mb-6 text-left"></div>
+
+        <p class="text-lg text-gray-300" data-i18n="pageSubtitle">Quest Board — 建立 GitHub Issue，記錄練習成果與反思</p>
+        <p class="text-sm text-gray-500 mt-2" data-i18n="analysisDesc">IELTS Task 1 AI vs 自我評估比較分析</p>
+    </div>
+
+    <!-- 主表單容器 -->
+    <div class="max-w-4xl w-full space-y-8">
+
+        <!-- 🌟 新增：匯出/匯入功能卡片 -->
+        <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+            <h2 class="text-2xl font-semibold text-green-400 mb-4" data-i18n="importExportTitle">🔄 匯出 / 匯入資料</h2>
+            <p class="text-gray-300 mb-5 text-sm md:text-base" data-i18n="importExportDesc">
+                您可以將目前表單的所有內容匯出為 Markdown 檔案，以便稍後匯入並還原。
+            </p>
+            <div class="flex flex-col md:flex-row gap-4">
+                <!-- 匯出按鈕 -->
+                <button type="button" id="export-markdown-button" class="gradient-button w-full px-6 py-3 text-lg font-bold rounded-xl shadow-lg
+                                         text-white bg-gradient-to-r from-green-500 to-blue-500
+                                         hover:from-blue-500 hover:to-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-darkBg
+                                         transition duration-300 ease-in-out" data-i18n="exportBtn">
+                    📥 匯出為 ZIP 壓縮檔
+                </button>
+
+                <!-- 匯入按鈕 (使用 label 偽裝) -->
+                <label for="import-markdown-input" class="gradient-button w-full px-6 py-3 text-lg font-bold rounded-xl shadow-lg
+                                         text-white bg-gradient-to-r from-blue-500 to-purple-500
+                                         hover:from-purple-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-darkBg
+                                         transition duration-300 ease-in-out text-center cursor-pointer"
+                    data-i18n="importBtn">
+                    📤 匯入 ZIP 壓縮檔
+                </label>
+                <!-- 隱藏的實際檔案上傳欄位 -->
+                <input type="file" id="import-markdown-input" class="hidden" accept=".zip"> <!-- 🌟 修改 accept 屬性 -->
+            </div>
+            <!-- 狀態訊息提示 -->
+            <p id="import-status" class="text-green-400 text-sm mt-4 hidden"></p>
+        </div>
+
+
+        <!-- GitHub Repo 設定卡片 -->
+        <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+            <h2 class="text-2xl font-semibold text-blue-400 mb-4" data-i18n="githubConfigTitle">⚙️ GitHub 儲存庫與 API 設定
+            </h2>
+            <p class="text-gray-300 mb-5 text-sm md:text-base" data-i18n="githubConfigDesc">
+                要自動建立 Issue，您需要提供具有 `repo` 權限的 Personal Access Token (PAT)。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- User Name -->
+                <div class="col-span-1">
+                    <label for="github_user" class="block text-sm font-medium text-gray-400 mb-2"
+                        data-i18n="githubUser">GitHub 使用者名稱</label>
+                    <input type="text" id="github_user" name="github_user"
+                        class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200"
+                        placeholder="例如：your-username" value="charliejimi">
+                </div>
+                <!-- Repo Name (MODIFIED) -->
+                <div class="col-span-1">
+                    <label for="github_repo" class="block text-sm font-medium text-gray-400 mb-2"
+                        data-i18n="githubRepo">GitHub 儲存庫名稱</label>
+                    <!-- 🌟 MODIFIED: Changed from input to select -->
+                    <select id="github_repo" name="github_repo"
+                        class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 text-gray-200">
+                        <option value="" disabled selected class="bg-darkBg text-gray-500" data-i18n="labelFetchPrompt">
+                            請先填寫 PAT 並點擊抓取...</option>
+                        <option value="Git_Practice_Sandbox" selected class="bg-darkBg">Git_Practice_Sandbox (Default)
+                        </option>
+                    </select>
+                </div>
+                <!-- PAT Token (MODIFIED) -->
+                <div class="col-span-1">
+                    <label for="github_token" class="block text-sm font-medium text-gray-400 mb-2"
+                        data-i18n="githubToken">Personal Access Token (PAT)</label>
+                    <input type="password" id="github_token" name="github_token"
+                        class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200"
+                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" value="">
+                    <!-- 🌟 NEW: Fetch button -->
+                    <button type="button" id="fetch-repos-button"
+                        class="w-full mt-3 px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-200 text-white"
+                        data-i18n="fetchReposBtn">
+                        🔄 抓取儲存庫 (Repos)
+                    </button>
+                </div>
+            </div>
+            <!-- 🌟 NEW: Status message for repo fetching -->
+            <p id="repo-fetch-status" class="text-sm mt-4 hidden"></p>
+            <p id="repo-error" class="text-red-400 text-sm mt-4 hidden">🚨 請務必填寫所有 GitHub 欄位，包括 PAT。</p>
+        </div>
+
+        <!-- Issue 表單 -->
+        <form id="issue-form" class="space-y-8">
+
+            <!-- 1. 題目名稱/編號 -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="task_name" class="block text-xl font-bold text-gray-200 mb-3" data-i18n="taskNameLabel">1️⃣
+                    題目名稱/編號</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="taskNameDesc">請填寫這次練習的題目名稱代號</p>
+                <input type="text" id="task_name" name="task_name"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200"
+                    data-i18n-placeholder="placeholderTaskName" placeholder="例如：WT1_Two_Pies">
+            </div>
+
+            <!-- 2. 文章檔案 -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="task_file" class="block text-xl font-bold text-gray-200 mb-3" data-i18n="taskFileLabel">📄
+                    文章檔案 (Docx)</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="taskFileDesc">
+                    請填寫您的檔案名稱 (例如：06_Process_Cyclic_Silkworms.docx)。
+                    <br>
+                    <strong class="text-accentYellow">重要提示：</strong>
+                    Issue 建立後，您需要 <strong class="underline">手動將您的 .doc/.docx 檔案</strong> 拖曳到 Issue 留言區才能完成上傳。
+                </p>
+                <input type="text" id="task_file" name="task_file"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200"
+                    data-i18n-placeholder="placeholderTaskFile" placeholder="[次數]_[題型]_[題目主題].docx">
+            </div>
+
+            <!-- 2.5 文章內容 (支援貼圖並傳輸至 GitHub) -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="article_content" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="articleContentLabel">📝 文章內容與圖表截圖</label>
+                <p class="text-sm text-gray-400 mb-2" data-i18n="articleContentDesc">
+                    請將您的 Task 1 寫作內容和圖表截圖貼於此處。您可以直接 **貼上 (Ctrl+V)** 截圖或 **拖曳** 圖片檔案。
+                </p>
+                <p id="image-upload-status" class="text-sm text-accentGreen mb-4 hidden"
+                    data-i18n="imageUploadStatusTemplate">
+                    正在等待上傳的圖片：0 張。
+                </p>
+                <textarea id="article_content" name="article_content" rows="12"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderContent"
+                    placeholder="貼上您的 Task 1 寫作內容和圖表截圖... (例如：The provided line graph illustrates...)"></textarea>
+            </div>
+
+            <!-- 2.6 逐句解析內容 -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="sentence_analysis" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="sentenceAnalysisLabel">📚 逐句解析內容</label>
+                <p class="text-sm text-gray-400 mb-2" data-i18n="sentenceAnalysisDesc">
+                    請貼上您對 Task 1 寫作內容進行逐句解析的內容、截圖或表格，例如每個句子的文法或詞彙修正。
+                </p>
+                <textarea id="sentence_analysis" name="sentence_analysis" rows="8"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderAnalysis"
+                    placeholder="貼上逐句解析內容... (例如：[句子 1] - 修正建議 / [句子 2] - 備註)"></textarea>
+            </div>
+
+
+            <!-- 3. 寫作日期 -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="writing_date" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="writingDateLabel">📅 寫作日期</label>
+                <input type="date" id="writing_date" name="writing_date"
+                    class="w-full md:w-1/2 px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 text-gray-200">
+            </div>
+
+            <!-- 4. 題型 -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="question_type" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="questionTypeLabel">📊 題型</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="questionTypeDesc">請選擇這次寫作的圖表題型。</p>
+                <select id="question_type" name="question_type"
+                    class="w-full md:w-1/2 px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 text-gray-200">
+                    <option value="" disabled selected class="bg-darkBg text-gray-500" data-i18n="labelSelect">請選擇...
+                    </option>
+                    <option value="Line Graph" class="bg-darkBg">Line Graph</option>
+                    <option value="Bar Chart" class="bg-darkBg">Bar Chart</option>
+                    <option value="Pie Chart" class="bg-darkBg">Pie Chart</option>
+                    <option value="Table" class="bg-darkBg">Table</option>
+                    <option value="Map" class="bg-darkBg">Map</option>
+                    <option value="Process Diagram" class="bg-darkBg">Process Diagram</option>
+                    <option value="Mixed" class="bg-darkBg">Mixed</option>
+                </select>
+            </div>
+
+            <!-- 5. 自我評估分數 (四個數字欄位 + 備註區) -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label class="block text-xl font-bold text-gray-200 mb-3" data-i18n="selfAssessmentTitle">2️⃣ 自我評估分數
+                    (0-9)</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="selfAssessmentDesc">請填寫你對 IELTS 四大核心維度的自評分數 (0~9)。</p>
+
+                <!-- 四個數字輸入欄位 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <!-- TA -->
+                    <div>
+                        <label for="self_assessment_ta" class="block text-sm font-medium text-gray-400 mb-2"
+                            data-i18n="taskResponse">Task
+                            Achievement (TA)</label>
+                        <input type="number" id="self_assessment_ta" name="self_assessment_ta" min="0" max="9"
+                            step="0.5"
+                            class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 text-gray-200"
+                            data-i18n-placeholder="placeholderScore" placeholder="例如：6.5">
+                    </div>
+                    <!-- CC -->
+                    <div>
+                        <label for="self_assessment_cc" class="block text-sm font-medium text-gray-400 mb-2"
+                            data-i18n="coherenceCohesion">Coherence &
+                            Cohesion (CC)</label>
+                        <input type="number" id="self_assessment_cc" name="self_assessment_cc" min="0" max="9"
+                            step="0.5"
+                            class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 text-gray-200"
+                            data-i18n-placeholder="placeholderScore" placeholder="例如：7.0">
+                    </div>
+                    <!-- LR -->
+                    <div>
+                        <label for="self_assessment_lr" class="block text-sm font-medium text-gray-400 mb-2"
+                            data-i18n="lexicalResource">Lexical
+                            Resource (LR)</label>
+                        <input type="number" id="self_assessment_lr" name="self_assessment_lr" min="0" max="9"
+                            step="0.5"
+                            class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 text-gray-200"
+                            data-i18n-placeholder="placeholderScore" placeholder="例如：6.0">
+                    </div>
+                    <!-- GRA -->
+                    <div>
+                        <label for="self_assessment_gra" class="block text-sm font-medium text-gray-400 mb-2"
+                            data-i18n="grammaticalRange">Grammatical Range & Accuracy
+                            (GRA)</label>
+                        <input type="number" id="self_assessment_gra" name="self_assessment_gra" min="0" max="9"
+                            step="0.5"
+                            class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 text-gray-200"
+                            data-i18n-placeholder="placeholderScore" placeholder="例如：7.5">
+                    </div>
+                </div>
+
+                <!-- 🌟 新增：自評總覽截圖 -->
+                <label for="self_assessment_screenshot" class="block text-sm font-medium text-gray-400 mb-2 mt-6"
+                    data-i18n="screenshotLabel">📸
+                    自評總覽截圖 (支援貼圖/拖曳)</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="screenshotDesc">請在此貼上您完整的自評截圖 (例如：包含四項分數的總覽圖)。</p>
+                <textarea id="self_assessment_screenshot" name="self_assessment_screenshot" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderNotes" placeholder="貼上您的自評總覽截圖..."></textarea>
+
+                <!-- 新增：LR 自評解析 -->
+                <label for="self_assessment_lr_analysis" class="block text-sm font-medium text-gray-400 mb-2 mt-6"
+                    data-i18n="lexicalAnalysis">詞彙資源
+                    (LR) 自評解析 (支援貼圖/拖曳)</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="lexicalAnalysisDesc">請貼上您對 LR 分數的自評細節或圖表，將會自動格式化。</p>
+                <textarea id="self_assessment_lr_analysis" name="self_assessment_lr_analysis" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderLR" placeholder="例如：自評單字庫的使用、同義詞替換的數量與準確性等。"></textarea>
+
+                <!-- 新增：GRA 自評解析 -->
+                <label for="self_assessment_gra_analysis" class="block text-sm font-medium text-gray-400 mb-2 mt-6"
+                    data-i18n="grammaticalAnalysis">文法範圍與準確性 (GRA) 自評解析 (支援貼圖/拖曳)</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="grammaticalAnalysisDesc">請貼上您對 GRA 分數的自評細節或圖表，將會自動格式化。
+                </p>
+                <textarea id="self_assessment_gra_analysis" name="self_assessment_gra_analysis" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderGRA" placeholder="例如：自評複雜句型的使用、時態或主謂一致的錯誤數量等。"></textarea>
+
+
+                <!-- 新增：Google Translate Source (TA/CC 語義檢查 - 中文源文) -->
+                <label for="google_translate_source"
+                    class="block text-sm font-medium text-gray-400 mb-2 mt-6 text-yellow-300"
+                    data-i18n="translateSource">💡 Google 語義檢查 (1/3):
+                    中文源文（TA/CC 意圖）</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="translateSourceDesc">請輸入您的原始意圖 (中文)，用於比對 AI 評分和您的實際表達。
+                </p>
+                <textarea id="google_translate_source" name="google_translate_source" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderSource"
+                    placeholder="例如：這張圖表顯示了 A 國在 2000 年到 2020 年之間能源消耗的顯著增長。"></textarea>
+
+                <!-- 新增：Google Translate Output (TA/CC 語義檢查 - 翻譯結果) -->
+                <label for="google_translate_output"
+                    class="block text-sm font-medium text-gray-400 mb-2 mt-6 text-yellow-300"
+                    data-i18n="translateOutput">💡 Google 語義檢查 (2/3):
+                    翻譯結果（反向驗證）</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="translateOutputDesc">請將 Google
+                    翻譯結果貼於此處（如：您將中文源文翻譯成英文的結果，或將您的英文寫作反譯回中文的結果）。</p>
+                <textarea id="google_translate_output" name="google_translate_output" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderOutput"
+                    placeholder="例如：This chart shows a significant increase in energy consumption in country A between 2000 and 2020."></textarea>
+
+                <!-- 新增：自評辨識出的問題 -->
+                <label for="self_identified_issues"
+                    class="block text-sm font-medium text-gray-400 mb-2 mt-6 text-red-400"
+                    data-i18n="identifiedIssues">🚨 自評辨識出的問題 (3/3) - 修正盲點
+                    (支援貼圖/拖曳)</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="identifiedIssuesDesc">請輸入您比對原文、中文源文和翻譯結果後，自己發現的 TA/CC
+                    用字準確性問題或 AI
+                    未能辨識出的盲點。**（將自動格式化為列表/段落）**</p>
+                <textarea id="self_identified_issues" name="self_identified_issues" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderIssues"
+                    placeholder="例如：將 '顯著增長' 寫成了 '快速發展'，導致 TA 準確性不足；或連接詞使用與中文語義不符。"></textarea>
+
+                <!-- ================================== -->
+                <!--    ⬇️ AI 內容理解 (已修改) ⬇️      -->
+                <!-- ================================== -->
+                <label class="block text-sm font-medium text-gray-400 mb-2 mt-6 text-purple-300"
+                    data-i18n="aiUnderstanding">🤖 AI 內容理解
+                    (實驗性)</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="aiUnderstandingDesc">點擊按鈕，讓 AI
+                    根據您在「文章內容與圖表截圖」欄位中的*文字描述*來生成內容理解 (Breakdown)。</p>
+                <button type="button" id="generate-chart-button"
+                    class="w-full px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition duration-200 text-white"
+                    data-i18n="generateAIBtn">
+                    生成 AI 理解
+                </button>
+                <div id="chart-generator-status" class="text-xs text-accentYellow mt-2"></div>
+
+                <!-- AI Breakdown text will be injected here -->
+                <div id="chart-display-area" class="mt-4">
+                </div>
+
+                <!-- NEW: Container for manual paste, hidden by default -->
+                <div id="manual-chart-paste-container" class="hidden mt-4">
+                    <label for="manual_chart_paste"
+                        class="block text-sm font-medium text-gray-400 mb-2 mt-6 text-green-300"
+                        data-i18n="manualChart">🖼️ 手動貼上圖表</label>
+                    <p class="text-xs text-gray-500 mb-2" data-i18n="manualChartDesc">AI
+                        理解已生成。請在此處貼上您手動製作或修正的圖表（支援貼圖/拖曳）。</p>
+                    <textarea id="manual_chart_paste" name="manual_chart_paste" rows="4"
+                        class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                        data-i18n-placeholder="placeholderManual" placeholder="請貼上您的圖表..."></textarea>
+                </div>
+
+                <!-- NEW: Hidden field to store AI breakdown text for submission -->
+                <!-- 🌟 移除：刪除這個隱藏欄位，使其不會被提交 -->
+                <!-- <textarea id="ai_breakdown_text" name="ai_breakdown_text" class="hidden"></textarea> -->
+
+                <!-- ================================== -->
+                <!--    ⬆️ AI 內容理解 (已修改) ⬆️      -->
+                <!-- ================================== -->
+
+                <!-- ================================== -->
+                <!-- ⬇️ 欄位已修改 (TA/CC 準確性) ⬇️  -->
+                <!-- ================================== -->
+                <label for="custom_field_1" class="block text-sm font-medium text-gray-400 mb-2 mt-6 text-green-300"
+                    data-i18n="customField1">💡
+                    TA/CC 用字準確性 (圖表反向驗證) (支援貼圖/拖曳)</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="customField1Desc">請觀察 AI 依據您的文字所生成的「AI
+                    理解」以及您「手動貼上的圖表」，反向驗證您在 TA (任務完成度) 和 CC (連貫性)
+                    上的用字是否精確。</p>
+                <textarea id="custom_field_1" name="custom_field_1" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderCustom"
+                    placeholder="例如：我描述 'rapidly increased'，但手動貼上的圖表顯示的僅是 'gradual rise'，這表示我 TA 用字不準確..."></textarea>
+                <!-- ================================== -->
+                <!-- ⬆️ 欄位已修改 (TA/CC 準確性) ⬆️  -->
+                <!-- ================================== -->
+
+                <!-- 備註/其他觀察區塊 -->
+                <label for="self_assessment_notes" class="block text-sm font-medium text-gray-400 mb-2 mt-6"
+                    data-i18n="otherNotes">其他觀察/備註
+                    (通用) (支援貼圖/拖曳)</label>
+                <p class="text-xs text-gray-500 mb-2" data-i18n="otherNotesDesc">補充其他觀察、自評原因或截圖...</p>
+                <textarea id="self_assessment_notes" name="self_assessment_notes" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderNotes" placeholder="補充其他觀察、自評原因或截圖..."></textarea>
+            </div>
+
+            <!-- 6. AI 評分 (支援貼圖並格式化) -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="ai_assessment" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="aiAssessmentTitle">3️⃣ AI 評分 (支援貼圖/拖曳 & AI
+                    格式化)</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="aiAssessmentDesc">填入 AI 對四大核心維度的評分與建議評語，或貼上 AI
+                    評分截圖內容。內容將**自動轉換為表格**。</p>
+                <textarea id="ai_assessment" name="ai_assessment" rows="6"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderAIEval" placeholder="Task Response (TR): 
+Coherence & Cohesion (CC): 
+Lexical Resource (LR): 
+Grammatical Range & Accuracy (GRA): 
+AI 評語:"></textarea>
+            </div>
+
+            <!-- 7. 差異判斷 -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label class="block text-xl font-bold text-gray-200 mb-3" data-i18n="diffAnalysisTitle">4️⃣ 差異判斷
+                    (Difference Analysis)</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="diffAnalysisDesc">勾選本篇文章與 AI 評分的差異類型，並補充原因與判斷</p>
+                <div id="difference_analysis" class="space-y-3 mt-2">
+                    <div class="flex items-center">
+                        <input id="diff_1" name="difference_analysis" type="checkbox" value="自評高 / AI 低 → 自我盲點"
+                            class="h-5 w-5 text-blue-500 bg-darkBg border-borderDark rounded focus:ring-blue-500 accent-blue-600">
+                        <label for="diff_1" class="ml-3 block text-base text-gray-200" data-i18n="diff1">自評高 / AI 低 →
+                            自我盲點</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="diff_2" name="difference_analysis" type="checkbox" value="自評低 / AI 高 → 認知保守"
+                            class="h-5 w-5 text-blue-500 bg-darkBg border-borderDark rounded focus:ring-2 focus:ring-blue-500 accent-blue-600">
+                        <label for="diff_2" class="ml-3 block text-base text-gray-200" data-i18n="diff2">自評低 / AI 高 →
+                            認知保守</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="diff_3" name="difference_analysis" type="checkbox" value="自評 ≈ AI → 共識問題"
+                            class="h-5 w-5 text-blue-500 bg-darkBg border-borderDark rounded focus:ring-2 focus:ring-blue-500 accent-blue-600">
+                        <label for="diff_3" class="ml-3 block text-base text-gray-200" data-i18n="diff3">自評 ≈ AI →
+                            共識問題</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input id="diff_4" name="difference_analysis" type="checkbox" value="分數接近但理由不同 → 認知偏差"
+                            class="h-5 w-5 text-blue-500 bg-darkBg border-borderDark rounded focus:ring-2 focus:ring-blue-500 accent-blue-600">
+                        <label for="diff_4" class="ml-3 block text-base text-gray-200" data-i18n="diff4">分數接近但理由不同 →
+                            認知偏差</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. 反思與行動 (支援貼圖並格式化) -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="reflection_action" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="reflectionTitle">5️⃣ 反思與行動 (支援貼圖/拖曳 &
+                    AI 格式化)</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="reflectionDesc">針對每個差異類型列出具體修正行動，並可附 Project
+                    或任務連結，或貼上修正的截圖。內容將**自動轉換為表格或列表**。</p>
+                <textarea id="reflection_action" name="reflection_action" rows="8"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderReflection" placeholder="🔹 自我盲點修正 (需重寫或改善段落): 
+🔹 認知保守收錄 (存入最佳範例庫或模板): 
+🔹 共識問題訓練 (指定練習任務或練習題): 
+🔹 理由偏差驗證 (你與 AI 給出不同原因但結果相似時，需比對 AI 評語或高分範文，找出真正原因):"></textarea>
+            </div>
+
+            <!-- ================================== -->
+            <!--   ⬇️ 新增：根本原因 (Issue Title) ⬇️  -->
+            <!-- ================================== -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="root_cause_title" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="rootCauseTitle">🎯 根本原因推敲 (GitHub Issue
+                    標題)</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="rootCauseDesc">
+                    請根據上面解析,分析出無法達標的根本原因。
+                    <br>
+                    <strong class="text-accentYellow">這將會直接作為 GitHub Issue 的標題。</strong>
+                </p>
+                <textarea id="root_cause_title" name="root_cause_title" rows="2"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderRootCause"
+                    placeholder="例如：TA 漏失關鍵數據點 (Data Missing) 且時態使用混亂"></textarea>
+            </div>
+            <!-- ================================== -->
+            <!--   ⬆️ 新增：根本原因 (Issue Title) ⬆️  -->
+            <!-- ================================== -->
+
+
+            <!-- 9. 其他備註 (支援貼圖並格式化) -->
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <label for="additional_notes" class="block text-xl font-bold text-gray-200 mb-3"
+                    data-i18n="actualRootCause">6️⃣ 實際根本原因 (支援貼圖/拖曳 &
+                    AI 格式化)</label>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="actualRootCauseDesc">反覆修改文章,
+                    透過在ChatGPT驗證分數是否達標,確認修改方法有效,根因正確。</p>
+                <textarea id="additional_notes" name="additional_notes" rows="4"
+                    class="w-full px-4 py-3 bg-darkBg border border-borderDark rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-200 placeholder:text-gray-500"
+                    data-i18n-placeholder="placeholderActualRootCause" placeholder="請填寫實際根本原因"></textarea>
+            </div>
+
+            <!-- 提交按鈕 -->
+            <div class="pt-8 text-center">
+                <div id="status-message" class="mb-4 p-3 rounded-lg text-sm hidden"></div>
+                <button type="submit" id="submit-button" class="gradient-button w-full md:w-2/3 lg:w-1/Two_Pies px-8 py-4 text-xl font-bold rounded-xl shadow-lg
+                                         text-white bg-gradient-to-r from-primaryBtnStart to-primaryBtnEnd
+                                         hover:from-blue-500 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-darkBg
+                                         transition duration-300 ease-in-out" data-i18n="submitBtn">
+                    ✨ 自動建立 GitHub Issue
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // --- Internationalization (i18n) System ---
+        window.i18n = {
+            currentLang: 'zh',
+            translations: {
+                zh: {
+                    pageTitle: '📋 任務看板',
+                    pageSubtitle: 'Quest Board — 建立 GitHub Issue，記錄練習成果與反思',
+                    analysisDesc: 'IELTS Task 1 AI vs 自我評估比較分析',
+                    importExportTitle: '🔄 匯出 / 匯入資料',
+                    importExportDesc: '您可以將目前表單的所有內容匯出為 Markdown 檔案，以便稍後匯入並還原。',
+                    exportBtn: '📥 匯出為 ZIP 壓縮檔',
+                    importBtn: '📤 匯入 ZIP 壓縮檔',
+                    githubConfigTitle: '⚙️ GitHub 儲存庫與 API 設定',
+                    githubConfigDesc: '要自動建立 Issue，您需要提供具有 `repo` 權限的 Personal Access Token (PAT)。',
+                    githubUser: 'GitHub 使用者名稱',
+                    githubRepo: 'GitHub 儲存庫名稱',
+                    githubToken: 'Personal Access Token (PAT)',
+                    fetchReposBtn: '🔄 抓取儲存庫 (Repos)',
+                    taskNameLabel: '1️⃣ 題目名稱/編號',
+                    taskFileLabel: '📄 文章檔案 (Docx)',
+                    articleContentLabel: '📝 文章內容與圖表截圖',
+                    sentenceAnalysisLabel: '📚 逐句解析內容',
+                    writingDateLabel: '📅 寫作日期',
+                    questionTypeLabel: '📊 題型',
+                    selfAssessmentTitle: '2️⃣ 自我評估分數 (0-9)',
+                    taskResponse: 'Task Response / Achievement',
+                    coherenceCohesion: 'Coherence & Cohesion',
+                    lexicalResource: 'Lexical Resource',
+                    grammaticalRange: 'Grammatical Range & Accuracy',
+                    screenshotLabel: '📸 自評截圖 (可拖放圖片或是貼上截圖)',
+                    lexicalAnalysis: '詞彙資源分析 (LR Analysis)',
+                    grammaticalAnalysis: '文法多樣性與準確性分析 (GRA Analysis)',
+                    translateSource: '💡 Google 語義檢查 (1/3): 中文源文（TA/CC 意圖）',
+                    translateOutput: '💡 Google 語義檢查 (2/3): 翻譯結果（反向驗證）',
+                    identifiedIssues: '🚨 自評辨識出的問題 (3/3) - 修正盲點 (支援貼圖/拖曳)',
+                    aiUnderstanding: '🤖 AI 內容理解 (實驗性)',
+                    manualChart: '🖼️ 手動貼上圖表',
+                    customField1: '💡 TA/CC 用字準確性 (圖表反向驗證) (支援貼圖/拖曳)',
+                    otherNotes: '其他觀察/備註 (通用) (支援貼圖/拖曳)',
+                    aiAssessmentTitle: '3️⃣ AI 評分 (支援貼圖/拖曳 & AI 格式化)',
+                    diffAnalysisTitle: '4️⃣ 差異判斷 (Difference Analysis)',
+                    diff1: '自評高 / AI 低 → 自我盲點',
+                    diff2: '自評低 / AI 高 → 認知保守',
+                    diff3: '自評 ≈ AI → 共識問題',
+                    diff4: '分數接近但理由不同 → 認知偏差',
+                    reflectionTitle: '5️⃣ 反思與行動 (支援貼圖/拖曳 & AI 格式化)',
+                    rootCauseTitle: '🎯 根本原因推敲 (GitHub Issue 標題)',
+                    actualRootCause: '6️⃣ 實際根本原因 (支援貼圖/拖曳 & AI 格式化)',
+                    submitBtn: '✨ 自動建立 GitHub Issue',
+                    taskNameDesc: '請填寫這次練習的題目名稱代號',
+                    taskFileDesc: '請填寫您的檔案名稱 (例如：06_Process_Cyclic_Silkworms.docx)。 重要提示：Issue 建立後，您需要手動將您的 .doc/.docx 檔案拖曳到 Issue 留言區才能完成上傳。',
+                    articleContentDesc: '請將您的 Task 1 寫作內容和圖表截圖貼於此處。您可以直接 貼上 (Ctrl+V) 截圖或 拖曳 圖片檔案。',
+                    imageUploadStatusTemplate: '正在等待上傳的圖片：{count} 張。',
+                    sentenceAnalysisDesc: '請貼上您對 Task 1 寫作內容進行逐句解析的內容、截圖或表格，例如每個句子的文法或詞彙修正。',
+                    questionTypeDesc: '請選擇這次寫作的圖表題型。',
+                    selfAssessmentDesc: '請填寫你對 IELTS 四大核心維度的自評分數 (0~9)。',
+                    screenshotDesc: '請在此貼上您完整的自評截圖 (例如：包含四項分數的總覽圖)。',
+                    lexicalAnalysisDesc: '請貼上您對 LR 分數的自評細節或圖表，將會自動格式化。',
+                    grammaticalAnalysisDesc: '請貼上您對 GRA 分數的自評細節或圖表，將會自動格式化。',
+                    translateSourceDesc: '請輸入您的原始意圖 (中文)，用於比對 AI 評分和您的實際表達。',
+                    translateOutputDesc: '請將 Google 翻譯結果貼於此處（如：您將中文源文翻譯成英文的結果，或將您的英文寫作反譯回中文的結果）。',
+                    identifiedIssuesDesc: '請輸入您比對原文、中文源文和翻譯結果後，自己發現的 TA/CC 用字準確性問題或 AI 未能辨識出的盲點。**（將自動格式化為列表/段落）**',
+                    aiUnderstandingDesc: '點擊按鈕，讓 AI 根據您在「文章內容與圖表截圖」欄位中的文字描述來生成內容理解 (Breakdown)。',
+                    generateAIBtn: '生成 AI 理解',
+                    manualChartDesc: 'AI 理解已生成。請在此處貼上您手動製作或修正的圖表（支援貼圖/拖曳）。',
+                    customField1Desc: '請觀察 AI 依據您的文字所生成的「AI 理解」以及您「手動貼上的圖表」，反向驗證您在 TA (任務完成度) 和 CC (連貫性) 上的用字是否精確。',
+                    otherNotesDesc: '補充其他觀察、自評原因或截圖...',
+                    aiAssessmentDesc: '填入 AI 對四大核心維度的評分與建議評語，或貼上 AI 評分截圖。內容將自動轉換為表格。',
+                    diffAnalysisDesc: '勾選本篇文章與 AI 評分的差異類型，並補充原因與判斷',
+                    reflectionDesc: '針對每個差異類型列出具體修正行動，並可附 Project 或任務連結，或貼上修正的截圖。內容將自動轉換為表格或列表。',
+                    actualRootCauseDesc: '反覆修改文章, 透過在ChatGPT驗證分數是否達標,確認修改方法有效,根因正確。',
+                    issueSuccess: '✅ Issue 建立成功！Issue #{number} 已建立。',
+                    rpgXpNeeded: '還需 {xp} XP 升級',
+                    labelFetchPrompt: '請先填寫 PAT 並點擊抓取...',
+                    labelSelect: '請選擇...',
+                    placeholderScore: '例如：7.0',
+                    fetchReposBtn: '🔄 抓取儲存庫 (Repos)',
+                    fetchingRepos: '🔄 抓取中...',
+                    refetchRepos: '🔄 重新抓取儲存庫 (Repos)',
+                    fetchErrorPAT: '🚨 錯誤：請先填寫 GitHub 使用者名稱和 PAT。',
+                    fetchingStatus: '🔄 正在從 GitHub API 抓取您的儲存庫...',
+                    fetchSuccessRestored: '✅ 成功抓取 {length} 個儲存庫！已還原您的選擇。',
+                    fetchSuccessImported: '✅ 成功抓取 {length} 個儲存庫！已還原 (Default/Imported) 選擇。',
+                    fetchSuccessPick: '✅ 成功抓取 {length} 個儲存庫！請選擇一個。',
+                    fetchEmpty: 'ℹ️ 未找到您擁有的任何儲存庫。',
+                    fetchStatusError: '抓取失敗 (Status: {status})。',
+                    fetchError401: ' 請檢查您的 PAT 是否正確且具有 "repo" 權限。',
+                    fetchError404: ' 請檢查您的 GitHub 使用者名稱是否正確。',
+                    fetchNetworkError: '❌ 網路錯誤：{message}',
+                    fetchErrorLoading: '抓取失敗',
+                    labelSelectRepo: '請選擇一個儲存庫...',
+                    labelLoading: '抓取中...',
+                    labelNoRepo: '未找到儲存庫',
+                    zipExporting: '🔄 正在打包資料...',
+                    zipCompressed: '🔄 正在壓縮 {count} 張圖片...',
+                    zipSuccess: '✅ 資料已成功匯出為 ZIP！',
+                    zipFailJSZip: '❌ 匯出失敗：JSZip 函式庫載入失敗。',
+                    zipFailError: '❌ 匯出失敗：{message}',
+                    zipReading: '🔄 正在讀取 ZIP 檔案...',
+                    zipImportSuccess: '✅ 資料匯入完成！',
+                    zipImportFailNoData: '❌ 匯入失敗：ZIP 檔案中找不到 data.md。',
+                    zipImportFailJSZip: '❌ 匯入失敗：JSZip 函式庫載入失敗。',
+                    zipImportFailError: '❌ 匯入失敗：{message}',
+
+                    // Placeholders
+                    placeholderTaskName: '例如 1029_Pie_Chart',
+                    placeholderTaskFile: '例如 pie_chart_task.docx',
+                    placeholderContent: '貼上文章內容或是把圖表截圖拖到這裡...',
+                    placeholderAnalysis: '在此貼入逐句解構分析...',
+                    placeholderLR: '分析你的用字是否有誤或可精進之處...',
+                    placeholderGRA: '分析你的文法結構多樣性與準確度...',
+                    placeholderSource: '貼入原始英文文章...',
+                    placeholderOutput: '貼入 Google 翻譯後的中文...',
+                    placeholderIssues: '你在寫作時發現了什麼問題？',
+                    placeholderAI: 'AI 是如何理解你的圖表原始數據的？',
+                    placeholderManual: '手動輸入或貼入圖表的具體數據與標籤...',
+                    placeholderCustom: '記錄任何突然閃過的靈感或相關主題的延伸思考...',
+                    placeholderNotes: '任何不屬於上述分類的筆記...',
+                    placeholderAIEval: '貼入 AI 的完整評分報告...',
+                    placeholderReflection: '你學到了什麼？下次如何改進？',
+                    placeholderRootCause: '一句話總結問題點 (用於 Issue 標題)',
+                    placeholderActualRootCause: '深挖這次表現不佳或出錯的最核心原因...',
+
+                    // RPG Ranks
+                    rpgRank1: '新手挑戰者',
+                    rpgRank2: '見習冒險家',
+                    rpgRank3: '探索者',
+                    rpgRank4: '挑戰達人',
+                    rpgRank5: '精英戰士',
+                    rpgRank6: '專家引導者',
+                    rpgRank7: '大師創造者',
+                    rpgRank8: '宗師煉金師',
+                    rpgRank9: '傳奇締造者',
+                    rpgRank10: '帝國領袖',
+                    backLink: '← 返回 Quest Empire'
+                },
+                en: {
+                    pageTitle: '📋 Mission Board',
+                    pageSubtitle: 'Quest Board — Create GitHub Issue to record practice results and reflections',
+                    analysisDesc: 'IELTS Task 1 AI vs Self-Assessment Comparative Analysis',
+                    importExportTitle: '🔄 Export / Import Data',
+                    importExportDesc: 'You can export all current form content as a Markdown file to import and restore later.',
+                    exportBtn: '📥 Export as ZIP',
+                    importBtn: '📤 Import ZIP',
+                    githubConfigTitle: '⚙️ GitHub Repository & API Settings',
+                    githubConfigDesc: 'To automatically create issues, provide a Personal Access Token (PAT) with `repo` permission.',
+                    githubUser: 'GitHub Username',
+                    githubRepo: 'GitHub Repository Name',
+                    githubToken: 'Personal Access Token (PAT)',
+                    fetchReposBtn: '🔄 Fetch Repositories',
+                    taskNameLabel: '1️⃣ Task Name/Number',
+                    taskFileLabel: '📄 Article File (Docx)',
+                    articleContentLabel: '📝 Article Content & Screenshots',
+                    sentenceAnalysisLabel: '📚 Sentence Analysis Content',
+                    writingDateLabel: '📅 Writing Date',
+                    questionTypeLabel: '📊 Question Type',
+                    selfAssessmentTitle: '2️⃣ Self-Assessment Score (0-9)',
+                    taskResponse: 'Task Response / Achievement',
+                    coherenceCohesion: 'Coherence & Cohesion',
+                    lexicalResource: 'Lexical Resource',
+                    grammaticalRange: 'Grammatical Range & Accuracy',
+                    screenshotLabel: '📸 Score Screenshot (Drop image or paste screenshot)',
+                    lexicalAnalysis: 'Lexical Resource Analysis (LR Analysis)',
+                    grammaticalAnalysis: 'Grammatical Range & Accuracy Analysis (GRA Analysis)',
+                    translateSource: '💡 Google Semantic Check (1/3): Chinese Source (TA/CC Intent)',
+                    translateOutput: '💡 Google Semantic Check (2/3): Translation Result (Verification)',
+                    identifiedIssues: '🚨 Self-Identified Issues (3/3) - Blind Spots (Supports paste/drag)',
+                    aiUnderstanding: '🤖 AI Breakdown (Experimental)',
+                    manualChart: '🖼️ Manual Chart Paste',
+                    customField1: '💡 TA/CC Precision (Chart Verification) (Supports paste/drag)',
+                    otherNotes: 'Other Observations/Notes (General) (Supports paste/drag)',
+                    aiAssessmentTitle: '3️⃣ AI Assessment (Supports paste/drag & AI Formatting)',
+                    diffAnalysisTitle: '4️⃣ Difference Analysis',
+                    diff1: 'Self High / AI Low → Blind Spot',
+                    diff2: 'Self Low / AI High → Conservative',
+                    diff3: 'Self ≈ AI → Consensus',
+                    diff4: 'Close Scores / Different Reasons → Cognitive Bias',
+                    reflectionTitle: '5️⃣ Reflection & Action (Supports paste/drag & AI Formatting)',
+                    rootCauseTitle: '🎯 Root Cause (GitHub Issue Title)',
+                    actualRootCause: '6️⃣ Actual Root Cause (Supports paste/drag & AI Formatting)',
+                    submitBtn: '✨ Create GitHub Issue Automatically',
+                    taskNameDesc: 'Please fill in the task name/number for this practice.',
+                    taskFileDesc: 'Please fill in your file name (e.g., 06_Process_Cyclic_Silkworms.docx). Important: After the Issue is created, you need to manually drag and drop your .doc/.docx file to the Issue comments to complete the upload.',
+                    articleContentDesc: 'Please paste your Task 1 writing content and chart screenshots here. You can paste (Ctrl+V) or drag and drop image files directly.',
+                    imageUploadStatusTemplate: 'Wait for upload: {count} images.',
+                    sentenceAnalysisDesc: 'Please paste your sentence-by-sentence analysis of the Task 1 writing, such as grammar or vocabulary corrections.',
+                    questionTypeDesc: 'Please select the chart type for this writing.',
+                    selfAssessmentDesc: 'Please fill in your self-assessment scores (0~9) for the four core IELTS dimensions.',
+                    screenshotDesc: 'Please paste your complete self-assessment screenshot here (e.g., overview with all four scores).',
+                    lexicalAnalysisDesc: 'Please paste your self-assessment details or charts for LR score; it will be automatically formatted.',
+                    grammaticalAnalysisDesc: 'Please paste your self-assessment details or charts for GRA score; it will be automatically formatted.',
+                    translateSourceDesc: 'Please enter your original intent (Chinese) to compare AI scoring with your actual expression.',
+                    translateOutputDesc: 'Please paste the Google Translate result here (e.g., Chinese to English or your English back to Chinese).',
+                    identifiedIssuesDesc: 'Enter questions or blind spots identified by comparing original, source, and translation. (Auto-formatted)',
+                    aiUnderstandingDesc: 'Click the button to let the AI generate a breakdown based on your text description.',
+                    generateAIBtn: 'Generate AI Breakdown',
+                    manualChartDesc: 'AI breakdown generated. Paste your manually created or corrected chart here (Supports paste/drag).',
+                    customField1Desc: 'Observe the AI-generated breakdown and your pasted chart to verify your precision in TA and CC.',
+                    otherNotesDesc: 'Add other observations, self-assessment reasons, or screenshots...',
+                    aiAssessmentDesc: 'Enter the AI assessment scores and comments, or paste a screenshot. Content will be converted to a table.',
+                    diffAnalysisDesc: 'Check the difference types between your assessment and the AI, and add reasons.',
+                    reflectionDesc: 'List specific correction actions for each difference type. Content will be converted to a table/list.',
+                    actualRootCauseDesc: 'Validate if the correction method is effective and root cause is correct through repeated revisions.',
+                    issueSuccess: '✅ Issue created successfully! Issue #{number} established.',
+                    rpgXpNeeded: '{xp} XP needed to level up',
+                    labelFetchPrompt: 'Fill PAT and click fetch first...',
+                    labelSelect: 'Please select...',
+                    placeholderScore: 'e.g., 7.0',
+                    fetchReposBtn: '🔄 Fetch Repositories',
+                    fetchingRepos: '🔄 Fetching...',
+                    refetchRepos: '🔄 Re-fetch Repositories',
+                    fetchErrorPAT: '🚨 Error: Please fill in GitHub Username and PAT first.',
+                    fetchingStatus: '🔄 Fetching repositories from GitHub API...',
+                    fetchSuccessRestored: '✅ Fetched {length} repositories! Restoration successful.',
+                    fetchSuccessImported: '✅ Fetched {length} repositories! Restoration (Default/Imported) successful.',
+                    fetchSuccessPick: '✅ Fetched {length} repositories! Please select one.',
+                    fetchEmpty: 'ℹ️ No repositories found under your account.',
+                    fetchStatusError: 'Fetch failed (Status: {status}).',
+                    fetchError401: ' Please check if your PAT is correct and has "repo" scope.',
+                    fetchError404: ' Please check if your GitHub Username is correct.',
+                    fetchNetworkError: '❌ Network Error: {message}',
+                    fetchErrorLoading: 'Fetch Failed',
+                    labelSelectRepo: 'Please select a repository...',
+                    labelLoading: 'Loading...',
+                    labelNoRepo: 'No Repositories Found',
+                    zipExporting: '🔄 Packing data...',
+                    zipCompressed: '🔄 Compressing {count} images...',
+                    zipSuccess: '✅ Data exported as ZIP successfully!',
+                    zipFailJSZip: '❌ Export failed: JSZip not loaded.',
+                    zipFailError: '❌ Export failed: {message}',
+                    zipReading: '🔄 Reading ZIP file...',
+                    zipImportSuccess: '✅ Data imported successfully!',
+                    zipImportFailNoData: '❌ Import failed: data.md not found in ZIP.',
+                    zipImportFailJSZip: '❌ Import failed: JSZip not loaded.',
+                    zipImportFailError: '❌ Import failed: {message}',
+
+                    // Placeholders
+                    placeholderTaskName: 'e.g., 1029_Pie_Chart',
+                    placeholderTaskFile: 'e.g., pie_chart_task.docx',
+                    placeholderContent: 'Paste article content or drop screenshots here...',
+                    placeholderAnalysis: 'Paste your sentence-by-sentence analysis here...',
+                    placeholderLR: 'Analyze if your vocabulary is accurate or can be improved...',
+                    placeholderGRA: 'Analyze your grammatical variety and accuracy...',
+                    placeholderSource: 'Paste original English article...',
+                    placeholderOutput: 'Paste Google Translated Chinese...',
+                    placeholderIssues: 'What problems did you notice while writing?',
+                    placeholderAI: 'How did the AI interpret your chart data?',
+                    placeholderManual: 'Input chart data and labels manually...',
+                    placeholderCustom: 'Record any sudden inspirations or extended thoughts...',
+                    placeholderNotes: 'Any notes not fitting in above categories...',
+                    placeholderAIEval: 'Paste complete AI evaluation report...',
+                    placeholderReflection: 'What did you learn? How to improve next time?',
+                    placeholderRootCause: 'Summarize problem in one sentence (for Issue title)',
+                    placeholderActualRootCause: 'Deep dive into the core reason of performance...',
+
+                    // RPG Ranks
+                    rpgRank1: 'Novice Challenger',
+                    rpgRank2: 'Apprentice Adventurer',
+                    rpgRank3: 'Explorer',
+                    rpgRank4: 'Challenge Master',
+                    rpgRank5: 'Elite Warrior',
+                    rpgRank6: 'Expert Guide',
+                    rpgRank7: 'Master Creator',
+                    rpgRank8: 'Grandmaster Alchemist',
+                    rpgRank9: 'Legendary Founder',
+                    rpgRank10: 'Empire Leader',
+                    backLink: '← Back to Quest Empire'
+                }
+            },
+
+            t: function (key, params = {}) {
+                let text = this.translations[this.currentLang][key] || key;
+                for (const [k, v] of Object.entries(params)) {
+                    text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+                }
+                return text;
+            },
+
+            setLanguage: function (lang) {
+                this.currentLang = lang;
+                localStorage.setItem('github_manager_lang', lang);
+                this.applyTranslations();
+            },
+
+            loadSavedLanguage: function () {
+                const savedLang = localStorage.getItem('github_manager_lang');
+                if (savedLang && this.translations[savedLang]) {
+                    this.currentLang = savedLang;
+                }
+            },
+
+            applyTranslations: function () {
+                try {
+                    document.querySelectorAll('[data-i18n]').forEach(el => {
+                        const key = el.getAttribute('data-i18n');
+                        if (!key) return;
+                        el.innerHTML = this.t(key);
+                    });
+
+                    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                        const key = el.getAttribute('data-i18n-placeholder');
+                        el.placeholder = this.t(key);
+                    });
+
+                    const langBtn = document.getElementById('langToggleBtn');
+                    if (langBtn) {
+                        const btnText = document.getElementById('langBtnText');
+                        if (btnText) {
+                            btnText.innerText = this.currentLang === 'zh' ? 'EN' : '中文';
+                        }
+                    }
+
+                    // Update RPG Status Card if present
+                    if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
+                        try {
+                            document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                        } catch (e) {
+                            console.warn('[i18n] Failed to update RPG status card:', e);
+                        }
+                    }
+
+                    document.documentElement.lang = this.currentLang === 'zh' ? 'zh-Hant' : 'en';
+                } catch (error) {
+                    console.error('[i18n] Error applying translations:', error);
+                }
+            }
+        };
+
+        function toggleLanguage() {
+            const newLang = i18n.currentLang === 'zh' ? 'en' : 'zh';
+            i18n.setLanguage(newLang);
+        }
+        // -----------------------------------------------------
+        // 🌟 新增：匯出/匯入 功能所需 ID 列表
+        // -----------------------------------------------------
+        // 此列表包含所有需要被儲存和還原的欄位 ID
+        const fieldsToSync = [
+            'github_user', 'github_repo', 'github_token', 'task_name', 'task_file',
+            'article_content', 'sentence_analysis', 'writing_date', 'question_type',
+            'self_assessment_ta', 'self_assessment_cc', 'self_assessment_lr', 'self_assessment_gra',
+            'self_assessment_screenshot', 'self_assessment_lr_analysis', 'self_assessment_gra_analysis', // 🌟 新增 self_assessment_screenshot
+            'google_translate_source', 'google_translate_output', 'self_identified_issues',
+            'manual_chart_paste', 'custom_field_1', 'self_assessment_notes', 'ai_assessment',
+            'diff_1', 'diff_2', 'diff_3', 'diff_4', // Checkboxes
+            'reflection_action', 'root_cause_title', 'additional_notes'
+        ];
+
+        // -----------------------------------------------------
+        // 🌟 修改：匯出為 ZIP 壓縮檔 (包含圖片)
+        // -----------------------------------------------------
+        async function exportZip() { // 🌟 Renamed and made async
+            console.log('開始匯出 ZIP...');
+            const statusEl = document.getElementById('import-status');
+
+            // 檢查 JSZip 是否已載入
+            if (typeof JSZip === 'undefined') {
+                console.error('JSZip library not loaded.');
+                statusEl.textContent = i18n.t('zipFailJSZip');
+                statusEl.classList.remove('hidden', 'text-green-400');
+                statusEl.classList.add('text-red-400');
+                return;
+            }
+
+            statusEl.textContent = i18n.t('zipExporting');
+            statusEl.classList.remove('hidden', 'text-red-400', 'text-green-400');
+            statusEl.classList.add('text-yellow-400');
+
+            try {
+                const zip = new JSZip();
+
+                // 1. 產生並儲存 data.md (文字內容)
+                let markdownContent = `# IELTS Task 1 匯出資料\n\n`;
+                fieldsToSync.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        let value;
+                        if (element.type === 'checkbox') {
+                            value = element.checked; // 儲存 true/false
+                        } else {
+                            value = element.value; // 儲存文字、數字、日期、下拉選單等
+                        }
+                        markdownContent += `<!--FIELD:${id}-->\n`;
+                        markdownContent += `${value}\n\n`;
+                    }
+                });
+                zip.file("data.md", markdownContent);
+
+                // 2. 儲存所有 "pendingImages" (待上傳圖片)
+                const imgFolder = zip.folder("images");
+                let imageCount = 0;
+                for (const fieldId in pendingImages) {
+                    for (const img of pendingImages[fieldId]) {
+                        // img.file is the File object
+                        // img.placeholder is the unique name (e.g., article_content_pasted_123.png)
+                        imgFolder.file(img.placeholder, img.file); // JSZip handles File objects
+                        imageCount++;
+                    }
+                }
+                console.log(`Adding ${imageCount} images to zip.`);
+
+                // 3. 產生 ZIP 檔案
+                statusEl.textContent = i18n.t('zipCompressed', { count: imageCount });
+                const zipBlob = await zip.generateAsync({
+                    type: "blob",
+                    compression: "DEFLATE",
+                    compressionOptions: {
+                        level: 6 // 1-9 (6 is a good balance)
+                    }
+                });
+
+                // 4. 產生檔案名稱並觸發下載
+                const taskName = document.getElementById('task_name').value.trim() || 'untitled';
+                const date = new Date().toISOString().split('T')[0];
+                const filename = `ielts-export-${taskName}-${date}.zip`;
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(zipBlob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                console.log('ZIP 匯出完成。');
+                statusEl.textContent = i18n.t('zipSuccess');
+                statusEl.classList.remove('hidden', 'text-red-400', 'text-yellow-400');
+                statusEl.classList.add('text-green-400');
+
+            } catch (error) {
+                console.error('ZIP 匯出失敗:', error);
+                statusEl.textContent = i18n.t('zipFailError', { message: error.message });
+                statusEl.classList.remove('hidden', 'text-green-400');
+                statusEl.classList.add('text-red-400');
+            }
+        }
+
+        // -----------------------------------------------------
+        // 🌟 新增：輔助函式 - 清空 pendingImages
+        // -----------------------------------------------------
+        function clearPendingImages() {
+            // 清空主物件
+            for (const key in pendingImages) {
+                delete pendingImages[key];
+            }
+
+            // 重新初始化所有 textarea 的鍵
+            fieldsToSync.forEach(id => {
+                const element = document.getElementById(id);
+                if (element && element.tagName === 'TEXTAREA') {
+                    pendingImages[id] = [];
+                }
+            });
+            updateImageStatus(); // 更新計數器為 0
+        }
+
+        // -----------------------------------------------------
+        // 🌟 修改：從 ZIP 壓縮檔匯入 (包含圖片)
+        // -----------------------------------------------------
+        async function importZip(event) { // 🌟 Renamed and made async
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const statusEl = document.getElementById('import-status');
+
+            // 檢查 JSZip 是否已載入
+            if (typeof JSZip === 'undefined') {
+                console.error('JSZip library not loaded.');
+                statusEl.textContent = i18n.t('zipImportFailJSZip');
+                statusEl.classList.remove('hidden', 'text-green-400');
+                statusEl.classList.add('text-red-400');
+                return;
+            }
+
+            statusEl.textContent = i18n.t('zipReading');
+            statusEl.classList.remove('hidden', 'text-red-400', 'text-green-400');
+            statusEl.classList.add('text-yellow-400');
+
+            try {
+                const zip = await JSZip.loadAsync(file);
+
+                // 1. 匯入文字資料 (data.md)
+                const dataFile = zip.file("data.md");
+                if (!dataFile) {
+                    throw new Error(i18n.t('zipImportFailNoData'));
+                }
+
+                const content = await dataFile.async("string");
+                const chunks = content.split('<!--FIELD:');
+                if (chunks.length <= 1) {
+                    throw new Error(i18n.t('zipImportFailNoData')); // Re-use for malformed file
+                }
+
+                let fieldsImported = 0;
+                for (let i = 1; i < chunks.length; i++) {
+                    const chunk = chunks[i];
+                    const delimiterPos = chunk.indexOf('-->');
+                    if (delimiterPos === -1) continue;
+
+                    const id = chunk.substring(0, delimiterPos).trim();
+                    const value = chunk.substring(delimiterPos + 3).trim();
+                    const element = document.getElementById(id);
+
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = (value === 'true');
+                        } else {
+                            element.value = value;
+                        }
+
+                        // 🌟 NEW: Special handling for github_repo to add the imported option
+                        if (id === 'github_repo' && value) {
+                            // Check if this option already exists (e.g., from a previous fetch)
+                            let option = element.querySelector(`option[value="${value}"]`);
+                            if (!option) {
+                                // If not, create and append it so it can be selected
+                                option = document.createElement('option');
+                                option.value = value;
+                                option.textContent = `${value} (from import)`;
+                                element.appendChild(option);
+                            }
+                            // Set the value, which now matches an option
+                            element.value = value;
+                        }
+
+                        fieldsImported++;
+                    }
+                }
+                console.log(`Imported ${fieldsImported} text fields.`);
+
+                // 2. 匯入圖片資料 (images/*)
+                statusEl.textContent = i18n.t('zipReading'); // Keep "reading" status while processing images
+
+                // 清空並準備 pendingImages
+                clearPendingImages();
+
+                const imageFiles = Object.values(zip.files).filter(file => file.name.startsWith('images/') && !file.dir);
+                console.log(`Found ${imageFiles.length} images in zip.`);
+
+                for (const zipEntry of imageFiles) {
+                    const placeholderName = zipEntry.name.substring("images/".length);
+
+                    // 從 placeholderName (e.g., 'article_content_pasted_123.png') 提取 ID
+                    // 修正：確保能正確處理 'article_content' 這種包含底線的 ID
+                    const idParts = placeholderName.split('_');
+                    if (idParts.length < 3) continue; // 格式不符 (e.g., textareaid_pasted_timestamp.png)
+
+                    // 重組 ID
+                    const textareaId = idParts.slice(0, idParts.length - 2).join('_');
+
+                    if (document.getElementById(textareaId) && pendingImages[textareaId]) {
+                        const fileBlob = await zipEntry.async("blob");
+                        const file = new File([fileBlob], placeholderName, { type: fileBlob.type || 'image/png' });
+
+                        // 加入
+                        pendingImages[textareaId].push({ file: file, placeholder: placeholderName });
+                    } else {
+                        console.warn(`Could not find matching textarea ID "${textareaId}" for image ${placeholderName}`);
+                    }
+                }
+
+                updateImageStatus(); // 更新圖片計數器
+
+                statusEl.textContent = i18n.t('zipImportSuccess');
+                statusEl.classList.remove('hidden', 'text-red-400', 'text-yellow-400');
+                statusEl.classList.add('text-green-400');
+
+            } catch (error) {
+                console.error('ZIP 匯入失敗:', error);
+                statusEl.textContent = i18n.t('zipImportFailError', { message: error.message });
+                statusEl.classList.remove('hidden', 'text-green-400');
+                statusEl.classList.add('text-red-400');
+            } finally {
+                // 清空 file input 的值
+                event.target.value = null;
+            }
+        }
+
+
+        // 全域變數
+        const apiKey = "AIzaSyAG5d8eUpB3QcE5kTXt-2w0VJbOklMh__c"; // 留空，系統會自動填入
+        const modelName = "gemini-2.5-flash-preview-09-2025";
+        const imageModelName = "gemini-2.5-flash-image-preview"; // 🌟 (用於 AI 圖表生成)
+
+        // -----------------------------------------------------
+        // 🌟 NEW: GitHub Repo Fetching Function
+        // -----------------------------------------------------
+        async function fetchUserRepos() {
+            console.log("[GitHub Fetch] Starting repo fetch...");
+            const user = document.getElementById('github_user').value.trim();
+            const token = document.getElementById('github_token').value.trim();
+            const button = document.getElementById('fetch-repos-button');
+            const statusEl = document.getElementById('repo-fetch-status');
+            const repoSelect = document.getElementById('github_repo');
+
+            // 1. Validate inputs
+            if (!user || !token) {
+                statusEl.textContent = i18n.t('fetchErrorPAT');
+                statusEl.classList.remove('hidden', 'text-green-400');
+                statusEl.classList.add('text-red-400');
+                return;
+            }
+
+            // 2. Set loading state
+            button.disabled = true;
+            button.textContent = i18n.t('fetchingRepos');
+            statusEl.textContent = i18n.t('fetchingStatus');
+            statusEl.classList.remove('hidden', 'text-red-400', 'text-green-400');
+            statusEl.classList.add('text-yellow-400');
+
+            // 3. Preserve imported value
+            // (Store the value *before* clearing options, in case it came from an import)
+            const previouslySelectedRepo = repoSelect.value;
+            console.log(`[GitHub Fetch] Preserving selected repo (if any): ${previouslySelectedRepo}`);
+
+            // 4. Clear existing options
+            // (Clear all *except* the first disabled one, or just clear all and re-add)
+            repoSelect.innerHTML = `<option value="" disabled selected class="bg-darkBg text-gray-500">${i18n.t('labelLoading')}</option>`;
+
+            // 5. Make API Call
+            // We fetch up to 100 repos owned by the user
+            const apiUrl = `https://api.github.com/users/${user}/repos?type=owner&per_page=100`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.com/v3+json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Success
+                    if (Array.isArray(result) && result.length > 0) {
+                        // Clear the "loading" option
+                        repoSelect.innerHTML = '';
+
+                        // Add a new default
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = "";
+                        defaultOption.textContent = i18n.t('labelSelectRepo');
+                        defaultOption.disabled = true;
+                        repoSelect.appendChild(defaultOption);
+
+                        // Populate with fetched repos
+                        result.forEach(repo => {
+                            const option = document.createElement('option');
+                            option.value = repo.name;
+                            option.textContent = repo.name;
+                            option.className = 'bg-darkBg';
+                            repoSelect.appendChild(option);
+                        });
+
+                        // 6. Restore selection
+                        // Try to set the value back. If it exists, it will be selected.
+                        if (previouslySelectedRepo) {
+                            repoSelect.value = previouslySelectedRepo;
+                        }
+
+                        // Check if the restored value was successful
+                        if (repoSelect.value === previouslySelectedRepo && previouslySelectedRepo !== "") {
+                            statusEl.textContent = i18n.t('fetchSuccessRestored', { length: result.length });
+                        } else {
+                            // This happens if the imported/default value wasn't in the fetched list
+                            // 🌟 NEW LOGIC: Add the previous value back if it wasn't found
+                            if (previouslySelectedRepo) {
+                                let option = document.createElement('option');
+                                option.value = previouslySelectedRepo;
+                                option.textContent = `${previouslySelectedRepo} (Default/Imported)`;
+                                option.className = 'bg-darkBg';
+                                option.selected = true; // Select it
+                                repoSelect.appendChild(option);
+                                // repoSelect.value = previouslySelectedRepo; // Select it
+                                statusEl.textContent = i18n.t('fetchSuccessImported', { length: result.length });
+                            } else {
+                                // It was empty before, so just ask to select
+                                statusEl.textContent = i18n.t('fetchSuccessPick', { length: result.length });
+                                repoSelect.value = ""; // Reset to "Please select"
+                            }
+                        }
+
+                        statusEl.classList.remove('text-red-400', 'text-yellow-400');
+                        statusEl.classList.add('text-green-400');
+
+                    } else {
+                        // Empty but successful response
+                        statusEl.textContent = i18n.t('fetchEmpty');
+                        statusEl.classList.remove('text-red-400', 'text-yellow-400');
+                        statusEl.classList.add('text-gray-300');
+                        repoSelect.innerHTML = `<option value="" disabled selected class="bg-darkBg text-gray-500">${i18n.t('labelNoRepo')}</option>`;
+                    }
+                } else {
+                    // API Error (401, 404, etc.)
+                    let errorMsg = i18n.t('fetchStatusError', { status: response.status });
+                    if (response.status === 401) {
+                        errorMsg += i18n.t('fetchError401');
+                    } else if (response.status === 404) {
+                        errorMsg += i18n.t('fetchError404');
+                    } else {
+                        errorMsg += ` ${result.message || ''}`;
+                    }
+                    console.error("[GitHub Fetch] Error:", errorMsg, result);
+                    statusEl.textContent = `❌ ${errorMsg}`;
+                    statusEl.classList.remove('text-green-400', 'text-yellow-400');
+                    statusEl.classList.add('text-red-400');
+                    repoSelect.innerHTML = `<option value="" disabled selected class="bg-darkBg text-gray-500">${i18n.t('fetchErrorLoading')}</option>`;
+                }
+
+            } catch (error) {
+                console.error("[GitHub Fetch] Network Error:", error);
+                statusEl.textContent = i18n.t('fetchNetworkError', { message: error.message });
+                statusEl.classList.remove('text-green-400', 'text-yellow-400');
+                statusEl.classList.add('text-red-400');
+                repoSelect.innerHTML = `<option value="" disabled selected class="bg-darkBg text-gray-500">${i18n.t('fetchErrorLoading')}</option>`;
+            } finally {
+                button.disabled = false;
+                button.textContent = i18n.t('refetchRepos');
+            }
+        }
+
+
+        // -----------------------------------------------------
+        // 圖片處理專用變數：新的結構，用於儲存待上傳的圖片並追蹤其來源
+        // { 'textareaId': [{file, placeholder}, ...] }
+        // -----------------------------------------------------
+        const pendingImages = {};
+        const imageStatusElement = document.getElementById('image-upload-status');
+
+        /**
+         * 處理貼上和拖曳事件的核心邏輯，用於將圖片儲存為待上傳列表並插入佔位符。
+         * @param {string} textareaId - 目標文字區域的 ID
+         */
+        function setupImageUpload(textareaId) {
+            const textarea = document.getElementById(textareaId);
+
+            if (!textarea) return; // 確保元素存在
+
+            // 初始化陣列
+            pendingImages[textareaId] = [];
+
+            // ------------------ 貼上處理 (Paste) ------------------
+            textarea.addEventListener('paste', function (event) {
+                const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+                let imageFound = false;
+
+                for (let item of items) {
+                    if (item.type.indexOf('image') !== -1) {
+                        event.preventDefault();
+                        const file = item.getAsFile();
+                        if (file) {
+                            const timestamp = Date.now();
+                            const mimeType = file.type || 'image/png';
+                            const extension = mimeType.split('/')[1] || 'png';
+                            const placeholderName = `${textareaId}_pasted_${timestamp}.${extension}`;
+
+                            // 儲存檔案和佔位符，並標記來源 ID
+                            pendingImages[textareaId].push({ file: file, placeholder: placeholderName });
+
+                            // 在文字區塊中插入 Markdown 佔位符
+                            const placeholderText = `\n![Uploading: ${placeholderName}]\n`;
+                            const start = this.selectionStart;
+                            const end = this.selectionEnd;
+                            this.value = this.value.substring(0, start) + placeholderText + this.value.substring(end);
+                            this.setSelectionRange(start + placeholderText.length, start + placeholderText.length);
+
+                            imageFound = true;
+                        }
+                    }
+                }
+
+                if (imageFound) {
+                    updateImageStatus();
+                }
+            });
+
+            // ------------------ 拖曳處理 (Drag & Drop) ------------------
+            textarea.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                this.classList.add('border-blue-500', 'ring-2', 'ring-blue-500'); // 視覺回饋
+            });
+
+            textarea.addEventListener('dragleave', function (event) {
+                this.classList.remove('border-blue-500', 'ring-2', 'ring-blue-500');
+            });
+
+            textarea.addEventListener('drop', function (event) {
+                event.preventDefault();
+                this.classList.remove('border-blue-500', 'ring-2', 'ring-blue-500');
+
+                let imageFound = false;
+                const files = event.dataTransfer.files;
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.type.startsWith('image/')) {
+                        const timestamp = Date.now() + i;
+                        const extension = file.type.split('/')[1] || 'png';
+                        const placeholderName = `${textareaId}_dragged_${timestamp}.${extension}`;
+
+                        pendingImages[textareaId].push({ file: file, placeholder: placeholderName });
+
+                        const placeholderText = `\n![Uploading: ${placeholderName}]\n`;
+                        this.value += placeholderText;
+                        imageFound = true;
+                    }
+                }
+
+                if (imageFound) {
+                    updateImageStatus();
+                }
+            });
+        }
+
+        /**
+         * 統計所有欄位中待上傳的圖片總數，並更新狀態提示
+         */
+        function updateImageStatus() {
+            let totalImages = 0;
+            for (const id in pendingImages) {
+                totalImages += pendingImages[id].length;
+            }
+
+            if (totalImages > 0) {
+                imageStatusElement.textContent = i18n.t('imageUploadStatusTemplate', { count: totalImages });
+                imageStatusElement.classList.remove('hidden');
+            } else {
+                imageStatusElement.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 將 Base64 數據上傳到 GitHub Repo
+         * @returns {string} The raw content URL for the uploaded file.
+         */
+        async function uploadImageToGithub(user, repo, token, path, base64Content, message) {
+            const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/${path}`;
+            const maxRetries = 5; // Allow retries for 409 conflicts
+            let sha = null;
+
+            // 1. 初次嘗試 GET 現有檔案的 SHA
+            try {
+                const getResponse = await fetch(apiUrl, {
+                    headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.com/v3+json' }
+                });
+
+                if (getResponse.ok) {
+                    const existingFile = await getResponse.json();
+                    sha = existingFile.sha;
+                }
+            } catch (e) {
+                console.warn(`[GitHub Upload] Initial attempt to GET SHA failed for ${path}:`, e);
+            }
+
+            // 2. PUT 請求與 409 衝突重試循環
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                console.log(`[GitHub Upload] PUT attempt ${attempt + 1} for ${path}. Current SHA: ${sha || 'new file'}`);
+
+                // 準備 PUT 請求體
+                const putBody = {
+                    message: sha ? `Update existing image for Task 1 Issue: ${path}` : message,
+                    content: base64Content,
+                    committer: {
+                        name: user,
+                        email: `${user}@users.noreply.github.com`
+                    }
+                };
+
+                if (sha) {
+                    putBody.sha = sha; // 包含 SHA 以更新現有檔案
+                }
+
+                const response = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.com/v3+json'
+                    },
+                    body: JSON.stringify(putBody)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // 成功
+                    console.log(`[GitHub Upload] Successfully uploaded ${path} on attempt ${attempt + 1}.`);
+                    return result.content.download_url;
+                }
+
+                if (response.status === 409) {
+                    // 409 Conflict (SHA mismatch) - 需要重試
+                    console.warn(`[GitHub Upload] Conflict (409) detected for ${path}. Retrying to get latest SHA...`);
+
+                    let reGetError = null;
+
+                    // 重新 GET 檔案以取得最新的 SHA
+                    try {
+                        const getResponse = await fetch(apiUrl, {
+                            headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.com/v3+json' }
+                        });
+
+                        if (getResponse.ok) { // 200 OK
+                            const existingFile = await getResponse.json();
+                            sha = existingFile.sha; // 更新 SHA
+                            console.log(`[GitHub Upload] Successfully fetched new SHA: ${sha}. Retrying PUT...`);
+                        } else if (getResponse.status === 404) {
+                            // FIX: 如果重新 GET 得到 404 (Not Found)，表示檔案不存在，應清除 SHA，作為新檔案重試 PUT
+                            sha = null;
+                            console.warn(`[GitHub Upload] File ${path} not found (404) during SHA re-GET. Retrying PUT as a new file (clearing SHA).`);
+                        } else {
+                            // Non-recoverable error during GET (403, 500, etc.)
+                            const errResult = await getResponse.json();
+                            reGetError = new Error(`GitHub 重新獲取 SHA 失敗 (${path}, Status: ${getResponse.status}): ${errResult.message || 'Unknown error during re-GET'}`);
+                        }
+                    } catch (e) {
+                        // Catches network error
+                        reGetError = new Error(`Fatal network error during re-GET for SHA: ${e.message}`);
+                    }
+
+                    // 如果在重新 GET 期間發生錯誤，且不是可忽略的 404，或者達到重試上限但 SHA 仍為舊值，拋出致命錯誤
+                    if (reGetError) {
+                        console.error(`[GitHub Upload] ${reGetError.message}`);
+                        throw new Error(`GitHub 圖片上傳失敗 (${path}, Status: 409): 無法獲取最新的 SHA 進行重試。
+Stack: ${reGetError.message}`);
+                    }
+
+                    // 延遲重試以避免立即衝突
+                    await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+                    continue; // 進入下一次循環 (重試 PUT)
+                }
+
+                // 非 409 錯誤，拋出
+                throw new Error(`GitHub 圖片上傳失敗 (${path}, Status: ${response.status}): ${result.message || 'Unknown error'}`);
+            }
+
+            // 達到最大重試次數
+            throw new Error(`GitHub 圖片上傳失敗 (${path}): 已達最大重試次數 (${maxRetries})。`);
+        }
+
+        /**
+         * 執行所有圖片上傳並返回佔位符到最終 Markdown 連結的映射。
+         */
+        async function uploadAllImages(user, repo, token, submitButton) {
+            const uploadedMap = {}; // Maps: placeholder -> final URL
+            const allImagesToUpload = [];
+
+            // 將所有欄位的圖片扁平化為一個列表
+            for (const fieldId in pendingImages) {
+                pendingImages[fieldId].forEach(img => {
+                    allImagesToUpload.push({ ...img, fieldId });
+                });
+            }
+
+            if (allImagesToUpload.length === 0) {
+                console.log("[GitHub Upload] No images to upload.");
+                return uploadedMap;
+            }
+
+            console.log(`[GitHub Upload] Starting upload of ${allImagesToUpload.length} images...`);
+
+            const uploadPromises = allImagesToUpload.map(async (img, index) => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = async () => {
+                        try {
+                            const base64Content = reader.result.split(',')[1];
+                            const path = `issue_images/${img.placeholder}`;
+                            const message = `Upload image for Task 1 Issue - Field: ${img.fieldId}`;
+
+                            // 更新按鈕文字，讓用戶知道進度
+                            submitButton.textContent = `🖼️ 正在上傳圖片 (${index + 1}/${allImagesToUpload.length})...`;
+
+                            const rawUrl = await uploadImageToGithub(user, repo, token, path, base64Content, message);
+                            uploadedMap[img.placeholder] = rawUrl;
+                            resolve();
+                        } catch (error) {
+                            console.error(`[GitHub Upload] Image Upload Error for ${img.placeholder}:`, error);
+                            // 即使上傳失敗，也將佔位符映射到錯誤訊息，以便在內容中顯示
+                            uploadedMap[img.placeholder] = `[圖片上傳失敗: ${error.message}]`;
+                            resolve();
+                        }
+                    };
+                    reader.readAsDataURL(img.file);
+                });
+            });
+
+            // 使用 Promise.allSettled 等待所有上傳完成，即使有失敗
+            await Promise.allSettled(uploadPromises);
+
+            // 清空所有待上傳圖片
+            for (const id in pendingImages) {
+                pendingImages[id].length = 0;
+            }
+            updateImageStatus();
+
+            console.log("[GitHub Upload] All image uploads completed.");
+            return uploadedMap;
+        }
+
+        // -----------------------------------------------------
+        // Gemini 格式化功能 (DEBUG 強化版)
+        // -----------------------------------------------------
+
+        /**
+         * 使用 Gemini API 將純文字轉換為格式化的 Markdown 表格或整潔段落。
+         * @param {string} text - 待格式化的原始文字 (已替換圖片佔位符)
+         * @param {string} context - 給 AI 的上下文提示
+         * @param {boolean} preferTable - 是否傾向於轉換為 Key:Value 表格
+         */
+        async function formatTextWithGemini(text, context, preferTable = true) {
+            const trimmedText = text.trim();
+            if (!trimmedText) {
+                return '無';
+            }
+
+            console.log(`\n--- [Gemini Format] Starting API Call ---`);
+            console.log(`[Gemini Format] Context: '${context}'`);
+            console.log(`[Gemini Format] Input text (first 100 chars):\n${trimmedText.substring(0, 100)}...`);
+
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+            const tableInstruction = preferTable
+                ? `請優先嘗試使用兩欄 Markdown 表格 (例如：項目 | 內容) 來呈現 Key:Value 結構或分行項目。如果內容是自由格式的評語或含有圖片連結，則將其轉換為整潔的 Markdown 列表或段落，並確保換行被保留為段落。`
+                : `請將內容轉換為整潔的 Markdown 格式，例如列表、標題或段落，保留所有換行以確保可讀性。不要使用表格。`;
+
+            const userQuery = `請將以下關於 IELTS Task 1 評估的純文字內容轉換為 GitHub Issue 兼容的 Markdown 格式。
+                ${tableInstruction}
+                
+                上下文/預期用途: ${context}
+                
+                原始輸入:
+                ---
+                ${trimmedText}
+                ---
+                `;
+
+            const responseSchema = {
+                type: "OBJECT",
+                properties: {
+                    "markdown_output": {
+                        "type": "STRING",
+                        "description": "The input text converted into a GitHub compatible Markdown table or clean text string, or the original text if a table is not suitable. Only include the table or text itself, no Markdown code fences."
+                    }
+                },
+                required: ["markdown_output"]
+            };
+
+            const systemPrompt = "你是一位專業的 Markdown 格式化助手。你的任務是將非結構化文本轉換為整潔的 Markdown 表格或純文字格式，以方便 GitHub 顯示。你必須以指定的 JSON 格式返回結果，**不要包含任何多餘的解釋或 Markdown 區塊標記**，例如 ```json 或 ```。";
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema,
+                }
+            };
+
+            const maxRetries = 3;
+            let delay = 1000;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        const candidate = result.candidates?.[0];
+
+                        if (candidate && candidate.content?.parts?.[0]?.text) {
+                            let jsonText = candidate.content.parts[0].text;
+
+                            // --- 關鍵修正：清理 Markdown 程式碼區塊標記 ---
+                            jsonText = jsonText.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+
+                            console.log("[Gemini Format] Raw JSON Text received:", jsonText.substring(0, 500) + '...');
+
+                            try {
+                                const parsedJson = JSON.parse(jsonText);
+
+                                if (parsedJson && typeof parsedJson.markdown_output === 'string') {
+                                    const finalOutput = parsedJson.markdown_output.trim();
+                                    console.log("[Gemini Format] Success. Formatted output (first 100 chars):\n", finalOutput.substring(0, 100) + '...');
+                                    return finalOutput;
+                                } else {
+                                    console.warn("[Gemini Format] Output JSON structure missing 'markdown_output'. Falling back to original text.");
+                                    return trimmedText;
+                                }
+                            } catch (jsonError) {
+                                console.error("[Gemini Format] 輸出 JSON 解析失敗:", jsonError, "原始文字:", jsonText.substring(0, 500) + '...');
+                                console.log("[Gemini Format] Falling back to original text due to JSON error.");
+                                return trimmedText;
+                            }
+                        } else {
+                            console.warn("[Gemini Format] Candidate or content part missing in response.");
+                        }
+                    } else if ((response.status === 429 || response.status === 503) && i < maxRetries - 1) {
+                        console.warn(`[Gemini Format] API Rate Limit hit (${response.status}). Retrying in ${delay / 1000}s...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                        continue;
+                    }
+
+                    console.error(`[Gemini Format] API call failed with status: ${response.status}. Falling back to original text.`);
+                    return trimmedText;
+
+                } catch (error) {
+                    console.error("[Gemini Format] Fetch or general API error:", error);
+                    if (i < maxRetries - 1) {
+                        console.warn(`[Gemini Format] General error. Retrying in ${delay / 1000}s...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                        continue;
+                    }
+                    console.log("[Gemini Format] Final fallback to original text.");
+                    return trimmedText;
+                }
+            }
+            return trimmedText;
+        }
+
+        // =================================================================
+        // 🌟 (函數已更新) 
+        // 僅生成 AI Breakdown 文字，並顯示手動貼圖欄位
+        // =================================================================
+        async function generateAIBreakdown() { // 函數已重命名
+            const button = document.getElementById('generate-chart-button');
+            const status = document.getElementById('chart-generator-status');
+            const displayArea = document.getElementById('chart-display-area');
+            // 🌟 移除：不再需要 hiddenBreakdownTextarea
+            // const hiddenBreakdownTextarea = document.getElementById('ai_breakdown_text'); 
+            const manualPasteContainer = document.getElementById('manual-chart-paste-container'); // 新的貼圖容器
+
+            // 1. 獲取描述
+            const articleContent = document.getElementById('article_content').value.trim();
+
+            if (!articleContent) {
+                status.textContent = '🚨 錯誤：請先在「文章內容與圖表截圖」欄位中填寫文字描述。';
+                return;
+            }
+
+            // 2. 設置加載狀態
+            button.disabled = true;
+            button.textContent = '🧠 正在理解文字...';
+            status.textContent = '請稍候，AI 正在分析您的文字描述...';
+            displayArea.innerHTML = ''; // 清空舊內容
+            manualPasteContainer.classList.add('hidden'); // 隱藏貼圖區
+            // 🌟 移除：不再需要 hiddenBreakdownTextarea
+            // hiddenBreakdownTextarea.value = ''; 
+
+            let breakdownText = "";
+            const maxRetries = 3;
+            let delay = 1000;
+
+            try {
+                // ==========================================================
+                // 步驟 1: 呼叫 *文字模型* (modelName) 獲取完整的 Breakdown
+                // ==========================================================
+
+                const textPrompt = `你是一個專業的IELTS Task 1 圖表分析師。請詳細閱讀以下的 Task 1 寫作文字，並"break down"你對內容的理解。你的 breakdown 應該包含：
+1.  圖表的主要類型 (例如：line graph, bar chart)。
+2.  圖表描述的關鍵主體和單位 (例如：energy consumption in tonnes, population in millions)。
+3.  描述的關鍵時間範圍 (例如：from 1990 to 2010)。
+4.  描述的關鍵數據點和趨勢 (例如：A started at 50 and rose to 100, while B declined)。
+
+請以清晰、有條理的格式輸出這個 breakdown。
+
+原始文字：
+---
+${articleContent}
+---
+`;
+
+                const textApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+                const textPayload = {
+                    contents: [{ parts: [{ text: textPrompt }] }]
+                };
+
+                let textResponse;
+                let textResult;
+
+                for (let i = 0; i < maxRetries; i++) {
+                    textResponse = await fetch(textApiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(textPayload)
+                    });
+
+                    if (textResponse.ok) {
+                        textResult = await textResponse.json();
+                        break;
+                    }
+
+                    if ((textResponse.status === 429 || textResponse.status === 503) && i < maxRetries - 1) {
+                        console.warn(`[Chart Gen - Text] API Rate Limit hit (${textResponse.status}). Retrying in ${delay / 1000}s...`);
+                        status.textContent = `API 忙碌中 (${textResponse.status})，${delay / 1000} 秒後重試...`;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                    } else {
+                        const errorResult = await textResponse.json();
+                        console.error("[Chart Gen - Text] API Error Response:", errorResult);
+                        throw new Error(`[文字理解] API 請求失敗，狀態碼: ${textResponse.status}. ${errorResult?.error?.message || ''}`);
+                    }
+                }
+
+                // 提取文字 breakdown
+                breakdownText = textResult?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!breakdownText) {
+                    throw new Error('AI 未能返回文字理解 (Breakdown)。');
+                }
+
+                // 3. 顯示 Breakdown
+                console.log("[Chart Gen] Found full text part:", breakdownText);
+                const breakdownElement = document.createElement('div');
+                breakdownElement.className = 'p-4 bg-darkBg border border-borderDark rounded-lg mt-4';
+                breakdownElement.innerHTML = `<strong class="text-lg text-purple-300">AI 的理解 (Breakdown):</strong><br><pre class="whitespace-pre-wrap text-gray-300 font-sans mt-2">${breakdownText}</pre>`;
+                displayArea.appendChild(breakdownElement);
+
+                // 4. 儲存 Breakdown 到隱藏欄位
+                // 🌟 移除：不再儲存 Breakdown 文字到隱藏欄位
+                // hiddenBreakdownTextarea.value = breakdownText;
+
+                // 5. 顯示手動貼圖容器
+                manualPasteContainer.classList.remove('hidden');
+
+                status.textContent = '✅ AI 理解已生成！請在下方欄位貼上您的圖表。';
+
+                // 6. 移除所有圖片生成相關的程式碼
+
+            } catch (error) {
+                console.error('[Chart Gen] Error:', error);
+                status.textContent = `❌ 生成失敗：${error.message}`;
+            } finally {
+                // 7. 恢復按鈕
+                button.disabled = false;
+                button.textContent = '重新生成 AI 理解';
+            }
+        }
+
+
+        // -----------------------------------------------------
+        // 表單提交邏輯
+        // -----------------------------------------------------
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 🌟 修改：綁定 ZIP 匯出/匯入按鈕
+            document.getElementById('export-markdown-button').addEventListener('click', exportZip);
+            document.getElementById('import-markdown-input').addEventListener('change', importZip);
+
+            // 🌟 NEW: Bind the repo fetch button
+            document.getElementById('fetch-repos-button').addEventListener('click', fetchUserRepos);
+
+
+            // 在 DOMContentLoaded 時為所有需要的 Textarea 啟用圖片上傳功能
+            setupImageUpload('article_content');
+            setupImageUpload('sentence_analysis');
+            setupImageUpload('self_assessment_notes');
+            setupImageUpload('ai_assessment');
+            setupImageUpload('reflection_action');
+            setupImageUpload('additional_notes');
+
+            // 🌟 新增：為 self_assessment_screenshot 啟用
+            setupImageUpload('self_assessment_screenshot');
+            // LR/GRA 解析欄位
+            setupImageUpload('self_assessment_lr_analysis');
+            setupImageUpload('self_assessment_gra_analysis');
+
+            // 新增的自評問題辨識欄位 (支援貼圖)
+            setupImageUpload('self_identified_issues'); // <-- 新增
+
+            // 🌟 (新 JS 插入點) 為新欄位啟用貼圖
+            setupImageUpload('custom_field_1');
+
+            // 🌟 (新 JS 插入點) 為*新的手動貼圖欄位*啟用貼圖
+            setupImageUpload('manual_chart_paste');
+
+            // 🌟 (新 JS 插入點) 綁定 AI *Breakdown* 生成按鈕
+            document.getElementById('generate-chart-button').addEventListener('click', generateAIBreakdown); // 函數名稱已更新
+
+            // 預設寫作日期為今天
+            // ==================================
+            //   ⬇️ 語法錯誤修正 ⬇️
+            // ==================================
+            document.getElementById('writing_date').value = new Date().toISOString().split('T')[0];
+            // ==================================
+            //   ⬆️ 語法錯誤修正 ⬆️
+            // ==================================
+        });
+
+
+        document.getElementById('issue-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            console.log("Starting Issue Submission Process...");
+
+            // 獲取 GitHub 資訊
+            const user = document.getElementById('github_user').value.trim();
+            const repo = document.getElementById('github_repo').value.trim(); // 🌟 現在會從 select 獲取
+            const token = document.getElementById('github_token').value.trim();
+            const repoError = document.getElementById('repo-error');
+            const statusMessage = document.getElementById('status-message');
+            const submitButton = document.getElementById('submit-button');
+
+            statusMessage.classList.add('hidden');
+            statusMessage.textContent = '';
+
+            // 檢查 GitHub 資訊 (🌟 repo 現在是 select，所以也要檢查)
+            if (!user || !repo || !token) {
+                repoError.textContent = '🚨 請務必填寫 GitHub 欄位、PAT，並抓取及選擇一個儲存庫。';
+                repoError.classList.remove('hidden');
+                statusMessage.textContent = '🚨 錯誤：請填寫 GitHub 使用者名稱、儲存庫名稱和 PAT。';
+                statusMessage.classList.remove('hidden', 'bg-successGreen', 'bg-errorRed');
+                statusMessage.classList.add('bg-accentYellow', 'text-black');
+                return;
+            }
+            repoError.classList.add('hidden');
+
+            // 禁用按鈕並顯示載入狀態
+            submitButton.disabled = true;
+
+            // 1. 獲取表單數據
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+
+            // ==================================
+            //   ⬇️ 新增：標題邏輯修改 ⬇️
+            // ==================================
+            const taskName = data.task_name || '未命名練習';
+            const writingDate = data.writing_date || new Date().toISOString().split('T')[0];
+            const rootCauseTitle = data.root_cause_title ? data.root_cause_title.trim() : '';
+
+            // 如果根本原因欄位為空，則使用舊的標題格式作為後備
+            const title = rootCauseTitle ? rootCauseTitle : `Task 1 寫作評估 - ${taskName} (未填寫根本原因)`;
+            // ==================================
+            //   ⬆️ 新增：標題邏G輯修改 ⬆️
+            // ==================================
+
+            const labels = ['ielts-writing', 'task-1', data.question_type || 'unclassified'];
+
+
+            // 2. 處理圖片上傳
+            let uploadedImageMap = {};
+            // 檢查是否有圖片需要上傳
+            let totalImagesToUpload = 0;
+            for (const id in pendingImages) {
+                totalImagesToUpload += pendingImages[id].length;
+            }
+
+            if (totalImagesToUpload > 0) {
+                try {
+                    // 🌟 傳入 repo (從 select 獲取的值)
+                    uploadedImageMap = await uploadAllImages(user, repo, token, submitButton);
+
+                    submitButton.textContent = '🤖 正在使用 AI 格式化內容... (1/12)'; // 🌟 11 -> 12
+                } catch (e) {
+                    statusMessage.textContent = `❌ 圖片上傳過程中發生嚴重錯誤: ${e.message}`;
+                    statusMessage.classList.remove('hidden', 'bg-successGreen', 'bg-accentYellow', 'text-black');
+                    statusMessage.classList.add('bg-errorRed', 'text-white');
+                    submitButton.disabled = false;
+                    submitButton.textContent = '✨ 自動建立 GitHub Issue';
+                    return;
+                }
+            } else {
+                submitButton.textContent = '🤖 正在使用 AI 格式化內容... (1/12)'; // 🌟 11 -> 12
+            }
+
+
+            // 3. 替換所有欄位中的圖片佔位符
+            function replacePlaceholders(content, uploadedMap) {
+                let newContent = content;
+                for (const placeholder in uploadedMap) {
+                    const finalUrl = uploadedMap[placeholder];
+                    // 替換所有的 ![Uploading: <placeholder>]
+                    newContent = newContent.replace(new RegExp(`!\\[Uploading: ${placeholder}\\]`, 'g'), `![${placeholder}](${finalUrl})`);
+                }
+                return newContent;
+            }
+
+            const processedFields = {};
+            // 🌟 <-- 更新要處理的欄位清單: 移除 'ai_breakdown_text'，新增 'self_assessment_screenshot'
+            // 注意：root_cause_title 不需要格式化或圖片替換，所以不在此列表中
+            for (const key of ['article_content', 'sentence_analysis', 'self_assessment_notes', 'ai_assessment', 'reflection_action', 'additional_notes', 'self_assessment_screenshot', 'self_assessment_lr_analysis', 'self_assessment_gra_analysis', 'self_identified_issues', 'custom_field_1', 'manual_chart_paste']) {
+                // 將圖片連結替換到文字中
+                processedFields[key] = replacePlaceholders(data[key] || '', uploadedImageMap);
+            }
+
+            // 獲取新的 Google Translate 欄位內容 (不需要替換佔位符，因為它們不支援貼圖)
+            const googleTranslateSource = data.google_translate_source || '';
+            const googleTranslateOutput = data.google_translate_output || '';
+
+            // 4. 準備分數 (通用備註將單獨處理)
+            const selfAssessmentInput = `
+Task Achievement (TA): ${data.self_assessment_ta || 'N/A'}
+Coherence & Cohesion (CC): ${data.self_assessment_cc || 'N/A'}
+Lexical Resource (LR): ${data.self_assessment_lr || 'N/A'}
+Grammatical Range & Accuracy (GRA): ${data.self_assessment_gra || 'N/A'}
+`.trim();
+
+
+            // 5. 使用 Gemini 轉換評估文本 (現在有 12 個步驟)
+
+            // A. 轉換自我評估 (僅分數) (1/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (1/12)';
+            const selfAssessmentFormatted = await formatTextWithGemini(
+                selfAssessmentInput,
+                "IELTS Task 1 自我評估，包含 TA, CC, LR, GRA 分數。請轉為兩欄 Markdown 表格。",
+                true // Prefer Table
+            );
+
+            // B. 🌟 新增：轉換自評總覽截圖 (2/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (2/12)';
+            const screenshotFormatted = await formatTextWithGemini(
+                processedFields.self_assessment_screenshot,
+                "IELTS Task 1 自我評估的總覽截圖，應為 Markdown 圖片連結。請保持原樣。",
+                false // Do NOT prefer table
+            );
+
+            // C. 轉換 LR Analysis (3/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (3/12)';
+            const lrAnalysisFormatted = await formatTextWithGemini(
+                processedFields.self_assessment_lr_analysis,
+                "IELTS Task 1 詞彙資源 (LR) 的自我評估細節和分析，可能含有圖片連結。請將內容轉換為整潔的 Markdown 列表或段落，以便閱讀。",
+                true // Prefer Table
+            );
+
+            // D. 轉換 GRA Analysis (4/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (4/12)';
+            const graAnalysisFormatted = await formatTextWithGemini(
+                processedFields.self_assessment_gra_analysis,
+                "IELTS Task 1 文法範圍與準確性 (GRA) 的自我評估細節和分析，可能含有圖片連結。請將內容轉換為整潔的 Markdown 列表或段落，以便閱讀。",
+                true // Prefer Table
+            );
+
+            // E. 轉換 Self Identified Issues (新增) (5/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (5/12)';
+            const selfIdentifiedIssuesFormatted = await formatTextWithGemini(
+                processedFields.self_identified_issues,
+                "Task 1 寫作的自評辨識出的 TA/CC 準確性問題與盲點。請將內容轉換為整潔的 Markdown 列表或段落，保留所有換行和項目符號。",
+                false // Do NOT prefer table for free-form analysis of issues
+            );
+
+            // F. 轉換 TA/CC 圖表反向驗證 (6/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (6/12)';
+            const customField1Formatted = await formatTextWithGemini(
+                processedFields.custom_field_1,
+                "Task 1 寫作的 TA/CC 用字準確性 (圖表反向驗證)。請將內容轉換為整潔的 Markdown 列表或段落，保留所有換行和項目符號。",
+                false // 不優先使用表格
+            );
+
+            // G. 轉換手動貼上的圖表 (7/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (7/12)';
+            const manualChartFormatted = await formatTextWithGemini(
+                processedFields.manual_chart_paste,
+                "使用者手動貼上的圖表 (Markdown 圖片連結)。保持原樣。",
+                false // 不使用表格
+            );
+
+            // H. 轉換 AI 評分 (8/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (8/12)';
+            const aiAssessmentFormatted = await formatTextWithGemini(
+                processedFields.ai_assessment,
+                "IELTS Task 1 AI 評分，包含 TR, CC, LR, GRA 分數與 AI 評語建議，可能含有圖片連結。請優先轉為兩欄 Markdown 表格。",
+                true // Prefer Table
+            );
+
+            // I. 轉換 逐句解析內容 (9/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (9/12)';
+            const sentenceAnalysisFormatted = await formatTextWithGemini(
+                processedFields.sentence_analysis,
+                "Task 1 寫作的逐句解析內容，包含句子、文法修正、詞彙建議或截圖。請嘗試轉換為兩欄 Markdown 表格 (例如：原始句子 | 修正建議)，若內容不適合表格，則轉換為整潔的列表或段落。",
+                true // Prefer Table
+            );
+
+            // J. 轉換 反思與行動 (10/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (10/12)';
+            const reflectionActionFormatted = await formatTextWithGemini(
+                processedFields.reflection_action,
+                "寫作後的反思與具體修正行動，包含項目符號、任務連結或修正截圖。請嘗試轉換為兩欄 Markdown 表格 (項目 | 內容)，若內容不適合表格，則轉換為整潔的列表或段落。",
+                true // Prefer Table
+            );
+
+            // K. 轉換 其他備註 (11/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (11/12)';
+            const additionalNotesFormatted = await formatTextWithGemini(
+                processedFields.additional_notes,
+                "額外備註或寫作心得，可能包含圖片連結。請嘗試轉換為兩欄 Markdown 表格 (項目 | 內容)，若內容不適合表格，則轉換為整潔的段落。",
+                true // Prefer Table
+            );
+
+            // L. 處理 checkbox (12/12)
+            submitButton.textContent = '🤖 正在使用 AI 格式化內容... (12/12)';
+            const checkedDifferences = Array.from(document.querySelectorAll('input[name="difference_analysis"]:checked'))
+                .map(cb => `- [x] ${cb.value}`)
+                .join('\n');
+
+
+            // 6. 建立 body 內容 (將新的解析欄位加入)
+            const body = `
+### ⚠️ 文章內容
+
+點擊下方可收合區塊查看原始寫作截圖與文字。
+
+---
+<details>
+<summary>點擊此處展開原始文章內容截圖與文字</summary>
+<br>
+
+${processedFields.article_content.trim() || '（原始文章內容欄位為空）'}
+
+</details>
+---
+
+### 📚 逐句解析內容
+${sentenceAnalysisFormatted}
+
+---
+
+### 1️⃣ 題目名稱/編號
+${data.task_name || '未填寫'}
+
+### 文章檔案
+**檔案名稱：** ${data.task_file || '未填寫'}
+*(⚠️ **重要提醒：** 檔案 ${data.task_file || '未填寫'} 未能自動上傳。請在 Issue 建立後，手動拖曳檔案到此處來完成上傳。)*
+
+### 📅 寫作日期
+${data.writing_date || '未填寫'}
+
+### 📊 題型
+${data.question_type || '未選擇'}
+
+### 2️⃣ 自我評估分數 (Self Assessment)
+
+#### 📝 評分項目
+${selfAssessmentFormatted}
+
+#### 📸 自評總覽截圖
+${screenshotFormatted}
+
+#### 📝 詞彙資源 (LR) 自評解析
+${lrAnalysisFormatted}
+
+#### 📝 文法範圍與準確性 (GRA) 自評解析
+${graAnalysisFormatted}
+
+---
+
+### 💡 Google 語義檢查 (TA/CC/LR 準確性評估)
+
+#### 🇨🇳 中文源文（您的原始意圖）
+> ${googleTranslateSource.trim().replace(/\n/g, '\n> ') || '（未提供）'}
+
+#### 🇬🇧 翻譯結果（反向驗證）
+> ${googleTranslateOutput.trim().replace(/\n/g, '\n> ') || '（未提供）'}
+
+#### 🚨 自評辨識出的問題 (修正盲點)
+${selfIdentifiedIssuesFormatted}
+
+---
+<!-- 🌟 (新 JS 插入點) -->
+### 🤖 AI 依據**原始意圖**生成圖表 (TA/CC 準確性評估)
+${manualChartFormatted.trim() || '（未貼上圖表）'}
+---
+
+
+#### 🚨 自評辨識出的問題 (修正盲點)
+${customField1Formatted.trim() || '（未填寫）'}
+
+---
+
+### 📝 其他觀察/備註 (通用)
+${processedFields.self_assessment_notes.trim() || '（未填寫通用備註）'}
+
+---
+
+### 3️⃣ AI 評分 (AI Scoring)
+${aiAssessmentFormatted}
+
+### 4️⃣ 差異判斷 (Difference Analysis)
+${checkedDifferences || '未選擇'}
+
+### 5️⃣ 反思與行動 (Reflection & Action)
+${reflectionActionFormatted}
+
+<!-- ================================== -->
+<!--      ⬇️ 新增：根本原因 (Body) ⬇️     -->
+<!-- ================================== -->
+### 🎯 根本原因 (Issue Title)
+> ${title}
+<!-- ================================== -->
+<!--      ⬆️ 新增：根本原因 (Body) ⬆️     -->
+<!-- ================================== -->
+
+### 6️⃣ 實際根本原因
+${additionalNotesFormatted}
+`;
+
+            // 7. 發送 API 請求自動建立 Issue
+            submitButton.textContent = '🚀 正在建立 GitHub Issue...';
+            // 🌟 使用 data.github_repo (從 select 獲取的值)
+            const apiUrl = `https://api.github.com/repos/${user}/${repo}/issues`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/vnd.github.com/v3+json'
+                    },
+                    body: JSON.stringify({
+                        title: title, // 🌟 已更新為使用新的 title 變數
+                        body: body,
+                        labels: labels
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusMessage.textContent = i18n.t('issueSuccess', { number: result.number });
+                    statusMessage.classList.remove('hidden', 'bg-errorRed', 'bg-accentYellow', 'text-black');
+                    statusMessage.classList.add('bg-successGreen', 'text-white');
+
+                    // 🎮 RPG: Award XP for successful issue creation
+                    if (typeof DevScribeRPG !== 'undefined') {
+                        const rpgResult = DevScribeRPG.recordModuleAction('mission_board', 'issue_created');
+                        if (rpgResult) {
+                            DevScribeRPG.showXPNotification(rpgResult);
+                            // Refresh RPG card
+                            if (document.getElementById('rpg-status-card')) {
+                                document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                            }
+                        }
+                    }
+
+                    // 成功後，開啟 new Issue 頁面
+                    setTimeout(() => {
+                        window.open(result.html_url, '_blank');
+                    }, 1000);
+
+                } else {
+                    let errorMessage = '建立 Issue 失敗。';
+                    if (result.message) {
+                        errorMessage += ` GitHub 錯誤訊息：${result.message}`;
+                    }
+                    if (response.status === 401 || response.status === 403) {
+                        errorMessage += " (請檢查 PAT 是否有效或權限是否足夠 - 需要 'repo' 權限)";
+                    } else if (response.status === 404) {
+                        errorMessage += " (請檢查使用者名稱或儲存庫名稱是否正確)";
+                    }
+                    statusMessage.textContent = `❌ ${errorMessage}`;
+                    statusMessage.classList.remove('hidden', 'bg-successGreen', 'bg-accentYellow', 'text-black');
+                    statusMessage.classList.add('bg-errorRed', 'text-white');
+                }
+
+            } catch (error) {
+                statusMessage.textContent = `❌ 網路或未知錯誤：${error.message}`;
+                statusMessage.classList.remove('hidden', 'bg-successGreen', 'bg-accentYellow', 'text-black');
+                statusMessage.classList.add('bg-errorRed', 'text-white');
+            } finally {
+                // 恢復按鈕狀態
+                submitButton.disabled = false;
+                submitButton.textContent = '✨ 自動建立 GitHub Issue';
+            }
+        });
+
+        // 頁面載入時初始化 i18n
+        document.addEventListener('DOMContentLoaded', () => {
+            i18n.loadSavedLanguage();
+            i18n.applyTranslations();
+
+            // Initialize RPG card
+            if (typeof DevScribeRPG !== 'undefined' && document.getElementById('rpg-status-card')) {
+                document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+            }
+        });
+    </script>
+
+</body>
+
+</html>

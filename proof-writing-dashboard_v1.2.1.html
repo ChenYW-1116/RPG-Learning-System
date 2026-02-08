@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">寫作校準儀式 SOP - Writing Correction Ritual (Local History)</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* Custom styles for the ritualistic feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #0d121c 100%);
+            /* Darker gradient background */
+        }
+
+        .header-glow {
+            text-shadow: 0 0 8px rgba(99, 102, 241, 0.6), 0 0 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .ritual-card {
+            background-color: #1f2937;
+            /* Darker card background */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            /* Deeper shadow */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Smoother transition */
+            border-left: 5px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ritual-card:hover:not(.completed):not(.locked) {
+            transform: translateY(-5px);
+            /* More pronounced lift */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            border-left-color: #a78bfa !important;
+            /* Lighter indigo for hover */
+        }
+
+        .completed {
+            opacity: 0.8;
+            border-left-color: #34d399 !important;
+            /* Green 400 */
+            filter: grayscale(10%);
+        }
+
+        .locked {
+            opacity: 0.5;
+            filter: blur(1px) grayscale(50%);
+            cursor: not-allowed;
+            pointer-events: none;
+            /* Disable click events */
+        }
+
+        .phase-diagnosis {
+            border-left-color: #6366f1;
+            /* Indigo 500 */
+        }
+
+        .phase-verification {
+            border-left-color: #f59e0b;
+            /* Amber 500 */
+        }
+
+        .step-toggle {
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            position: relative;
+            z-index: 10;
+        }
+
+        .step-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* Gradient for buttons */
+        .btn-gradient {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            /* Indigo to Violet */
+            border: none;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn-gradient:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.5s;
+            z-index: -1;
+        }
+
+        .btn-gradient:hover:before {
+            left: 100%;
+        }
+
+        .btn-gradient:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* New Complete Button Gradient */
+        .btn-complete {
+            background: linear-gradient(90deg, #10b981, #059669);
+            /* Emerald Gradient */
+        }
+
+        .btn-complete:hover {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.7);
+        }
+
+        .btn-complete:disabled {
+            background: #4b5563;
+        }
+
+
+        /* Custom scrollbar for textareas */
+        textarea {
+            scrollbar-width: thin;
+            /* Firefox */
+            scrollbar-color: #6366f1 #1f2937;
+            /* thumb and track */
+        }
+
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 10px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #6366f1;
+            border-radius: 10px;
+            border: 2px solid #1f2937;
+        }
+
+        /* Table styles */
+        #history-list th,
+        #history-list td {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            /* Default small width */
+            max-width: 80px;
+            padding-left: 0.75rem;
+            /* px-3 */
+            padding-right: 0.75rem;
+            /* px-3 */
+        }
+
+        @media (min-width: 768px) {
+
+            /* Adjusted widths for desktop view with 5 columns */
+            #history-list th:nth-child(2),
+            #history-list td:nth-child(2) {
+                /* Original (A) */
+                max-width: 180px;
+            }
+
+            #history-list th:nth-child(3),
+            #history-list td:nth-child(3) {
+                /* Corrected (B) */
+                max-width: 180px;
+            }
+
+            #history-list th:nth-child(4),
+            #history-list td:nth-child(4) {
+                /* Principle (Step 7) */
+                max-width: 220px;
+            }
+
+            #history-list th:nth-child(5),
+            #history-list td:nth-child(5) {
+                /* Action */
+                max-width: 80px;
+                width: 80px;
+            }
+        }
+    </style>
+    <!-- Dev-Scribe RPG Engine -->
+    <script src="DevScribeRPG.js"></script>
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-10">
+
+    <!-- Language Toggle -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="langToggleBtn" type="button" onclick="window.toggleLanguage()"
+            class="bg-slate-700/80 hover:bg-slate-600 backdrop-blur-md text-gray-300 text-sm py-2 px-4 rounded-full border border-slate-600 shadow-2xl transition flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            <span id="langBtnText">EN</span>
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-3 tracking-tight header-glow font-orbitron"
+                data-i18n="ritualTitle">
+                🔮 升級儀式祭壇
+            </h1>
+            <p class="text-indigo-300 text-lg md:text-xl font-light" data-i18n="ritualSubtitle">寫作校準儀式 SOP — 完成後可解鎖冒險者公會
+                (本地儲存)</p>
+
+            <a href="rpg-hub.html" class="inline-block mt-4 text-indigo-400 hover:text-indigo-300 text-sm"
+                data-i18n="backLink">
+                ← 返回 Quest Empire
+            </a>
+
+            <!-- RPG Status Card -->
+            <div id="rpg-status-card" class="mt-6 max-w-md mx-auto"></div>
+            <div id="progress-bar" class="w-full bg-gray-700 rounded-full h-3 mt-6 relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-500 opacity-20"></div>
+                <div id="progress-fill"
+                    class="bg-gradient-to-r from-green-400 to-emerald-500 h-full rounded-full transition-all duration-700 ease-out shadow-lg shadow-green-500/30"
+                    style="width: 0%"></div>
+            </div>
+            <p id="progress-text" class="text-sm mt-2 text-gray-400">0 / 8 步驟已完成</p>
+        </header>
+
+
+        <div class="bg-gray-800 p-6 rounded-2xl mb-8 shadow-2xl border border-gray-700">
+            <label for="writing-text" class="block text-xl font-semibold mb-3 text-indigo-200"
+                data-i18n="labelOriginal">
+                A. 欲校準的原始句子或段落：
+            </label>
+            <textarea id="writing-text" rows="2"
+                class="w-full p-4 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-inner"
+                data-i18n-placeholder="placeholderOriginal" placeholder="請輸入您想要校準的句子。"></textarea>
+
+
+            <button id="diagnosis-btn" onclick="window.handleDiagnosis()"
+                class="w-full mt-4 flex items-center justify-center space-x-2 px-6 py-3 btn-gradient text-white font-bold rounded-xl transition duration-300 shadow-xl hover:shadow-indigo-500/70 active:scale-98"
+                disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span data-i18n="btnDiagnosisLocked">解鎖：智能診斷與修正建議 (AI Diagnosis & Suggestion)</span>
+            </button>
+
+            <div id="diagnosis-unlock-message"
+                class="mt-4 text-center text-amber-400 font-semibold bg-gray-900/50 p-3 rounded-lg border border-amber-600/50"
+                data-i18n="unlockMessage">
+                🔒 請先完成「第一階段：問題診斷 (步驟 1-4)」才能解鎖智能診斷和後續驗證步驟。
+            </div>
+
+
+            <div id="diagnosis-loading" class="hidden mt-4 text-center">
+                <div class="flex items-center justify-center text-indigo-400">
+                    <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <span data-i18n="loadingDiagnosis">正在進行智能診斷... 請稍候片刻。</span>
+                </div>
+            </div>
+            <div id="diagnosis-result" class="mt-4">
+
+            </div>
+
+            <!-- NEW: Final Corrected Sentence Input -->
+            <div class="mt-8 pt-6 border-t border-gray-700">
+                <label for="final-corrected-text" class="block text-xl font-semibold mb-3 text-green-300"
+                    data-i18n="labelCorrected">
+                    B. 最終校準後的句子：
+                </label>
+                <textarea id="final-corrected-text" rows="2"
+                    class="w-full p-4 rounded-xl bg-gray-700 border border-gray-600 text-white placeholder-gray-500 focus:ring-green-500 focus:border-green-500 transition-all duration-200 shadow-inner"
+                    data-i18n-placeholder="placeholderCorrected" placeholder="請將您根據步驟 1-8 徹底校準後的最終句子輸入於此。"></textarea>
+            </div>
+
+
+            <!-- NEW: Complete Ritual Button -->
+            <button id="complete-ritual-btn" onclick="window.checkRitualCompletion()"
+                class="w-full mt-6 flex items-center justify-center space-x-2 px-6 py-4 btn-complete text-white font-bold text-lg rounded-xl transition duration-300 shadow-xl hover:shadow-green-500/70 active:scale-98"
+                disabled>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="complete-ritual-text" data-i18n="btnCompleteRitualLocked">完成所有 8 個步驟後，點擊此處記錄歷史</span>
+            </button>
+
+            <p id="completion-message" class="text-sm text-gray-500 mt-4 text-center" data-i18n="ritualNote">
+                提示：智能診斷將為您提供一個**直覺修正**的起點。您仍需執行步驟 5-8 進行嚴謹的**驗證**。
+            </p>
+        </div>
+
+
+        <div id="step-list" class="space-y-6">
+
+        </div>
+
+        <!-- UPDATED: History Section -->
+        <section class="mt-12 pt-8 border-t border-gray-700">
+            <h2 class="text-3xl font-bold text-indigo-300 mb-6 header-glow" data-i18n="historyTitle">歷史校準紀錄 (本地儲存)</h2>
+            <div id="history-list">
+                <!-- History Table will be rendered here by JavaScript -->
+                <p class="text-center text-gray-500 p-4 border border-gray-700 rounded-xl bg-gray-800/50">
+                    載入中...
+                </p>
+            </div>
+
+            <!-- === MODIFICATION START: Added wrapper and export button === -->
+            <div class="flex justify-center items-center space-x-4 mt-4">
+                <button onclick="window.exportHistoryAsMarkdown()"
+                    class="text-sm text-green-400 hover:text-green-300 transition-colors duration-150 p-2 rounded-md hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span data-i18n="btnExport">匯出為 Markdown</span>
+                </button>
+                <button onclick="window.clearHistory()"
+                    class="text-sm text-red-400 hover:text-red-300 transition-colors duration-150 p-2 rounded-md hover:bg-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-1" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span data-i18n="btnClear">清除所有本地紀錄</span>
+                </button>
+            </div>
+        </section>
+
+
+        <footer class="mt-12 pt-8 border-t border-gray-700 text-center">
+            <p class="text-gray-400 text-base font-light" data-i18n="footerSummary">
+                流程總結：[寫作] → [步驟 1-4 診斷] → [建立修改 (直覺)] → [步驟 5-8 驗證 (反直覺)] → [確認最終修正，記錄完成]
+            </p>
+        </footer>
+    </div>
+
+    <script type="module">
+        // 🌍 INTERNATIONALIZATION (i18n)
+        window.i18n = {
+            currentLang: 'zh',
+            translations: {
+                zh: {
+                    pageTitle: "寫作校準儀式 SOP - Writing Correction Ritual (Local History)",
+                    ritualTitle: "🔮 升級儀式祭壇",
+                    ritualSubtitle: "寫作校準儀式 SOP — 完成後可解鎖冒險者公會 (本地儲存)",
+                    labelOriginal: "A. 欲校準的原始句子或段落：",
+                    placeholderOriginal: "請輸入您想要校準的句子。",
+                    btnDiagnosisLocked: "解鎖：智能診斷與修正建議 (AI Diagnosis & Suggestion)",
+                    btnDiagnosisUnlocked: "✨ 智能診斷與修正建議 (AI Diagnosis & Suggestion)",
+                    unlockMessage: "🔒 請先完成「第一階段：問題診斷 (步驟 1-4)」才能解鎖智能診斷和後續驗證步驟。",
+                    loadingDiagnosis: "正在進行智能診斷... 請稍候片刻。",
+                    labelCorrected: "B. 最終校準後的句子：",
+                    placeholderCorrected: "請將您根據步驟 1-8 徹底校準後的最終句子輸入於此。",
+                    btnCompleteRitualLocked: "完成所有 8 個步驟後，點擊此處記錄歷史",
+                    btnCompleteRitualUnlocked: "✅ 完成儀式並記錄歷史 (點擊此處)",
+                    ritualNote: "提示：智能診斷將為您提供一個**直覺修正**的起點。您仍需執行步驟 5-8 進行嚴謹的**驗證**。",
+                    historyTitle: "歷史校準紀錄 (本地儲存)",
+                    btnExport: "匯出為 Markdown",
+                    btnClear: "清除所有本地紀錄",
+                    footerSummary: "流程總結：[寫作] → [步驟 1-4 診斷] → [建立修改 (直覺)] → [步驟 5-8 驗證 (反直覺)] → [確認最終修正，記錄完成]",
+
+                    historyTime: "時間",
+                    historyOriginal: "原始句子 (A)",
+                    historyCorrected: "校準後句子 (B)",
+                    historyPrinciple: "原理推導 (Step 7)",
+                    historyAction: "操作",
+                    historyEmpty: "目前沒有已完成的校準紀錄。",
+                    confirmDelete: "您確定要永久移除這筆歷史紀錄嗎？",
+                    confirmClear: "您確定要永久清除所有本地校準紀錄嗎？此操作不可逆！",
+                    exportSuccess: "✅ 成功匯出 {count} 筆紀錄為 {filename}！",
+                    noExportData: "ℹ️ 沒有可匯出的歷史紀錄。",
+
+                    phase1: "第一階段：問題診斷",
+                    phase2: "第二階段：錯誤驗證",
+                    focusLabel: "專注領域",
+                    detailLabel: "執行細節",
+                    standardLabel: "驗證標準",
+                    errorLabel: "錯誤類型（範例）",
+                    recordLabel: "儀式紀錄（備註）：",
+
+                    stepsCompleted: "{completed} / {total} 步驟已完成",
+                    diagnosisDone: "(已完成診斷)",
+                    allStepsDone: "🎉 所有步驟已完成！請在下方點擊「完成儀式並記錄」按鈕。",
+
+                    // Steps
+                    step1_title: "朗讀檢查 (Read-Aloud Check)",
+                    step1_detail: "大聲朗讀句子。哪裡有卡頓、猶豫或需要換氣？",
+                    step1_error: "語句過長，結構混亂。",
+                    step1_notePlaceholder: "在此記錄您發現的結構問題",
+
+                    step2_title: "詞形檢查 (Word Form Check)",
+                    step2_detail: "描述「概念」或「事物」時，是否誤用了 V-ing？詞性是否一致？（如：`constructing` → `construction`）",
+                    step2_error: "名詞化問題：V-ing → Noun。",
+                    step2_notePlaceholder: "在此記錄詞性轉換的依據",
+
+                    step3_title: "精確度檢查 (Precision Check)",
+                    step3_detail: "每個關鍵詞是否「最準確」？詞語搭配（Collocation）是否自然？（如：`old construction` → `old building`）",
+                    step3_error: "詞語選擇不精確。",
+                    step3_notePlaceholder: "在此記錄更替為更精準的詞彙",
+
+                    step4_title: "連貫性檢查 (Cohesion Check)",
+                    step4_detail: "是否「不必要地重複」了前一句的主語？過渡是否彆扭？",
+                    step4_error: "不必要的重複主語。",
+                    step4_notePlaceholder: "在此記錄連貫性的改善方法",
+
+                    step5_title: "Google 語料庫驗證",
+                    step5_detail: "使用雙引號 (`\"...\"`) 搜索修改後的詞組。檢查結果來源。",
+                    step5_standard: "A. 規模：修正後的詞組有顯著更多的搜索結果。B. 來源：結果來自可靠新聞/學術網站。",
+                    step5_notePlaceholder: "在此記錄語料庫驗證結果",
+
+                    step6_title: "AI 工具複查",
+                    step6_detail: "將「整個修改後的句子」貼入專業寫作工具（如 Grammarly）。",
+                    step6_standard: "AI 不再標記修改部分中的語法或流暢性錯誤。",
+                    step6_notePlaceholder: "在此記錄 AI 複查結果（通過/未通過）",
+
+                    step7_title: "原理推導 (Principle Deduction)",
+                    step7_detail: "強迫自己為修正寫下一條簡短的「語法/詞彙規則」作為「備註」。",
+                    step7_standard: "可以清晰闡述規則（例如：「遵循名詞化原則」）。",
+                    step7_notePlaceholder: "（在此處記錄修正的規則，這是分析的證明）",
+
+                    step8_title: "範文比較",
+                    step8_detail: "回憶或搜索高分範文，尋找相似表達或結構。",
+                    step8_standard: "您的修改與高分 IELTS 範文中使用的措辭保持一致。",
+                    step8_notePlaceholder: "在此記錄範文參考來源或對比結果",
+
+                    // RPG Ranks (used in status card)
+                    rpgRank1: '新手挑戰者',
+                    rpgRank2: '見習冒險家',
+                    rpgRank3: '探索者',
+                    rpgRank4: '挑戰達人',
+                    rpgRank5: '精英戰士',
+                    rpgRank6: '專家引導者',
+                    rpgRank7: '大師創造者',
+                    rpgRank8: '宗師煉金師',
+                    rpgRank9: '傳奇締造者',
+                    rpgRank10: '帝國領袖',
+                    rpgXpNeeded: '還需 {xp} XP 升級',
+                    historyNoRecord: "無紀錄",
+                    backLink: "← 返回 Quest Empire",
+                    rpgGuildUnlocked: "🎉 儀式完成！已解鎖冒險者公會。獲得 <span class='text-green-400 font-bold'>{xp} XP</span>",
+                    rpgRitualComplete: "校準儀式完成",
+                    notifyEarnedXP: "獲得 {xp} XP",
+                    notifyLevelUpTitle: "等級提升！",
+                    notifyLevelUpMsg: "恭喜升級至 Lv.{level} {title}",
+                    rpgGainXP: "獲得經驗值"
+                },
+                en: {
+                    pageTitle: "Writing Correction Ritual SOP - (Local History)",
+                    ritualTitle: "🔮 Ritual Altar",
+                    ritualSubtitle: "Writing Correction Ritual SOP — Unlock Guild upon completion (Local Storage)",
+                    labelOriginal: "A. Original sentence or paragraph to be calibrated:",
+                    placeholderOriginal: "Please enter the sentence you want to calibrate.",
+                    btnDiagnosisLocked: "Unlock: AI Diagnosis & Suggestion",
+                    btnDiagnosisUnlocked: "✨ AI Diagnosis & Suggestion",
+                    unlockMessage: "🔒 Please complete \"Phase I: Diagnosis (Steps 1-4)\" first to unlock AI diagnosis and further validation.",
+                    loadingDiagnosis: "Intelligent diagnosis in progress... please wait.",
+                    labelCorrected: "B. Final Calibrated Sentence:",
+                    placeholderCorrected: "Enter your final sentence thoroughly calibrated according to steps 1-8.",
+                    btnCompleteRitualLocked: "Complete all 8 steps to record history",
+                    btnCompleteRitualUnlocked: "✅ Complete Ritual & Record History (Click Here)",
+                    ritualNote: "Tip: AI diagnosis provides an **intuitive** starting point. You still need steps 5-8 for rigorous **verification**.",
+                    historyTitle: "History (Local Storage)",
+                    btnExport: "Export as Markdown",
+                    btnClear: "Clear Local History",
+                    footerSummary: "Workflow: [Draft] → [Steps 1-4 Diagnosis] → [Initial Edit (Intuition)] → [Steps 5-8 Verification (Counter-Intuition)] → [Confirm Final Fix, Record]",
+
+                    historyTime: "Time",
+                    historyOriginal: "Original (A)",
+                    historyCorrected: "Calibrated (B)",
+                    historyPrinciple: "Principle (Step 7)",
+                    historyAction: "Action",
+                    historyEmpty: "No calibration records found.",
+                    confirmDelete: "Are you sure you want to permanently remove this record?",
+                    confirmClear: "Are you sure you want to clear all local records? This is irreversible!",
+                    exportSuccess: "✅ Successfully exported {count} records as {filename}!",
+                    noExportData: "ℹ️ No records to export.",
+
+                    phase1: "Phase I: Problem Diagnosis",
+                    phase2: "Phase II: Validation",
+                    focusLabel: "Focus Area",
+                    detailLabel: "Execution Details",
+                    standardLabel: "Validation Standard",
+                    errorLabel: "Error Example",
+                    recordLabel: "Ritual Note:",
+
+                    stepsCompleted: "{completed} / {total} Steps Completed",
+                    diagnosisDone: "(Diagnosis Done)",
+                    allStepsDone: "🎉 All steps completed! Click the button below to record.",
+
+                    // Steps
+                    step1_title: "Read-Aloud Check",
+                    step1_detail: "Read the sentence out loud. Where do you stumble, hesitate, or need a breath?",
+                    step1_error: "Sentence too long, structure chaotic.",
+                    step1_notePlaceholder: "Record structural issues found here",
+
+                    step2_title: "Word Form Check",
+                    step2_detail: "When describing a 'concept' or 'thing', did you misuse V-ing? Is the part of speech consistent? (e.g., `constructing` → `construction`)",
+                    step2_error: "Nominalization issue: V-ing → Noun.",
+                    step2_notePlaceholder: "Record the basis for word form conversion",
+
+                    step3_title: "Precision Check",
+                    step3_detail: "Is each keyword the 'most accurate'? Is the collocation natural? (e.g., `old construction` → `old building`)",
+                    step3_error: "Inaccurate word choice.",
+                    step3_notePlaceholder: "Record the more precise vocabulary used",
+
+                    step4_title: "Cohesion Check",
+                    step4_detail: "Did you 'unnecessarily repeat' the subject of the previous sentence? Is the transition awkward?",
+                    step4_error: "Unnecessary repetition of subject.",
+                    step4_notePlaceholder: "Record how you improved cohesion",
+
+                    step5_title: "Google Corpus Verification",
+                    step5_detail: "Search the modified phrase with double quotes (`\"...\"`). Check source credibility.",
+                    step5_standard: "A. Scale: Significantly more results. B. Source: From reliable news/academic sites.",
+                    step5_notePlaceholder: "Record corpus verification results here",
+
+                    step6_title: "AI Tool Double-Check",
+                    step6_detail: "Paste the modified sentence into professional writing tools (e.g., Grammarly).",
+                    step6_standard: "AI no longer flags errors in the modified part.",
+                    step6_notePlaceholder: "Record AI review results (Pass/Fail)",
+
+                    step7_title: "Principle Deduction",
+                    step7_detail: "Force yourself to write a short 'grammar/vocab rule' as a 'note' for the fix.",
+                    step7_standard: "Rule can be clearly stated (e.g., 'Nominalization principle').",
+                    step7_notePlaceholder: "Record the rule of correction here (proof of analysis)",
+
+                    step8_title: "Sample Comparison",
+                    step8_detail: "Recall or search high-scoring samples for similar expressions or structures.",
+                    step8_standard: "Modification aligns with wording in high-score IELTS samples.",
+                    step8_notePlaceholder: "Record sample references or comparison results",
+
+                    // RPG Ranks (used in status card)
+                    rpgRank1: 'Novice Challenger',
+                    rpgRank2: 'Apprentice Adventurer',
+                    rpgRank3: 'Explorer',
+                    rpgRank4: 'Challenge Specialist',
+                    rpgRank5: 'Elite Warrior',
+                    rpgRank6: 'Expert Guide',
+                    rpgRank7: 'Master Creator',
+                    rpgRank8: 'Grandmaster Alchemist',
+                    rpgRank9: 'Legendary Maker',
+                    rpgRank10: 'Empire Leader',
+                    rpgXpNeeded: '{xp} XP needed to level up',
+                    historyNoRecord: "No Record",
+                    backLink: "← Back to Quest Empire",
+                    rpgGuildUnlocked: "🎉 Ritual Complete! Guild Unlocked. Gained <span class='text-green-400 font-bold'>{xp} XP</span>",
+                    rpgRitualComplete: "Calibration Ritual Complete",
+                    notifyEarnedXP: "Earned {xp} XP",
+                    notifyLevelUpTitle: "Level Up!",
+                    notifyLevelUpMsg: "Congratulations! Reached Lv.{level} {title}",
+                    rpgGainXP: "Gained Experience"
+                }
+            },
+
+            t: function (key, params = {}) {
+                let text = (this.translations[this.currentLang] && this.translations[this.currentLang][key]) || key;
+                for (const [k, v] of Object.entries(params)) {
+                    text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+                }
+                return text;
+            },
+
+            setLanguage: function (lang) {
+                this.currentLang = lang;
+                localStorage.setItem('ielts_arena_lang', lang);
+                this.applyTranslations();
+                renderSteps();
+                renderHistory();
+                updateProgress();
+
+                // 🎮 RPG: Re-render status card to update title translation
+                if (typeof DevScribeRPG !== 'undefined') {
+                    const card = document.getElementById('rpg-status-card');
+                    if (card) {
+                        card.innerHTML = DevScribeRPG.generateStatusCardHTML();
+                        this.applyTranslations(); // Re-apply to the new card
+                    }
+                }
+            },
+
+            loadSavedLanguage: function () {
+                const savedLang = localStorage.getItem('ielts_arena_lang');
+                if (savedLang && this.translations[savedLang]) {
+                    this.currentLang = savedLang;
+                }
+            },
+
+            applyTranslations: function () {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (key) el.innerHTML = this.t(key);
+                });
+
+                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (key) el.placeholder = this.t(key);
+                });
+
+                const btnText = document.getElementById('langBtnText');
+                if (btnText) {
+                    btnText.innerText = this.currentLang === 'zh' ? 'EN' : '中文';
+                }
+
+                document.documentElement.lang = this.currentLang === 'zh' ? 'zh-TW' : 'en';
+            }
+        };
+
+        window.toggleLanguage = function () {
+            const newLang = window.i18n.currentLang === 'zh' ? 'en' : 'zh';
+            window.i18n.setLanguage(newLang);
+        };
+
+        const t = window.i18n.t.bind(window.i18n);
+
+        // --- Gemini API Setup ---
+        const apiKey = "AIzaSyAG5d8eUpB3QcE5kTXt-2w0VJbOklMh__c";
+        const modelName = "gemini-2.5-flash";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        // Function for exponential backoff retry logic
+        async function fetchWithRetry(url, options, retries = 3) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        if (i < retries - 1 && response.status >= 400) {
+                            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000 + Math.random() * 500));
+                            continue;
+                        }
+                    }
+                    return response;
+                } catch (error) {
+                    if (i < retries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000 + Math.random() * 500));
+                        continue;
+                    }
+                    throw error;
+                }
+            }
+            throw new Error('Fetch failed after multiple retries.');
+        }
+
+        // --- Core SOP Data ---
+        const stepsData = [
+            // Phase I: Diagnosis (Steps 1-4) - Indigo Theme
+            { id: 1, phase: 'Diagnosis', title: 'step1_title', icon: '🔊', focus: 'Fluency/Structure', detail: 'step1_detail', error: 'step1_error', className: 'phase-diagnosis', notePlaceholder: 'step1_notePlaceholder' },
+            { id: 2, phase: 'Diagnosis', title: 'step2_title', icon: '📝', focus: 'Grammar/Word Form', detail: 'step2_detail', error: 'step2_error', className: 'phase-diagnosis', notePlaceholder: 'step2_notePlaceholder' },
+            { id: 3, phase: 'Diagnosis', title: 'step3_title', icon: '🎯', focus: 'Lexis/Collocation', detail: 'step3_detail', error: 'step3_error', className: 'phase-diagnosis', notePlaceholder: 'step3_notePlaceholder' },
+            { id: 4, phase: 'Diagnosis', title: 'step4_title', icon: '🔗', focus: 'Cohesion', detail: 'step4_detail', error: 'step4_error', className: 'phase-diagnosis', notePlaceholder: 'step4_notePlaceholder' },
+
+            // Phase II: Verification (Steps 5-8) - Amber Theme
+            { id: 5, phase: 'Verification', title: 'step5_title', icon: '🔍', focus: 'Scale/Credibility', detail: 'step5_detail', error: 'step5_error', verificationStandard: 'step5_standard', className: 'phase-verification', notePlaceholder: 'step5_notePlaceholder' },
+            { id: 6, phase: 'Verification', title: 'step6_title', icon: '🤖', focus: 'Grammar/Fluency', detail: 'step6_detail', error: 'step6_error', verificationStandard: 'step6_standard', className: 'phase-verification', notePlaceholder: 'step6_notePlaceholder' },
+            { id: 7, phase: 'Verification', title: 'step7_title', icon: '🧠', focus: 'Rules/Analysis', detail: 'step7_detail', error: 'step7_error', verificationStandard: 'step7_standard', className: 'phase-verification', notePlaceholder: 'step7_notePlaceholder' },
+            { id: 8, phase: 'Verification', title: 'step8_title', icon: '🏆', focus: 'Style/Expression', detail: 'step8_detail', error: 'step8_error', verificationStandard: 'step8_standard', className: 'phase-verification', notePlaceholder: 'step8_notePlaceholder' }
+        ];
+
+        let state = {
+            steps: stepsData.map(s => ({ ...s, completed: false, userNote: '' })),
+            originalWritingText: '',
+            history: [],
+        };
+
+        const stepList = document.getElementById('step-list');
+        const progressBar = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const diagnosisBtn = document.getElementById('diagnosis-btn');
+        const diagnosisUnlockMsg = document.getElementById('diagnosis-unlock-message');
+        const completeRitualBtn = document.getElementById('complete-ritual-btn');
+        const completeRitualText = document.getElementById('complete-ritual-text');
+        const finalCorrectedTextarea = document.getElementById('final-corrected-text');
+        const originalWritingTextarea = document.getElementById('writing-text');
+        const completionMessage = document.getElementById('completion-message');
+
+        const verificationStepIds = [5, 6, 7, 8];
+        const historyList = document.getElementById('history-list');
+
+        // --- History Functions ---
+
+        function loadHistory() {
+            try {
+                const storedHistory = localStorage.getItem('ritualHistory');
+                if (storedHistory) {
+                    state.history = JSON.parse(storedHistory);
+                }
+            } catch (e) {
+                console.error("無法從 localStorage 載入歷史紀錄:", e);
+                state.history = []; // Fallback
+            }
+        }
+
+        function saveHistory() {
+            const completedTime = new Date().toLocaleString('zh-TW', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
+            const finalCorrected = finalCorrectedTextarea.value.trim();
+            const original = originalWritingTextarea.value.trim();
+
+            // 找到步驟 7 (原理推導) 的使用者備註
+            const principleNote = state.steps.find(s => s.id === 7)?.userNote || '';
+
+            // NEW: Assign a unique ID (timestamp in ms)
+            const uniqueId = Date.now();
+
+            const newEntry = {
+                id: uniqueId, // <--- 新增唯一 ID
+                timestamp: completedTime,
+                // Use captured state (from the moment diagnosis was run) or current value as fallback
+                original: state.originalWritingText || original,
+                corrected: finalCorrected,
+                principle: principleNote
+            };
+
+            // Check if captured original text is available, or if the current original text is not empty
+            if (newEntry.original === '' || newEntry.corrected === '') {
+                // Prevent saving if either original or corrected are empty
+                console.warn("未完成校準，原始句子或最終修正句子為空。不儲存歷史紀錄。");
+                completionMessage.textContent = t('ritualEmptyFail');
+                completionMessage.classList.remove('text-gray-500', 'text-green-400');
+                completionMessage.classList.add('text-red-400');
+                return false;
+            }
+
+            state.history.unshift(newEntry); // Add to the beginning
+
+            try {
+                localStorage.setItem('ritualHistory', JSON.stringify(state.history));
+                completionMessage.textContent = t('ritualSavedTitle', {
+                    original: newEntry.original.substring(0, 20),
+                    corrected: newEntry.corrected.substring(0, 20)
+                });
+                completionMessage.classList.remove('text-gray-500', 'text-red-400');
+                completionMessage.classList.add('text-green-400', 'font-bold');
+                return true;
+            } catch (e) {
+                console.error("無法將歷史紀錄儲存到 localStorage:", e);
+                completionMessage.textContent = t('ritualSaveFail');
+                completionMessage.classList.remove('text-gray-500', 'text-green-400');
+                completionMessage.classList.add('text-red-400');
+                return false;
+            }
+        }
+
+        // NEW: Function to delete a history entry
+        function deleteHistoryEntry(id) {
+            // Convert id to number as it's a timestamp
+            const entryId = Number(id);
+
+            if (!confirm(t('confirmDelete'))) {
+                return;
+            }
+
+            const initialLength = state.history.length;
+
+            // Filter out the entry with the matching ID
+            state.history = state.history.filter(entry => entry.id !== entryId);
+
+            if (state.history.length < initialLength) {
+                // Only update localStorage and re-render if something was actually removed
+                try {
+                    localStorage.setItem('ritualHistory', JSON.stringify(state.history));
+                    renderHistory();
+                    completionMessage.textContent = t('recordDeleted', { id: id });
+                    completionMessage.classList.remove('text-gray-500', 'text-green-400', 'font-bold', 'text-amber-400');
+                    completionMessage.classList.add('text-red-400');
+                    setTimeout(() => {
+                        completionMessage.textContent = t('ritualNote');
+                        completionMessage.classList.remove('text-red-400');
+                        completionMessage.classList.add('text-gray-500');
+                    }, 3000);
+                } catch (e) {
+                    console.error("無法更新 localStorage:", e);
+                }
+            } else {
+                console.warn(`Attempted to delete ID ${id}, but no matching entry was found.`);
+            }
+        }
+
+
+        function renderHistory() {
+
+            if (state.history.length === 0) {
+                historyList.innerHTML = `<p class="text-center text-gray-500 p-4 border border-gray-700 rounded-xl bg-gray-800/50">${t('historyEmpty')}</p>`;
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto rounded-xl shadow-lg border border-gray-700">
+                    <table id="history-table" class="min-w-full divide-y divide-gray-700">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-1/12">${t('historyTime')}</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-3/12">${t('historyOriginal')}</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-3/12">${t('historyCorrected')}</th>
+                                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-4/12">${t('historyPrinciple')}</th>
+                                <th scope="col" class="px-3 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider w-1/12">${t('historyAction')}</th> 
+                            </tr>
+                        </thead>
+                        <tbody class="bg-gray-800 divide-y divide-gray-700">
+                            ${state.history.map(entry => `
+                                <tr class="hover:bg-gray-700 transition-colors duration-150">
+                                    <td class="px-3 py-3 text-sm text-gray-400">${entry.timestamp.split(', ')[1]}<br><span class="text-xs text-gray-500">${entry.timestamp.split(', ')[0]}</span></td>
+                                    <td class="px-3 py-3 text-sm text-indigo-300">${entry.original}</td>
+                                    <td class="px-3 py-3 text-sm text-green-300 font-medium">${entry.corrected}</td>
+                                    <td class="px-3 py-3 text-sm text-yellow-300">${entry.principle || t('historyNoRecord')}</td>
+                                    <td class="px-3 py-3 text-center">
+                                         <button onclick="window.deleteHistoryEntry(${entry.id})" class="text-red-400 hover:text-red-300 bg-red-900/30 hover:bg-red-900/50 p-1 rounded-md text-sm transition-colors duration-150 active:scale-95">
+                                            ❌</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            historyList.innerHTML = tableHtml;
+        }
+
+        function clearHistory() {
+            // Replaced alert() with standard JS confirm() for simple deletion confirmation
+            if (confirm(t('confirmClear'))) {
+                console.warn("Clearing all local ritual history. This cannot be undone.");
+                localStorage.removeItem('ritualHistory');
+                state.history = [];
+
+                // Provide immediate feedback in the UI
+                historyList.innerHTML = `<p class="text-center text-red-400 p-4 border border-red-700 rounded-xl bg-red-900/50 font-bold">${t('allHistoryCleared')}</p>`;
+
+                setTimeout(() => {
+                    renderHistory(); // Re-render the empty state after a brief delay
+                    completionMessage.textContent = t('ritualNote');
+                    completionMessage.classList.remove('text-red-400', 'text-green-400', 'font-bold');
+                    completionMessage.classList.add('text-gray-500');
+                }, 3000);
+            }
+        }
+
+        // === MODIFICATION START: Added export function ===
+        /**
+         * Exports the current history state to a Markdown file.
+         */
+        function exportHistoryAsMarkdown() {
+            const history = state.history;
+
+            // *** 新增此行檢查 ***
+            console.log("History is not empty. Proceeding to generate Markdown.");
+
+            if (!history || history.length === 0) {
+                completionMessage.textContent = t('noExportData');
+                completionMessage.classList.remove('text-gray-500', 'text-green-400', 'text-red-400');
+                completionMessage.classList.add('text-amber-400', 'font-bold');
+                setTimeout(() => {
+                    completionMessage.textContent = t('ritualNote');
+                    completionMessage.classList.remove('text-amber-400', 'font-bold');
+                    completionMessage.classList.add('text-gray-500');
+                }, 3000);
+                return;
+            }
+
+            // Helper to clean text for Markdown table cells
+            const clean = (str) => {
+                if (!str) return 'N/A';
+                // Escape pipes and replace newlines with <br> for visibility in Markdown tables
+                return str.replace(/\|/g, '\\|').replace(/\n/g, '<br>');
+            };
+
+            let markdownContent = "# 寫作校準紀錄\n\n";
+            markdownContent += "| 錯誤或不當 | 建議的修改或補充 | 註釋 |\n";
+            markdownContent += "|:---|:---|:---|\n";
+
+            // Add each history entry as a table row (history is already unshifted, so it's in reverse chronological order)
+            for (const entry of history) {
+                markdownContent += `| ${clean(entry.original)} | ${clean(entry.corrected)} | ${clean(entry.principle)} |\n`;
+            }
+
+            try {
+                // Create a blob and trigger download
+                const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Generate a timestamped filename
+                const date = new Date();
+                const filename = `writing-history-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}.md`;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // Show success message
+                completionMessage.textContent = t('exportSuccess', { count: history.length, filename: filename });
+                completionMessage.classList.remove('text-gray-500', 'text-red-400', 'text-amber-400');
+                completionMessage.classList.add('text-green-400', 'font-bold');
+                setTimeout(() => {
+                    completionMessage.textContent = t('ritualNote');
+                    completionMessage.classList.remove('text-green-400', 'font-bold');
+                    completionMessage.classList.add('text-gray-500');
+                }, 4000);
+
+            } catch (e) {
+                console.error("無法匯出 Markdown:", e);
+                completionMessage.textContent = '❌ Export Failed: Could not create file.';
+                completionMessage.classList.remove('text-gray-500', 'text-green-400');
+                completionMessage.classList.add('text-red-400', 'font-bold');
+            }
+        }
+        // === MODIFICATION END ===
+
+        // --- NEW: Check Completion and Save ---
+        function checkRitualCompletion() {
+            if (state.steps.every(s => s.completed)) {
+                // All 8 steps complete, trigger save and reset
+                if (saveHistory()) {
+                    // 🎮 RPG: Unlock Guild access and award XP
+                    if (typeof DevScribeRPG !== 'undefined') {
+                        DevScribeRPG.setRitualCompleted(true);
+                        const result = DevScribeRPG.recordModuleAction('ritual', 'ritual_complete');
+                        if (result) {
+                            DevScribeRPG.showXPNotification(result);
+                            completionMessage.innerHTML = t('rpgGuildUnlocked', { xp: result.earnedXP });
+                        }
+                    }
+                    setTimeout(resetRitual, 2000); // Auto-reset after successful saving
+                }
+            } else {
+                completionMessage.textContent = t('ritualCompletionAlert');
+                completionMessage.classList.remove('text-gray-500', 'text-green-400');
+                completionMessage.classList.add('text-amber-400', 'font-bold');
+            }
+        }
+
+        // --- Ritual Core Functions ---
+
+        function resetRitual() {
+            // Reset step completion and notes
+            state.steps = stepsData.map(s => ({ ...s, completed: false, userNote: '', locked: s.id >= 5 }));
+            state.originalWritingText = ''; // Reset original text
+
+            // Reset text areas and diagnosis result
+            originalWritingTextarea.value = '';
+            finalCorrectedTextarea.value = '';
+            document.getElementById('diagnosis-result').innerHTML = '';
+
+            // Reset completion message
+            completionMessage.textContent = t('ritualNote');
+            completionMessage.classList.remove('text-red-400', 'text-green-400', 'font-bold', 'text-amber-400');
+            completionMessage.classList.add('text-gray-500');
+
+
+            // Re-render
+            updateLockStatus();
+            renderSteps();
+            updateProgress(); // This will update the button state too
+            renderHistory();
+            originalWritingTextarea.focus();
+        }
+
+        // Function to call Gemini for writing diagnosis
+        async function handleDiagnosis() {
+            const writingText = originalWritingTextarea.value.trim();
+            const resultDiv = document.getElementById('diagnosis-result');
+            const loadingDiv = document.getElementById('diagnosis-loading');
+
+            // Check if Diagnosis Phase is complete
+            if (!isDiagnosisPhaseComplete()) {
+                resultDiv.innerHTML = `<p class="text-red-400 p-3 rounded-md bg-red-900/20 border border-red-700">${t('diagnosisManualAlert')}</p>`;
+                return;
+            }
+
+            if (!writingText) {
+                resultDiv.innerHTML = `<p class="text-red-400 p-3 rounded-md bg-red-900/20 border border-red-700">${t('diagnosisInputAlert')}</p>`;
+                return;
+            }
+
+            // Capture the initial text when diagnosis is run. This will be recorded as 'A'.
+            if (state.originalWritingText === '') {
+                state.originalWritingText = writingText;
+            }
+
+
+            // Show loading state
+            loadingDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '';
+
+            const systemPrompt = `
+                你是一位專業的英文寫作導師。
+                你的任務是根據用戶提供的句子，執行「寫作診斷 SOP」中的前四個診斷步驟，並以 JSON 格式輸出結果。
+                診斷應涵蓋：流暢度/結構 (Fluency/Structure)、語法/詞形 (Grammar/Word Form)、詞彙/搭配 (Lexis/Collocation)、和連貫性 (Cohesion)。
+                
+                請嚴格遵循以下步驟並以 JSON 格式返回結果：
+                1. 檢查並提供一個**修正後的句子** (correctedSentence)。
+                2. 判斷主要的**錯誤類型** (errorType)，必須是以下四種之一：Fluency (流暢度/結構), Grammar (語法/詞形), Lexis (詞彙/搭配), Cohesion (連貫性)。
+                3. 提供**修正的依據** (rationale)，說明為何需要進行此修正。
+            `;
+
+            const userQuery = `請分析並修正以下句子："${writingText}"`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "correctedSentence": { "type": "STRING", description: "修正後的完整句子" },
+                            "errorType": { "type": "STRING", description: "主要的錯誤類型 (Fluency, Grammar, Lexis, Cohesion)" },
+                            "rationale": { "type": "STRING", description: "修正的依據和原因" }
+                        },
+                        "propertyOrdering": ["correctedSentence", "errorType", "rationale"]
+                    }
+                }
+            };
+
+            try {
+                const response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("API Response Error:", response.status, errorBody);
+                    throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+                }
+
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!jsonText) {
+                    console.error("Invalid API response structure:", result);
+                    throw new Error("API returned no content or an unexpected structure.");
+                }
+
+                const data = JSON.parse(jsonText);
+
+                // Update the final correction box with the suggested correction for convenience
+                finalCorrectedTextarea.value = data.correctedSentence;
+
+                resultDiv.innerHTML = `
+                    <div class="space-y-3 p-4 rounded-xl bg-indigo-900/40 border border-indigo-700 shadow-md">
+                        <p class="font-bold text-indigo-300 text-lg flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            ${t('diagnosisTitle')}
+                        </p>
+                        <div class="bg-gray-700 p-3 rounded-md border border-gray-600 shadow-inner">
+                            <p class="text-sm text-gray-400 mb-1">${t('aiSuggestion')}</p>
+                            <p class="text-white font-medium text-lg">${data.correctedSentence}</p>
+                        </div>
+                        <p class="text-sm">
+                            <span class="font-semibold text-amber-300">${t('majorErrorType')}</span> 
+                            <span class="bg-amber-800 text-amber-100 px-2 py-0.5 rounded-full text-xs font-semibold">${data.errorType}</span>
+                        </p>
+                        <p class="text-sm">
+                            <span class="font-semibold text-indigo-300">${t('diagnosisRationale')}</span> ${data.rationale}
+                        </p>
+                        <p class="text-xs text-gray-400 mt-2 text-center">
+                            ${t('aiNote')}
+                        </p>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                resultDiv.innerHTML = `<p class="text-red-400 mt-4 p-3 rounded-md bg-red-900/20 border border-red-700">${t('diagnosisFailAlert')} (${error.message})</p>`;
+            } finally {
+                loadingDiv.classList.add('hidden');
+            }
+        }
+
+        // Helper function to check if all diagnosis steps (1-4) are complete
+        function isDiagnosisPhaseComplete() {
+            return state.steps.slice(0, 4).every(s => s.completed);
+        }
+
+        // Helper function to check if all 8 steps are complete
+        function isRitualComplete() {
+            return state.steps.every(s => s.completed);
+        }
+
+
+        // Function to update the lock/unlock state
+        function updateLockStatus() {
+            const isDiagnosisPhaseDone = isDiagnosisPhaseComplete();
+            const isAllComplete = isRitualComplete();
+
+            // 1. Toggle Diagnosis Button (AI)
+            diagnosisBtn.disabled = !isDiagnosisPhaseDone;
+            diagnosisUnlockMsg.classList.toggle('hidden', isDiagnosisPhaseDone);
+
+            if (isDiagnosisPhaseDone) {
+                diagnosisBtn.querySelector('span').textContent = t('btnDiagnosisUnlocked');
+            } else {
+                diagnosisBtn.querySelector('span').textContent = t('btnDiagnosisLocked');
+            }
+
+            // 2. Toggle Complete Ritual Button
+            completeRitualBtn.disabled = !isAllComplete;
+            if (isAllComplete) {
+                completeRitualText.textContent = t('btnCompleteRitualUnlocked');
+                completeRitualBtn.classList.add('shadow-green-500/70');
+            } else {
+                completeRitualText.textContent = t('btnCompleteRitualLocked');
+                completeRitualBtn.classList.remove('shadow-green-500/70');
+            }
+
+            // 3. Toggle Verification Steps (5-8) lock status
+            state.steps.forEach(step => {
+                if (verificationStepIds.includes(step.id)) {
+                    step.locked = !isDiagnosisPhaseDone;
+                }
+            });
+        }
+
+        // Function to update the progress bar and text
+        function updateProgress() {
+            const completedCount = state.steps.filter(s => s.completed).length;
+            const totalCount = state.steps.length;
+            const percentage = (completedCount / totalCount) * 100;
+
+            progressBar.style.width = `${percentage}%`;
+
+            if (completedCount === totalCount) {
+                progressText.innerHTML = `<span class="text-green-400 font-bold text-lg">${t('allStepsDone')}</span>`;
+            } else {
+                const diagDone = isDiagnosisPhaseComplete() ? ` ${t('diagnosisDone')}` : '';
+                progressText.textContent = t('stepsCompleted', { completed: completedCount, total: totalCount }) + diagDone;
+            }
+
+            updateLockStatus(); // Ensure button states reflect progress
+        }
+
+        // Function to toggle the completion status of a step
+        function toggleStepCompletion(id) {
+            const stepIndex = state.steps.findIndex(s => s.id === id);
+            if (stepIndex !== -1) {
+                // Prevent toggling locked steps
+                if (state.steps[stepIndex].locked) return;
+
+                state.steps[stepIndex].completed = !state.steps[stepIndex].completed;
+
+                // Crucial: Update lock status before rendering
+                updateLockStatus();
+
+                renderSteps();
+                updateProgress();
+            }
+        }
+
+        // Function to handle note input changes
+        function handleNoteChange(id, value) {
+            const stepIndex = state.steps.findIndex(s => s.id === id);
+            if (stepIndex !== -1) {
+                state.steps[stepIndex].userNote = value;
+            }
+        }
+
+        // Main rendering function
+        function renderSteps() {
+            // First ensure the lock status is up to date for rendering classes
+            updateLockStatus();
+
+            stepList.innerHTML = state.steps.map(step => {
+                const isCompleted = step.completed;
+                const isLocked = step.locked;
+                const phaseTitle = step.phase === 'Diagnosis' ? t('phase1') : t('phase2');
+                const phaseBgColor = step.phase === 'Diagnosis' ? 'bg-indigo-500' : 'bg-amber-500';
+
+                const cardClasses = `ritual-card ${step.className} ${isCompleted ? 'completed' : ''} ${isLocked ? 'locked' : ''} p-5 rounded-2xl transition-all duration-300 relative`;
+                const toggleClass = `step-toggle flex-shrink-0 w-12 h-12 rounded-full ${isCompleted ? 'bg-green-500 hover:bg-green-600' : (isLocked ? 'bg-gray-800' : 'bg-gray-700 hover:bg-indigo-600')} flex items-center justify-center`;
+
+                return `
+                    <div id="step-${step.id}" class="${cardClasses}">
+                         <!--${isCompleted ? `<div class="absolute top-0 right-0 m-4 text-green-400 text-3xl opacity-90"><svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></div>` : ''}
+                         -->
+                        ${isLocked ? `<div class="absolute inset-0 flex items-center justify-center bg-gray-900/70 z-20">
+                            <svg class="w-12 h-12 text-amber-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2h2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2h2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg>
+                        </div>` : ''}
+
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3 w-full">
+                                
+                                <!-- Step Icon -->
+                                <div class="flex-shrink-0 w-10 h-10 rounded-full ${phaseBgColor} text-white font-bold flex items-center justify-center text-xl">
+                                    ${step.icon}
+                                </div>
+                                
+                                <div class="flex-grow">
+                                    <!-- Phase Tag -->
+                                    <span class="inline-block px-2 py-0.5 text-xs font-bold uppercase rounded-full tracking-wider 
+                                        ${step.phase === 'Diagnosis' ? 'text-indigo-300 bg-indigo-900/50 border border-indigo-700' : 'text-amber-300 bg-amber-900/50 border border-amber-700'}">
+                                        ${phaseTitle}
+                                    </span>
+                                    <h2 class="text-xl font-bold ${isCompleted ? 'text-gray-400 line-through' : 'text-white'} mt-1">
+                                        ${step.id}. ${t(step.title)}
+                                    </h2>
+                                </div>
+                                
+                                
+                                <div class="${toggleClass}" onclick="window.toggleStepCompletion(${step.id})">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isCompleted ? 'M5 13l4 4L19 7' : 'M12 4v16m8-8H4'}"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div class="mt-4 pl-14 text-gray-300">
+                            <p class="mb-2 text-sm"><strong>${t('focusLabel')}:</strong> <span class="text-indigo-200">${step.focus}</span></p>
+                            <p class="mb-2 text-sm"><strong>${t('detailLabel')}:</strong> <span class="math-tex">${t(step.detail)}</span></p>
+                            ${step.verificationStandard ? `<p class="mb-2 text-sm"><strong>${t('standardLabel')}:</strong> <span class="text-amber-200">${t(step.verificationStandard)}</span></p>` : `<p class="mb-2 text-sm"><strong>${t('errorLabel')}:</strong> <span class="text-red-300">${t(step.error)}</span></p>`}
+                            
+                            
+                            <label for="note-${step.id}" class="block text-sm font-medium mt-3 ${isCompleted ? 'text-gray-500' : 'text-gray-300'}">
+                                ${t('recordLabel')}
+                            </label>
+                            <textarea id="note-${step.id}" rows="2" class="w-full p-2 mt-1 rounded-lg ${isCompleted ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-700 border border-gray-600 text-white'} focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 shadow-inner" placeholder="${t(step.notePlaceholder)}" oninput="window.handleNoteChange(${step.id}, this.value)" ${isCompleted || isLocked ? 'readonly' : ''}>${step.userNote}</textarea>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Re-render MathJax after inserting new HTML
+            if (window.MathJax) {
+                window.MathJax.typeset();
+            }
+        }
+
+        // --- Expose functions to the global scope for HTML attributes ---
+        window.handleDiagnosis = handleDiagnosis;
+        window.toggleStepCompletion = toggleStepCompletion;
+        window.handleNoteChange = handleNoteChange;
+        window.clearHistory = clearHistory;
+        window.checkRitualCompletion = checkRitualCompletion; // Expose new completion function
+        window.deleteHistoryEntry = deleteHistoryEntry; // <--- Expose new delete function
+        window.exportHistoryAsMarkdown = exportHistoryAsMarkdown; // <-- MODIFICATION: Added export function
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            window.i18n.loadSavedLanguage();
+            window.i18n.applyTranslations();
+            loadHistory(); // Load history first
+            // Initialize the ritual state
+            resetRitual();
+
+            // 🎮 RPG: Show status card
+            if (typeof DevScribeRPG !== 'undefined') {
+                document.getElementById('rpg-status-card').innerHTML = DevScribeRPG.generateStatusCardHTML();
+                window.i18n.applyTranslations(); // Apply translation to the newly generated card
+            }
+        });
+    </script>
+</body>
+
+</html>
