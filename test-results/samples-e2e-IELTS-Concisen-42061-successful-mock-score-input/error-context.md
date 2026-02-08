@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - heading "IELTS Writing Conciseness Coach" [level=1] [ref=e4]
+    - generic [ref=e5]:
+      - generic [ref=e6]: "Target: >15%"
+      - button "Export Data" [ref=e7] [cursor=pointer]:
+        - img [ref=e8]
+      - button "Settings" [ref=e10] [cursor=pointer]:
+        - img [ref=e11]
+  - alert [ref=e14]: Please submit at least two mock test scores to check promotion criteria.
+  - generic [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - heading "Writing Timer (15 min)" [level=3] [ref=e18]
+        - generic [ref=e19]:
+          - img [ref=e20]
+          - generic [ref=e23]: 15:00
+        - paragraph [ref=e24]: Ready
+        - button "Start 15-Min Session" [ref=e25] [cursor=pointer]
+      - generic [ref=e26]:
+        - heading "Conciseness Metrics" [level=3] [ref=e27]
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e30]: Word Reduction Rate (SC-001)
+            - generic [ref=e31]: 0.00%
+          - generic [ref=e32]:
+            - generic [ref=e33]: Conciseness Score
+            - generic [ref=e34]: "0.00"
+          - generic [ref=e35]:
+            - generic [ref=e36]: Process Verb Ratio
+            - generic [ref=e37]: "0.00"
+        - paragraph [ref=e38]: Please input original and rewrite text
+      - generic [ref=e39]:
+        - heading "48h Progress Tracker" [level=3] [ref=e40]
+        - generic [ref=e41]:
+          - paragraph [ref=e42]: 0 / 5
+          - paragraph [ref=e43]: 75 min
+        - paragraph [ref=e44]: 0 essays completed. Complete 5 essays within 48 hours.
+        - button "Send Email Reminder (T007)" [ref=e45] [cursor=pointer]
+    - generic [ref=e46]:
+      - generic [ref=e47]:
+        - generic [ref=e48]: Original Word Count
+        - generic [ref=e49]: 請貼上你的原始雅思寫作文章...
+        - paragraph [ref=e50]: "Word Count: 0"
+      - generic [ref=e51]:
+        - generic [ref=e52]: Rewritten Word Count
+        - generic [ref=e53]: 請在計時器啟動後，開始精簡重寫...
+        - paragraph [ref=e54]: "Word Count: 0 (Difference: 0)"
+      - generic [ref=e55]:
+        - button "Submit Rewrite (FR-005)" [disabled] [ref=e56]
+        - button "Generate Template (T009)" [disabled] [ref=e57]
+      - generic [ref=e58]:
+        - heading "Mock Gate Scores (Local Fallback)" [level=3] [ref=e59]
+        - paragraph [ref=e60]: Enter your mock test scores to check for promotion criteria (consecutive Band ≥ 8.0 and internal SD < 0.4).
+        - paragraph [ref=e61]: "*SD is calculated locally: sqrt(variance of four Band scores / 4). Criteria: Band ≥ 8.0 & SD < 0.4 (2 consecutive)."
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]: Band Score
+            - textbox "Band Score" [ref=e65]:
+              - /placeholder: 8.5, 8.0, 7.5, 9.0
+          - generic [ref=e66]:
+            - generic [ref=e67]: Internal SD
+            - spinbutton "Internal SD" [ref=e68]
+        - button "Submit Mock Score" [ref=e69] [cursor=pointer]
+```
