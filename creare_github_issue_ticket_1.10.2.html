@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant" class="dark"> <!-- 預設啟用暗黑模式 -->
 
 <head>
@@ -1221,7 +1221,7 @@ AI 評語:"></textarea>
 
         // 全域變數
         const apiKey = "AIzaSyAG5d8eUpB3QcE5kTXt-2w0VJbOklMh__c"; // 留空，系統會自動填入
-        const modelName = "gemini-2.5-flash-preview-09-2025";
+        const modelName = "gemini-3-flash-preview";
         const imageModelName = "gemini-2.5-flash-image-preview"; // 🌟 (用於 AI 圖表生成)
 
         // -----------------------------------------------------
@@ -2381,7 +2381,7 @@ ${issueBody}
 ---`;
 
                 // 3. Call Gemini API
-                const genApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiKey}`;
+                const genApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${geminiKey}`;
                 const payload = {
                     contents: [{ parts: [{ text: prompt }] }]
                 };

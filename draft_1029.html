@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- v2.9.3-en: Changed lang to English and translated all UI elements -->
 <html lang="en">
 
@@ -1312,7 +1312,7 @@ Ensure highlighted part does not wrap */
         async function callGeminiAPI(userApiKey, systemPrompt, userQuery, schema = null, temperature = 0.7, topP = 0.95, maxRetries = 3) {
 
             // --- [MODIFICATION] Dynamically build API URL ---
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userApiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${userApiKey}`;
             // --- [MODIFICATION END] ---
 
             // ===============================================

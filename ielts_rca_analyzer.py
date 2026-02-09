@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 print("🔥 NEW VERSION LOADED - With natural agency fix!")
 import numpy as np
 import matplotlib
@@ -37,7 +37,7 @@ KIMI_MODEL_NAME = "moonshotai/Kimi-K2-Instruct-0905"
 
 # GEMINI CONFIG
 gemini_api_key = os.environ.get("GEMINI_API_KEY") 
-GEMINI_MODEL_NAME ="gemini-3-flash-preview" # "gemini-2.5-flash-preview-09-2025"
+GEMINI_MODEL_NAME ="gemini-3-flash-preview" # "gemini-3-flash-preview"
 
 # Try to import google.generativeai, handle if missing
 try:

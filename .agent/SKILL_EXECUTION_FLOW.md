@@ -1,4 +1,4 @@
-# 🔍 Skills 系統執行流程分析報告
+﻿# 🔍 Skills 系統執行流程分析報告
 
 本文檔詳細說明 Spec Kit Agent 中 Skills 系統的運作機制和 LLM 通信流程。
 
@@ -243,7 +243,7 @@ const response = await fetch(finalUrl, {
 🤖 System Prompt: 你是一個專業的軟體工程師...
 🎯 Phase: phase2
 📍 Provider: gemini
-🤖 Model: gemini-2.5-flash-preview-09-2025
+🤖 Model: gemini-3-flash-preview
 🔑 API Key: AIzaSyBF2...r2l0
 📡 URL: (Native Gemini Endpoint)
 

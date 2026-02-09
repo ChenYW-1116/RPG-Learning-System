@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════════════════════
  * 🤖 SPEC KIT SDD CORE v2.0
  * 完整 Spec-Driven Development 工作流程引擎
@@ -214,7 +214,7 @@ featureName: [功能名稱]
 - **語言/版本**: JavaScript ES2022
 - **主要相依性**: TailwindCSS, Vanilla JS
 - **儲存方式**: LocalStorage
-- **AI 模型**: gemini-2.5-flash-preview-09-2025
+- **AI 模型**: gemini-3-flash-preview
 - **語言支援**: 雙語 (繁體中文/English)
 - **專案類型**: single
 
@@ -927,7 +927,7 @@ function resolveAIConfig(preferredProvider = null, phase = null) {
             console.log(`[Config] Using Gemini Key #${safeIndex + 1}/${allKeys.length} (${result.key.substring(0, 8)}...)`);
         }
 
-        result.model = (geminiCfg.model || 'gemini-2.5-flash-preview-09-2025').trim();
+        result.model = (geminiCfg.model || 'gemini-3-flash-preview').trim();
         // ⚠️ CRITICAL FIX: Use OpenAI-compatible endpoint for Gemini.
         // This endpoint uses Bearer token auth (same as OpenAI/Kimi), NOT ?key= URL parameter.
         // The native `:generateContent` endpoint has a different request body format.
@@ -981,7 +981,7 @@ function openConfig() {
             provider: 'gemini',
             gemini: {
                 key: state.config.apiKey || '',
-                model: state.config.model || 'gemini-2.5-flash-preview-09-2025'
+                model: state.config.model || 'gemini-3-flash-preview'
             },
             kimi: {
                 url: 'https://api.moonshot.cn/v1/chat/completions',
@@ -1009,7 +1009,7 @@ function openConfig() {
         const allGeminiKeys = [cfg.gemini?.key, ...(cfg.gemini?.keys || [])].filter(k => k);
         geminiKeyInput.value = allGeminiKeys.join('\n') || '';
     }
-    if (geminiModelInput) geminiModelInput.value = cfg.gemini?.model || 'gemini-2.5-flash-preview-09-2025';
+    if (geminiModelInput) geminiModelInput.value = cfg.gemini?.model || 'gemini-3-flash-preview';
 
     // 設定 Kimi 欄位
     const kimiUrlInput = document.getElementById('config-kimi-url');
@@ -2118,7 +2118,7 @@ function resolveAIConfig(forceProvider = null) {
             const domModel = document.getElementById('config-gemini-model')?.value?.trim();
             const domKey = document.getElementById('config-gemini-key')?.value?.trim();
 
-            model = domModel || state.config.gemini.model || "gemini-2.5-flash-preview-09-2025";
+            model = domModel || state.config.gemini.model || "gemini-3-flash-preview";
             key = domKey || state.config.gemini.key || ''; // Strict: UI Only
             url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
         }
@@ -2132,7 +2132,7 @@ function resolveAIConfig(forceProvider = null) {
         const uiModel = document.getElementById('config-gemini-model')?.value?.trim();
 
         return {
-            model: uiModel || "gemini-2.5-flash-preview-09-2025",
+            model: uiModel || "gemini-3-flash-preview",
             key: uiKey || '', // Strict: UI Only
             url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             provider: "gemini"
@@ -5522,7 +5522,7 @@ window.openConfig = function () {
     const geminiKeys = state.config.gemini?.keys || [state.config.gemini?.key || localStorage.getItem('gemini_api_key') || ''];
     document.getElementById('config-gemini-key').value = geminiKeys.filter(k => k).join(', ');
 
-    document.getElementById('config-gemini-model').value = state.config.gemini?.model || localStorage.getItem('gemini_model') || 'gemini-2.5-flash-preview-09-2025';
+    document.getElementById('config-gemini-model').value = state.config.gemini?.model || localStorage.getItem('gemini_model') || 'gemini-3-flash-preview';
 
     document.getElementById('config-kimi-key').value = state.config.kimi?.key || localStorage.getItem('kimi_api_key') || '';
     document.getElementById('config-kimi-url').value = state.config.kimi?.url || localStorage.getItem('kimi_endpoint') || 'https://api.moonshot.cn/v1/chat/completions';

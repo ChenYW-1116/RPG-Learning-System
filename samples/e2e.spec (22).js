@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+﻿const { test, expect } = require('@playwright/test');
 
 // The provided HTML application code
 const appHtml = `
@@ -149,7 +149,7 @@ const appHtml = `
                 <!-- API Key Configuration (A2) -->
                 <div class="mb-4">
                     <label for="input-api-key" class="block text-sm font-medium text-gray-700">Gemini API Key</label>
-                    <input type="password" id="input-api-key" class="mt-1 block w-full border border-gray-300 p-2 rounded-md" placeholder="請貼上 gemini-2.5-flash-preview-09-2025 Key">
+                    <input type="password" id="input-api-key" class="mt-1 block w-full border border-gray-300 p-2 rounded-md" placeholder="請貼上 gemini-3-flash-preview Key">
                     <p class="text-xs text-red-500 mt-1" data-i18n="api_key_warning">警告：此 Key 儲存在瀏覽器本地，有安全風險。</p>
                 </div>
 

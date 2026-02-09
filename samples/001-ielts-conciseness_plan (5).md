@@ -1,17 +1,17 @@
----
+﻿---
 featureName: IELTS Writing Conciseness Coach
 ---
 
 # 實作計畫: IELTS Writing Conciseness Coach
 
 ## 摘要  
-在單一 HTML 檔內實作「48h 五篇精簡重寫 → 一週雙欄範本評分 → Mock 成績晉級」完整流程，所有狀態離線保存在 LocalStorage；透過 gemini-2.5-flash-preview-09-2025 API 完成 NLP 評分與建議。無後端、零部署成本，監考官僅需上傳 CSV／貼上 API Key 即可啟用。
+在單一 HTML 檔內實作「48h 五篇精簡重寫 → 一週雙欄範本評分 → Mock 成績晉級」完整流程，所有狀態離線保存在 LocalStorage；透過 gemini-3-flash-preview API 完成 NLP 評分與建議。無後端、零部署成本，監考官僅需上傳 CSV／貼上 API Key 即可啟用。
 
 ## 技術上下文
 - **語言/版本**: JavaScript ES2022  
 - **主要相依性**: TailwindCSS（CDN）、Vanilla JS、SheetJS（讀 csv）、docx.js（讀 docx）  
 - **儲存方式**: LocalStorage（含匯出/重置）  
-- **AI 模型**: gemini-2.5-flash-preview-09-2025  
+- **AI 模型**: gemini-3-flash-preview  
 - **語言支援**: UI & Email Template：繁體中文 / English i18n switcher  
 - **專案類型**: single-file SPA (index.html)
 

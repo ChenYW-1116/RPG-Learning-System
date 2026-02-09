@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 import io
 import time
@@ -29,8 +29,8 @@ def sanitize_filename(filename):
     return re.sub(r'[\\/*?:"<>|]', "", filename)
 
 def call_gemini_api(api_key, content):
-    # Use gemini-2.5-flash-preview-09-2025 as requested
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=" + api_key
+    # Use gemini-3-flash-preview as requested
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + api_key
     
     system_prompt = """You are a professional bi-lingual technical editor.
     Your task is to polish the user's article AND format it into structured Markdown.
@@ -88,7 +88,7 @@ def is_likely_markdown(text):
 
 def auto_format_markdown(content, api_key):
     print("[INFO] Auto-formatting to Markdown via Gemini...")
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=" + api_key
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + api_key
     
     system_prompt = """You are a Markdown formatter. 
     Your ONLY task is to structure the user's text using Markdown syntax (Headers #, ##, Lists -, Bold **).

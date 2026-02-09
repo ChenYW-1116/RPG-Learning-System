@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Gemini API Wrapper Module
  * 
  * 封裝 Google Gemini API 調用邏輯，提供：
@@ -16,12 +16,12 @@ class GeminiAPIWrapper {
      * 創建 Gemini API Wrapper 實例
      * @param {Object} config - 配置對象
      * @param {string} config.apiKey - Gemini API Key
-     * @param {string} [config.model="gemini-2.5-flash-preview-09-2025"] - 模型名稱
+     * @param {string} [config.model="gemini-3-flash-preview"] - 模型名稱
      * @param {number[]} [config.retryDelays=[1000, 2000, 4000]] - 重試延遲毫秒數組
      */
     constructor(config = {}) {
         this.apiKey = config.apiKey || "";
-        this.model = config.model || "gemini-2.5-flash-preview-09-2025";
+        this.model = config.model || "gemini-3-flash-preview";
         this.retryDelays = config.retryDelays || [1000, 2000, 4000];
         this.baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
     }

@@ -1,4 +1,4 @@
----
+﻿---
 name: gemini-api-wrapper
 description: 封裝 Google Gemini API 調用邏輯，包含指數退避重試機制和 JSON/文本響應解析。使用場景：(1) 需要在 JavaScript 中程式化調用 Gemini API，(2) 需要自動重試機制處理網絡錯誤或限流，(3) 構建 AI 功能模組需要統一的 API 調用層，(4) 需要同時支持 JSON 和純文本響應格式。
 ---
@@ -26,7 +26,7 @@ description: 封裝 Google Gemini API 調用邏輯，包含指數退避重試機
   systemPrompt: string,     // 系統指令
   apiKey: string,           // Gemini API Key
   useJson?: boolean,        // 是否返回 JSON 格式 (default: true)
-  model?: string,           // 模型名稱 (default: "gemini-2.5-flash-preview-09-2025")
+  model?: string,           // 模型名稱 (default: "gemini-3-flash-preview")
   retryDelays?: number[]    // 重試延遲毫秒數組 (default: [1000, 2000, 4000])
 }
 ```
@@ -57,7 +57,7 @@ description: 封裝 Google Gemini API 調用邏輯，包含指數退避重試機
 class GeminiAPIWrapper {
   constructor(config = {}) {
     this.apiKey = config.apiKey || "";
-    this.model = config.model || "gemini-2.5-flash-preview-09-2025";
+    this.model = config.model || "gemini-3-flash-preview";
     this.retryDelays = config.retryDelays || [1000, 2000, 4000];
     this.baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
   }
@@ -134,7 +134,7 @@ import { GeminiAPIWrapper } from './skills/gemini-api-wrapper.js';
 // 初始化實例
 const geminiApi = new GeminiAPIWrapper({
   apiKey: "YOUR_API_KEY",
-  model: "gemini-2.5-flash-preview-09-2025"
+  model: "gemini-3-flash-preview"
 });
 
 // 使用示例 - 範文分析

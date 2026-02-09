@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ═══════════════════════════════════════════════════════════════════════════
  * 🔧 CODE GENERATOR MODULE
  * ═══════════════════════════════════════════════════════════════════════════
@@ -289,7 +289,7 @@ CodeGenLogger.init();
 class GeminiAPIWrapper {
     constructor(config = {}) {
         this.apiKey = config.apiKey || "";
-        this.model = config.model || "gemini-2.5-flash-preview-09-2025";
+        this.model = config.model || "gemini-3-flash-preview";
         this.retryDelays = config.retryDelays || [1000, 2000, 4000];
         this.baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
     }
