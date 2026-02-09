@@ -843,6 +843,11 @@ function resolveAIConfig(preferredProvider = null, phase = null) {
                 console.warn(`👉 System will use UI Key. You can clear storage by running: localStorage.removeItem('gemini_api_key')`);
             }
 
+            // 🔄 AUTO-SYNC: If UI is empty but storage has key, sync state (fixes 400/403 errors when key changes elsewhere)
+            if (!domGeminiKeyRaw && storageKey && state.config.gemini.key !== storageKey) {
+                state.config.gemini.key = storageKey;
+            }
+
             if (domProviderEl) state.config.provider = domProviderEl.value;
 
             // 🧠 Fix: Parse multi-line keys from DOM, don't just assign raw string

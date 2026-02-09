@@ -75,6 +75,7 @@ Ensure highlighted part does not wrap */
     </style>
     <!-- Dev-Scribe RPG Engine -->
     <script src="DevScribeRPG.js"></script>
+    <script src="modules/gemini-key-manager.js"></script>
 </head>
 
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8">
@@ -122,15 +123,15 @@ Ensure highlighted part does not wrap */
             </div>
         </header>
 
-        <!-- API Key Input -->
-        <div class="max-w-xl mx-auto mb-6 p-4 bg-gray-800 rounded-lg shadow-inner border border-gray-700">
+        <!-- API Key Input (Hidden: Managed by GeminiKeyManager) -->
+        <div class="max-w-xl mx-auto mb-6 p-4 bg-gray-800 rounded-lg shadow-inner border border-gray-700 hidden">
             <label for="apiKeyInput" class="block text-sm font-medium text-gray-300 mb-2" data-i18n="apiKeyLabel">
                 Gemini API Key
             </label>
             <!-- v2.9.3-en: Translated -->
             <input type="password" id="apiKeyInput"
                 class="w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your API key here..." value="AIzaSyDp_Zd4YNxcRSP6BGeFckSo9fJOSy2SUi4">
+                placeholder="Managed by System" value="">
             <!-- v2.9.3-en: Translated -->
             <p class="text-xs text-gray-500 mt-2" data-i18n="apiKeyHint">
                 Please paste your own Gemini API key to ensure service availability.
@@ -1105,6 +1106,22 @@ Ensure highlighted part does not wrap */
         // --- Core Helper Functions ---
 
         /**
+         * Get the effective API Key from manager or fallback.
+         */
+        function getSystemApiKey() {
+            let key = '';
+            if (typeof GeminiKeyManager !== 'undefined') {
+                key = GeminiKeyManager.getActiveKey();
+                if (key === '__USE_ADMIN_KEY__') {
+                    // Try local storage directly as fallback if not handled by manager for client-side
+                    key = localStorage.getItem('gemini_api_key');
+                }
+            }
+            return key || localStorage.getItem('gemini_api_key') || '';
+        }
+
+
+        /**
          * T1.4 Fix: Truncate context to the last N words
          * @param {string} text - Full input text
          * @param {number} wordCount - Number of last words to keep
@@ -1579,7 +1596,7 @@ If the first attempt outputs an invalid JSON, rewrite once to valid JSON without
         async function handlePredictionSubmit(e) {
             e.preventDefault();
 
-            const userApiKey = apiKeyInput.value.trim();
+            const userApiKey = getSystemApiKey();
             if (!userApiKey) {
                 displayError(predError, window.i18n.t('errorApiKeyEmpty'), predLoading, predButton, predButtonText, window.i18n.t('getPredictions'));
                 igpvlPredError.innerHTML = '';
@@ -1914,7 +1931,7 @@ Sampling Params (T=${temp}, TopP=${topP})
         async function handleCustomWordCheck(e) {
             e.preventDefault();
 
-            const userApiKey = apiKeyInput.value.trim();
+            const userApiKey = getSystemApiKey();
             if (!userApiKey) {
                 displayError(predError, window.i18n.t('errorApiKeyEmpty'), customLoading, customButton, customButtonText, window.i18n.t('checkWord'));
                 igpvlCustomError.innerHTML = '';
@@ -2516,7 +2533,7 @@ Sampling Params (T=${temp}, TopP=${topP})
         // Unified example regeneration logic (Shared by Prediction & Validation)
         async function handleRegeneration(button, band, context, word, type) {
             // --- [MODIFICATION START] Get API Key First ---
-            const userApiKey = apiKeyInput.value.trim();
+            const userApiKey = getSystemApiKey();
             const index = button.dataset.index;
             const exampleContainer = document.getElementById(type === 'prediction' ? `example-container-${index}` : `val-example-container`);
 
@@ -2751,7 +2768,7 @@ Sampling Params (T=${temp}, TopP=${topP})
         async function handleValidationSubmit(e) {
             e.preventDefault();
 
-            const userApiKey = apiKeyInput.value.trim();
+            const userApiKey = getSystemApiKey();
             if (!userApiKey) {
                 displayError(valError, window.i18n.t('errorApiKeyEmpty'), valLoading, valButton, valButtonText, window.i18n.t('validateCollocation'));
                 igpvlValError.innerHTML = '';
@@ -3013,7 +3030,7 @@ Full Collocation: "${fullPhrase}"
         async function handleContinuationSubmit(e) {
             e.preventDefault();
 
-            const userApiKey = apiKeyInput.value.trim();
+            const userApiKey = getSystemApiKey();
             if (!userApiKey) {
                 displayError(contError, window.i18n.t('errorApiKeyEmpty'), contLoading, contButton, contButtonText, window.i18n.t('predictAnalyze'));
                 igpvlContError.innerHTML = '';
@@ -3095,7 +3112,7 @@ Input Text:
         async function handleBandPredictionSubmit(e) {
             e.preventDefault();
 
-            const userApiKey = apiKeyInput.value.trim();
+            const userApiKey = getSystemApiKey();
             if (!userApiKey) {
                 displayError(bandError, window.i18n.t('errorApiKeyEmpty'), bandLoading, bandButton, bandButtonText, window.i18n.t('predictSentenceBand'));
                 igpvlBandError.innerHTML = '';
@@ -3199,7 +3216,7 @@ Input Text:
         async function handleSwotSubmit(e) {
             e.preventDefault();
 
-            const userApiKey = apiKeyInput.value.trim();
+            const userApiKey = getSystemApiKey();
             if (!userApiKey) {
                 displayError(swotError, window.i18n.t('errorApiKeyEmpty'), swotLoading, swotButton, swotButtonText, window.i18n.t('compareSwot'));
                 igpvlSwotError.innerHTML = '';
@@ -3484,8 +3501,7 @@ Return ONLY a valid JSON object matching the requested schema.
 
     </script>
 
-    <!-- Gemini Key Manager -->
-    <script src="modules/gemini-key-manager.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const updateKeyStatus = async () => {
