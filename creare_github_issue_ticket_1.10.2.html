@@ -603,6 +603,34 @@ AI 評語:"></textarea>
                 </button>
             </div>
         </form>
+
+        <!-- 🌟 AI Coach Feedback 顯示區塊 -->
+        <div id="ai-coach-feedback-section" class="hidden mt-8">
+            <div class="bg-cardBg p-6 md:p-8 rounded-xl shadow-lg border border-borderDark">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-semibold text-purple-400" data-i18n="aiCoachFeedbackTitle">
+                        🤖 AI 教練講評
+                    </h2>
+                    <span id="ai-coach-loading" class="hidden">
+                        <svg class="animate-spin h-6 w-6 text-purple-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </span>
+                </div>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="aiCoachFeedbackDesc">
+                    此 AI 講評已同步發布至 GitHub Issue 留言區。
+                </p>
+                <div id="ai-coach-feedback-content"
+                    class="prose prose-invert max-w-none text-gray-200 whitespace-pre-wrap leading-relaxed">
+                    <!-- AI Feedback will be injected here -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -709,6 +737,10 @@ AI 評語:"></textarea>
                     zipImportFailNoData: '❌ 匯入失敗：ZIP 檔案中找不到 data.md。',
                     zipImportFailJSZip: '❌ 匯入失敗：JSZip 函式庫載入失敗。',
                     zipImportFailError: '❌ 匯入失敗：{message}',
+
+                    // AI Coach Feedback
+                    aiCoachFeedbackTitle: '🤖 AI 教練講評',
+                    aiCoachFeedbackDesc: '此 AI 講評已同步發布至 GitHub Issue 留言區。',
 
                     // Placeholders
                     placeholderTaskName: '例如 1029_Pie_Chart',
@@ -841,6 +873,10 @@ AI 評語:"></textarea>
                     zipImportFailNoData: '❌ Import failed: data.md not found in ZIP.',
                     zipImportFailJSZip: '❌ Import failed: JSZip not loaded.',
                     zipImportFailError: '❌ Import failed: {message}',
+
+                    // AI Coach Feedback
+                    aiCoachFeedbackTitle: '🤖 AI Coach Feedback',
+                    aiCoachFeedbackDesc: 'This AI feedback has been synced to the GitHub Issue comments.',
 
                     // Placeholders
                     placeholderTaskName: 'e.g., 1029_Pie_Chart',
@@ -2314,6 +2350,9 @@ ${additionalNotesFormatted}
             statusMessage.classList.remove('hidden', 'bg-errorRed', 'bg-successGreen');
             statusMessage.classList.add('bg-accentYellow', 'text-black');
 
+            // 🌟 顯示 AI Coach Loading 狀態
+            showAICoachLoading();
+
             try {
                 // 1. Get Gemini Key
                 let geminiKey = null;
@@ -2390,14 +2429,97 @@ ${issueBody}
                 statusMessage.classList.remove('bg-accentYellow', 'text-black');
                 statusMessage.classList.add('bg-successGreen', 'text-white');
 
+                // 🌟 顯示 AI Coach Feedback 在頁面上
+                displayAICoachFeedback(aiResponseText);
+
             } catch (error) {
                 console.error("AI Coach Feedback Failed:", error);
                 statusMessage.textContent = `✅ Issue #${issueNumber} 建立成功，但 AI 教練講評失敗: ${error.message}`;
                 statusMessage.classList.remove('bg-accentYellow', 'text-black');
                 statusMessage.classList.add('bg-errorRed', 'text-white'); // Use red for partial failure warning
+
+                // 🌟 顯示錯誤訊息在 AI Coach Feedback 區塊
+                displayAICoachFeedback(null, error.message);
             } finally {
                 submitButton.disabled = false;
                 submitButton.textContent = '✨ 自動建立 GitHub Issue';
+            }
+        }
+
+        // -----------------------------------------------------
+        // 🌟 NEW: Display AI Coach Feedback on Page
+        // -----------------------------------------------------
+        function displayAICoachFeedback(feedbackText, errorMessage = null) {
+            const feedbackSection = document.getElementById('ai-coach-feedback-section');
+            const feedbackContent = document.getElementById('ai-coach-feedback-content');
+            const loadingSpinner = document.getElementById('ai-coach-loading');
+
+            if (!feedbackSection || !feedbackContent) {
+                console.warn('AI Coach Feedback section not found in DOM.');
+                return;
+            }
+
+            // Hide loading spinner
+            if (loadingSpinner) {
+                loadingSpinner.classList.add('hidden');
+            }
+
+            // Show the feedback section
+            feedbackSection.classList.remove('hidden');
+
+            if (errorMessage) {
+                // Display error state
+                feedbackContent.innerHTML = `
+                    <div class="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
+                        <div class="flex items-center gap-2 text-red-400 mb-2">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="font-semibold">AI 講評生成失敗</span>
+                        </div>
+                        <p class="text-gray-300 text-sm">${errorMessage}</p>
+                    </div>
+                `;
+            } else if (feedbackText) {
+                // Display success state with formatted feedback
+                // Simple markdown-like formatting: handle **bold**, *italic*, and line breaks
+                const formattedText = feedbackText
+                    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-purple-300">$1</strong>')
+                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                    .replace(/^- /gm, '• ')
+                    .replace(/^(\d+)\. /gm, '<span class="text-purple-400 font-semibold">$1.</span> ');
+
+                feedbackContent.innerHTML = `
+                    <div class="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+                        <div class="flex items-center gap-2 text-purple-400 mb-3">
+                            <i class="fas fa-robot"></i>
+                            <span class="font-semibold">IELTS Coach Feedback</span>
+                        </div>
+                        <div class="text-gray-200 leading-relaxed">${formattedText}</div>
+                    </div>
+                `;
+            }
+
+            // Scroll to the feedback section smoothly
+            feedbackSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Show loading state when AI feedback process starts
+        function showAICoachLoading() {
+            const feedbackSection = document.getElementById('ai-coach-feedback-section');
+            const loadingSpinner = document.getElementById('ai-coach-loading');
+            const feedbackContent = document.getElementById('ai-coach-feedback-content');
+
+            if (feedbackSection) {
+                feedbackSection.classList.remove('hidden');
+            }
+            if (loadingSpinner) {
+                loadingSpinner.classList.remove('hidden');
+            }
+            if (feedbackContent) {
+                feedbackContent.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-gray-400 animate-pulse">🤖 AI 教練正在準備講評...</p>
+                    </div>
+                `;
             }
         }
 
