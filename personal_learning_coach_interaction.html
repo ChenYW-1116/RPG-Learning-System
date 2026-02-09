@@ -472,7 +472,7 @@
       const [isQuizLoading, setIsQuizLoading] = useState(false);
       const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-      const apiKey = "AIzaSyCZAXCtLPnIE52p6Qpp8u_bzHH1QlpF7Bg"; // Updated API Key handling would be ideal
+
 
       // Toggle Lang
       const toggleLang = () => setLang(l => l === 'zh' ? 'en' : 'zh');
@@ -521,19 +521,51 @@
 
       const callGeminiAPI = async (contents, sysPrompt) => {
         setIsLoading(true);
+        let currentKey = '';
+
+        // 1. Get Key from Manager or Storage
         if (typeof GeminiKeyManager !== 'undefined') {
           await GeminiKeyManager.checkQuotaAndAlert();
+          const k = GeminiKeyManager.getActiveKey();
+          if (k && k !== '__USE_ADMIN_KEY__') {
+            currentKey = k;
+          }
         }
+
+        // Fallback to localStorage if manager didn't give a usable direct key
+        if (!currentKey) {
+          currentKey = localStorage.getItem('gemini_api_key');
+        }
+
+        if (!currentKey) {
+          setChatHistory(prev => [...prev, { role: 'model', text: "⚠️ 錯誤: 未設定 API Key。請前往 RPG Hub 或設定頁面輸入您的 Gemini API Key。" }]);
+          setIsLoading(false);
+          return "Error: No API Key found.";
+        }
+
         try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${currentKey}`;
+
           const data = await fetchWithRetry(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents, systemInstruction: { parts: [{ text: sysPrompt }] } })
           });
+
+          // Check for API errors in the response body even if status was OK (though fetchWithRetry catches non-OK)
+          if (data.error) {
+            throw new Error(data.error.message || 'Unknown API Error');
+          }
+
           return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
         } catch (e) {
-          return `Error: ${e.message}`;
+          console.error("Gemini API Error:", e);
+          let errorMsg = `Error: ${e.message}`;
+          if (e.message.includes('400')) errorMsg += " (可能原因: API Key 無效或請求格式錯誤)";
+          if (e.message.includes('403')) errorMsg += " (可能原因: API Key 權限不足)";
+          if (e.message.includes('429')) errorMsg += " (可能原因: 請求太過頻繁，請稍後再試)";
+
+          return errorMsg;
         } finally {
           setIsLoading(false);
         }
