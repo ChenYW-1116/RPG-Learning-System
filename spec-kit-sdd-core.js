@@ -868,7 +868,7 @@ function resolveAIConfig(preferredProvider = null, phase = null) {
         state.config = {
             provider: stored.provider || 'gemini',
             gemini: {
-                key: stored.gemini?.key || stored.apiKey || localStorage.getItem('gemini_api_key') || '',
+                key: localStorage.getItem('gemini_api_key') || stored.gemini?.key || stored.apiKey || '',
                 model: stored.gemini?.model || 'gemini-2.5-flash'
             },
             kimi: {

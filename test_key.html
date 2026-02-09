@@ -82,6 +82,19 @@
         <button onclick="testKey()">🚀 開始測試 (Test Connection)</button>
 
         <div id="log">等待測試...</div>
+
+        <hr style="margin: 20px 0; border: 1px solid #444;">
+
+        <h3>💾 LocalStorage 檢測 (Storage Inspector)</h3>
+        <p>檢測是否有殘留的舊 Key 或設定導致問題。</p>
+
+        <div id="storage-info"
+            style="background: #111; padding: 10px; border-radius: 5px; font-family: monospace; color: #aaa; margin-bottom: 10px;">
+            讀取中...
+        </div>
+
+        <button onclick="clearGeminiStorage()" style="background: #f55; color: #fff;">🗑️ 清除所有 Gemini 設定 (Clear
+            Config)</button>
     </div>
 
     <script>
@@ -146,6 +159,62 @@
                 log(`❌ 連線錯誤: ${e.message}`, 'error');
             }
         }
+
+        // 🟢 新增：檢查 LocalStorage 並顯示
+        function checkStorage() {
+            const infoEl = document.getElementById('storage-info');
+            const simpleKey = localStorage.getItem('gemini_api_key');
+            const fullConfig = localStorage.getItem('speckit_config');
+
+            let html = '';
+
+            if (simpleKey) {
+                html += `<div><strong>gemini_api_key:</strong> <span style="color: #f77;">${simpleKey.substring(0, 10)}...${simpleKey.slice(-4)}</span></div>`;
+            } else {
+                html += `<div><strong>gemini_api_key:</strong> <span style="color: #666;">(未設定)</span></div>`;
+            }
+
+            if (fullConfig) {
+                try {
+                    const cfg = JSON.parse(fullConfig);
+                    const gemini = cfg.gemini || {};
+                    const key = gemini.key || '';
+                    const backupKeys = gemini.keys || [];
+
+                    html += `<div style="margin-top:5px;"><strong>speckit_config (Active Key):</strong> <span style="color: #f77;">${key ? key.substring(0, 10) + '...' + key.slice(-4) : '(無)'}</span></div>`;
+
+                    if (backupKeys.length > 0) {
+                        html += `<div><strong>Backup Keys (${backupKeys.length}):</strong></div>`;
+                        backupKeys.forEach((k, i) => {
+                            html += `<div style="padding-left:10px;">- Key #${i + 1}: ${k.substring(0, 10)}...</div>`;
+                        });
+                    }
+                } catch (e) {
+                    html += `<div><strong>speckit_config:</strong> (JSON 解析失敗)</div>`;
+                }
+            } else {
+                html += `<div><strong>speckit_config:</strong> <span style="color: #666;">(未設定)</span></div>`;
+            }
+
+            if (!simpleKey && !fullConfig) {
+                html = '✅ LocalStorage 乾淨 (無殘留設定)';
+            }
+
+            infoEl.innerHTML = html;
+        }
+
+        // 🟢 新增：清除設定
+        function clearGeminiStorage() {
+            if (!confirm('確定要清除所有 Gemini 相關的 LocalStorage 設定嗎？\n這將移除您儲存的 API Key。')) return;
+
+            localStorage.removeItem('gemini_api_key');
+            localStorage.removeItem('speckit_config');
+            checkStorage();
+            log('已清除 LocalStorage 設定。請重新整理主頁面並輸入新的 Key。', 'success');
+        }
+
+        // 初始執行檢查
+        checkStorage();
     </script>
 </body>
 

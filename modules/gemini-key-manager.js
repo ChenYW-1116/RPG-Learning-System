@@ -94,7 +94,38 @@ const GeminiKeyManager = {
      */
     saveUserKey(key) {
         if (key && key.trim()) {
-            localStorage.setItem('gemini_api_key', key.trim());
+            const cleanKey = key.trim();
+            localStorage.setItem('gemini_api_key', cleanKey);
+
+            // 🔄 FORCE SYNC: 同步更新 speckit_config，防止舊的 Key 殘留導致 429
+            try {
+                const configStr = localStorage.getItem('speckit_config');
+                let config = configStr ? JSON.parse(configStr) : {};
+
+                if (!config.gemini) config.gemini = {};
+
+                // 強制更新主 Key
+                config.gemini.key = cleanKey;
+
+                // ⚠️ CRITICAL: 重置 Key 輪替清單與索引
+                // 用戶剛輸入新 Key，應該清除所有舊的、可能無效的備份 Key
+                config.gemini.keys = [cleanKey];
+                config.gemini.currentKeyIndex = 0;
+
+                localStorage.setItem('speckit_config', JSON.stringify(config));
+
+                // 如果 state 已載入，也同步更新內存中的 state
+                if (typeof window !== 'undefined' && window.state && window.state.config && window.state.config.gemini) {
+                    window.state.config.gemini.key = cleanKey;
+                    window.state.config.gemini.keys = [cleanKey];
+                    window.state.config.gemini.currentKeyIndex = 0;
+                }
+
+                console.log('[GeminiManager] ✅ Key saved and synced to global config (Rotation reset).');
+            } catch (e) {
+                console.warn('[GeminiManager] Failed to sync to speckit_config:', e);
+            }
+
         } else {
             localStorage.removeItem('gemini_api_key');
         }
