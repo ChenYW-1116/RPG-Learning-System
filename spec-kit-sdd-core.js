@@ -816,14 +816,14 @@ function resolveAIConfig(preferredProvider = null, phase = null) {
             case 'phase2':
             case 'implement':
                 phaseProvider = 'gemini';
-                forceKeyIndex = 0;
-                addLog(`🚀 Phase 2(實現): 使用 Gemini Key #1`, 'info', 'CONFIG');
+                // forceKeyIndex = 0; // ❌ Removed to allow rotation
+                addLog(`🚀 Phase 2(實現): 使用 Gemini (Idx: ${state.config?.gemini?.currentKeyIndex || 0})`, 'info', 'CONFIG');
                 break;
             case 'reverse':
             case 'autofix':
                 phaseProvider = 'gemini';
-                forceKeyIndex = 1;
-                addLog(`🔄 Reverse / AutoFix: 使用 Gemini Key #2`, 'info', 'CONFIG');
+                // forceKeyIndex = 1; // ❌ Removed to allow rotation
+                addLog(`🔄 Reverse / AutoFix: 使用 Gemini (Idx: ${state.config?.gemini?.currentKeyIndex || 0})`, 'info', 'CONFIG');
                 break;
         }
     }
@@ -1322,7 +1322,7 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
 
                 if (attempt >= maxAttempts) {
                     const helpMsg = provider === 'gemini' ?
-                        "💡 Google Gemini Free Tier 限制了請求頻率。請等待幾分鐘再試或是切換至 Kimi。" : "";
+                        "💡 Google Gemini Free Tier 限制了請求頻率。建議配置多個 API Key (換行分隔) 以啟用自動輪替，或稍後再試。" : "";
                     throw new Error(`HTTP Error 429: Rate Limit Exceeded after ${maxAttempts} attempts. ${helpMsg} ${errorText}`);
                 }
 
@@ -1333,9 +1333,14 @@ async function callKimi(prompt, systemPrompt = "你是一個專業的軟體工�
                         // Key rotation done, next loop iteration will pick up new key via resolveAIConfig()
                         addLog(`♻️ Key Rotated! Retrying immediately with Key #${(state.config.gemini.currentKeyIndex || 0) + 1}`, 'success', 'SYSTEM');
 
+                        // 🔓 CRITICAL FIX: Clear the override so next loop picks up the NEW key from config
+                        apiKeyOverride = null;
+
                         // Short pause to let system settle
                         await new Promise(r => setTimeout(r, 1000));
                         continue; // Retry - loop will call resolveAIConfig() again
+                    } else {
+                        addLog(`⚠️ API 限流且無備用 Key 可輪替。建議在設定中貼上多個 Gemini Key (換行分隔) 以啟用自動輪替。`, 'warn', 'SYSTEM');
                     }
                 }
 
