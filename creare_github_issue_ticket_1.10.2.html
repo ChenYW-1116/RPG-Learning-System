@@ -1914,7 +1914,7 @@ ${articleContent}
             // 獲取 GitHub 資訊
             const user = document.getElementById('github_user').value.trim();
             const repo = document.getElementById('github_repo').value.trim(); // 🌟 現在會從 select 獲取
-            const token = document.getElementById('github_token').value.trim();
+            let token = document.getElementById('github_token').value.trim();
             const repoError = document.getElementById('repo-error');
             const statusMessage = document.getElementById('status-message');
             const submitButton = document.getElementById('submit-button');
@@ -1923,14 +1923,33 @@ ${articleContent}
             statusMessage.textContent = '';
 
             // 檢查 GitHub 資訊 (🌟 repo 現在是 select，所以也要檢查)
-            if (!user || !repo || !token) {
-                repoError.textContent = '🚨 請務必填寫 GitHub 欄位、PAT，並抓取及選擇一個儲存庫。';
+            if (!user || !repo) {
+                repoError.textContent = '🚨 請務必填寫 GitHub 使用者名稱並選擇一個儲存庫。';
                 repoError.classList.remove('hidden');
-                statusMessage.textContent = '🚨 錯誤：請填寫 GitHub 使用者名稱、儲存庫名稱和 PAT。';
+                statusMessage.textContent = '🚨 錯誤：GitHub 資訊不完整。';
                 statusMessage.classList.remove('hidden', 'bg-successGreen', 'bg-errorRed');
                 statusMessage.classList.add('bg-accentYellow', 'text-black');
                 return;
             }
+
+            // 🌟 Try to get token from input OR fetch from server if empty
+            if (!token) {
+                console.log("Token input is empty. Attempting to fetch from server (Render Env)...");
+                try {
+                    await fetchTokenFromServer(); // This updates the input value
+                    token = document.getElementById('github_token').value.trim();
+                    if (!token) throw new Error("Server did not return a token.");
+                } catch (e) {
+                    console.error("Failed to fetch token:", e);
+                    repoError.textContent = '🚨 請填寫 Personal Access Token (PAT) 或確保 Render 環境變數已設定。';
+                    repoError.classList.remove('hidden');
+                    statusMessage.textContent = '🚨 錯誤：找不到有效的 GitHub Token。';
+                    statusMessage.classList.remove('hidden', 'bg-successGreen', 'bg-errorRed');
+                    statusMessage.classList.add('bg-accentYellow', 'text-black');
+                    return;
+                }
+            }
+
             repoError.classList.add('hidden');
 
             // 禁用按鈕並顯示載入狀態
