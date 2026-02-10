@@ -675,8 +675,8 @@ const state = {
                 currentKeyIndex: 0 // Track which key is currently in use
             },
             kimi: {
-                url: stored.kimi?.url || 'https://api.moonshot.cn/v1/chat/completions',
-                key: stored.kimi?.key || '',
+                url: stored.kimi?.url || 'https://api-ai.gitcode.com/v1/chat/completions',
+                key: stored.kimi?.key || '2Hy47E45eYf2kSYWU2vxVzFy',
                 model: stored.kimi?.model || 'moonshot-v1-8k'
             }
         };
@@ -877,8 +877,8 @@ function resolveAIConfig(preferredProvider = null, phase = null) {
                 model: stored.gemini?.model || 'gemini-2.5-flash'
             },
             kimi: {
-                url: stored.kimi?.url || 'https://api.moonshot.cn/v1/chat/completions',
-                key: stored.kimi?.key || '',
+                url: stored.kimi?.url || 'https://api-ai.gitcode.com/v1/chat/completions',
+                key: stored.kimi?.key || '2Hy47E45eYf2kSYWU2vxVzFy',
                 model: stored.kimi?.model || 'moonshot-v1-8k'
             }
         };
@@ -934,9 +934,9 @@ function resolveAIConfig(preferredProvider = null, phase = null) {
         result.url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
     } else {
         // Kimi / GitCode / OpenAI Compatible
-        result.key = cfg.kimi?.key || '';
-        result.model = cfg.kimi?.model || 'moonshot-v1-8k';
-        result.url = cfg.kimi?.url || 'https://api.moonshot.cn/v1/chat/completions';
+        result.key = cfg.kimi?.key || '2Hy47E45eYf2kSYWU2vxVzFy';
+        result.model = cfg.kimi?.model || 'moonshotai/Kimi-K2-Instruct-0905';
+        result.url = cfg.kimi?.url || 'https://api-ai.gitcode.com/v1/chat/completions';
     }
 
     return result;
@@ -984,9 +984,9 @@ function openConfig() {
                 model: state.config.model || 'gemini-3-flash-preview'
             },
             kimi: {
-                url: 'https://api.moonshot.cn/v1/chat/completions',
+                url: 'https://api-ai.gitcode.com/v1/chat/completions',
                 key: '',
-                model: 'moonshot-v1-8k'
+                model: 'moonshotai/Kimi-K2-Instruct-0905'
             }
         };
     }
@@ -1015,9 +1015,9 @@ function openConfig() {
     const kimiUrlInput = document.getElementById('config-kimi-url');
     const kimiKeyInput = document.getElementById('config-kimi-key');
     const kimiModelInput = document.getElementById('config-kimi-model');
-    if (kimiUrlInput) kimiUrlInput.value = cfg.kimi?.url || 'https://api.moonshot.cn/v1/chat/completions';
-    if (kimiKeyInput) kimiKeyInput.value = cfg.kimi?.key || '';
-    if (kimiModelInput) kimiModelInput.value = cfg.kimi?.model || 'moonshot-v1-8k';
+    if (kimiUrlInput) kimiUrlInput.value = cfg.kimi?.url || 'https://api-ai.gitcode.com/v1/chat/completions';
+    if (kimiKeyInput) kimiKeyInput.value = cfg.kimi?.key || '2Hy47E45eYf2kSYWU2vxVzFy';
+    if (kimiModelInput) kimiModelInput.value = cfg.kimi?.model || 'moonshotai/Kimi-K2-Instruct-0905';
 
     toggleProviderSettings();
     document.getElementById('config-modal').classList.add('active');
@@ -1039,7 +1039,7 @@ function saveConfig() {
         // GitCode keys are typically 24 chars and don't start with 'sk-'
         const isGitCodeKey = kimiKey && !kimiKey.startsWith('sk-') && kimiKey.length === 24;
         const isDefaultMoonshotUrl = !kimiUrl || kimiUrl.includes('moonshot.cn');
-        const isDefaultMoonshotModel = !kimiModel || kimiModel === 'moonshot-v1-8k';
+        const isDefaultMoonshotModel = !kimiModel || kimiModel === 'moonshot-v1-8k' || kimiModel === 'moonshotai/Kimi-K2-Instruct-0905';
 
         if (isGitCodeKey && isDefaultMoonshotUrl) {
             console.log("[saveConfig] Detected GitCode Key pattern. Auto-switching URL to GitCode endpoint.");
@@ -1047,8 +1047,8 @@ function saveConfig() {
             kimiUrl = "https://api-ai.gitcode.com/v1/chat/completions";
             // Only switch model if it's the default Moonshot one
             if (isDefaultMoonshotModel) {
-                kimiModel = "moonshotai/Kimi-K2-Instruct";
-                addLog("Auto-switching Kimi Model to 'moonshotai/Kimi-K2-Instruct'.", 'info', 'SYSTEM');
+                kimiModel = "moonshotai/Kimi-K2-Instruct-0905";
+                addLog("Auto-switching Kimi Model to 'moonshotai/Kimi-K2-Instruct-0905'.", 'info', 'SYSTEM');
             }
 
             // Optional: Update DOM to reflect this magic switch so user sees it
@@ -2105,13 +2105,13 @@ function resolveAIConfig(forceProvider = null) {
                 console.log("[resolveAIConfig] Detected GitCode Key pattern. Auto-switching URL to GitCode endpoint.");
                 url = "https://api-ai.gitcode.com/v1/chat/completions";
                 // Switch model if default
-                model = (!domModel || domModel === 'moonshot-v1-8k') ? "moonshotai/Kimi-K2-Instruct" : domModel;
+                model = (!domModel || domModel === 'moonshot-v1-8k') ? "moonshotai/Kimi-K2-Instruct-0905" : domModel;
 
                 // Auto-update DOM for visibility ONLY if we are relying on DOM
                 if (domUrlEl && domUrlEl.value !== url) domUrlEl.value = url;
                 if (domModelEl && domModelEl.value !== model && (!domModel || domModel === 'moonshot-v1-8k')) domModelEl.value = model;
             } else {
-                model = domModel || state.config.kimi.model || "moonshot-v1-8k";
+                model = domModel || state.config.kimi.model || "moonshotai/Kimi-K2-Instruct-0905";
                 url = domUrl || state.config.kimi.url;
             }
         } else {
@@ -5524,9 +5524,9 @@ window.openConfig = function () {
 
     document.getElementById('config-gemini-model').value = state.config.gemini?.model || localStorage.getItem('gemini_model') || 'gemini-3-flash-preview';
 
-    document.getElementById('config-kimi-key').value = state.config.kimi?.key || localStorage.getItem('kimi_api_key') || '';
-    document.getElementById('config-kimi-url').value = state.config.kimi?.url || localStorage.getItem('kimi_endpoint') || 'https://api.moonshot.cn/v1/chat/completions';
-    document.getElementById('config-kimi-model').value = state.config.kimi?.model || localStorage.getItem('kimi_model') || 'moonshot-v1-8k';
+    document.getElementById('config-kimi-key').value = state.config.kimi?.key || localStorage.getItem('kimi_api_key') || '2Hy47E45eYf2kSYWU2vxVzFy';
+    document.getElementById('config-kimi-url').value = state.config.kimi?.url || localStorage.getItem('kimi_endpoint') || 'https://api-ai.gitcode.com/v1/chat/completions';
+    document.getElementById('config-kimi-model').value = state.config.kimi?.model || localStorage.getItem('kimi_model') || 'moonshotai/Kimi-K2-Instruct-0905';
 
     // Update UI state
     toggleProviderSettings();
