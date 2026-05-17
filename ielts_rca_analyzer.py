@@ -33,7 +33,7 @@ except ImportError:
 # GITCODE (KIMI) CONFIG
 KIMI_API_KEY = os.environ.get("KIMI_API_KEY", "L_HdSPFWiborz4MZvfSUytus")
 KIMI_API_URL = os.environ.get("KIMI_API_URL", "https://api-ai.gitcode.com/v1/chat/completions")
-KIMI_MODEL_NAME = os.environ.get("KIMI_MODEL_NAME", "MoonshotAI/Kimi-K2.6")
+KIMI_MODEL_NAME = os.environ.get("KIMI_MODEL_NAME", "moonshotai/Kimi-K2-Instruct")
 
 # GEMINI CONFIG
 gemini_api_key = os.environ.get("GEMINI_API_KEY") 
