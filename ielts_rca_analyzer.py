@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 print("🔥 NEW VERSION LOADED - With natural agency fix!")
 import numpy as np
 import matplotlib
@@ -31,9 +31,9 @@ except ImportError:
     pass # python-dotenv not installed, rely on system env vars
 
 # GITCODE (KIMI) CONFIG
-KIMI_API_KEY = "bvGprYx1-5Jai4qCuKTydCQs"
-KIMI_API_URL = "https://api-ai.gitcode.com/v1/chat/completions"
-KIMI_MODEL_NAME = "moonshotai/Kimi-K2-Instruct-0905"
+KIMI_API_KEY = os.environ.get("KIMI_API_KEY", "bvGprYx1-5Jai4qCuKTydCQs")
+KIMI_API_URL = os.environ.get("KIMI_API_URL", "https://api-ai.gitcode.com/v1/chat/completions")
+KIMI_MODEL_NAME = os.environ.get("KIMI_MODEL_NAME", "moonshot-v1-8k")
 
 # GEMINI CONFIG
 gemini_api_key = os.environ.get("GEMINI_API_KEY") 
